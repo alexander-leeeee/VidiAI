@@ -2,7 +2,7 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}", // Tailwind будет следить за всеми файлами в папке src
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {},
