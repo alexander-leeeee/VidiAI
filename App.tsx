@@ -17,6 +17,9 @@ const App: React.FC = () => {
   const [credits, setCredits] = useState<number>(120);
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string>('free');
+  
+  // State for passing template prompt to generator
+  const [templatePrompt, setTemplatePrompt] = useState<string>('');
 
   // Handle Theme Change
   useEffect(() => {
@@ -49,6 +52,11 @@ const App: React.FC = () => {
     setCredits(prev => prev + amount);
   };
 
+  const handleUseTemplate = (video: VideoItem) => {
+    setTemplatePrompt(video.prompt);
+    setActiveTab(Tab.CREATE);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-background text-black dark:text-white font-sans selection:bg-primary/30 transition-colors duration-300">
       
@@ -56,7 +64,7 @@ const App: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 px-4 h-14 flex items-center justify-between transition-colors duration-300">
         <div className="flex items-center space-x-2">
             <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
-            <h1 className="text-lg font-bold tracking-tight">VeoMotion</h1>
+            <h1 className="text-lg font-bold tracking-tight">VidiAI</h1>
         </div>
         
         {/* Credits Counter */}
@@ -72,7 +80,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <main className="pt-14 w-full max-w-lg mx-auto min-h-screen relative">
         <div className={`transition-opacity duration-300 ${activeTab === Tab.SHOWCASE ? 'opacity-100' : 'hidden absolute inset-0'}`}>
-             <Showcase lang={lang} />
+             <Showcase lang={lang} onUseTemplate={handleUseTemplate} />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.SUBSCRIPTION ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Subscription 
@@ -83,7 +91,11 @@ const App: React.FC = () => {
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.CREATE ? 'opacity-100' : 'hidden absolute inset-0'}`}>
-             <Generator onVideoGenerated={handleVideoGenerated} lang={lang} />
+             <Generator 
+                onVideoGenerated={handleVideoGenerated} 
+                lang={lang} 
+                initialPrompt={templatePrompt}
+             />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Library videos={generatedVideos} lang={lang} />

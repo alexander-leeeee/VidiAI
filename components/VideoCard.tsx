@@ -3,9 +3,10 @@ import { VideoItem } from '../types';
 
 interface VideoCardProps {
   video: VideoItem;
+  onClick?: (video: VideoItem) => void;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,7 +37,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
   }, []);
 
   return (
-    <div className="relative w-full aspect-[9/16] bg-surface rounded-xl overflow-hidden shadow-lg border border-white/10 group">
+    <div 
+        className="relative w-full aspect-[9/16] bg-surface rounded-xl overflow-hidden shadow-lg border border-white/10 group cursor-pointer active:scale-95 transition-transform duration-200"
+        onClick={() => onClick && onClick(video)}
+    >
       {/* Loading Skeleton */}
       {isLoading && (
         <div className="absolute inset-0 bg-neutral-900 animate-pulse flex items-center justify-center">

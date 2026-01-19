@@ -5,9 +5,10 @@ import { getTranslation } from '../utils/translations';
 
 interface ShowcaseProps {
   lang: Language;
+  onUseTemplate: (video: VideoItem) => void;
 }
 
-const Showcase: React.FC<ShowcaseProps> = ({ lang }) => {
+const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
   const t = getTranslation(lang);
   const [activeCategory, setActiveCategory] = useState('all');
 
@@ -90,11 +91,11 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang }) => {
         {/* Grid Layout */}
         <div className="grid grid-cols-2 gap-3">
           {filteredVideos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard key={video.id} video={video} onClick={onUseTemplate} />
           ))}
           {/* Duplicate to fill space if filtered result is small */}
            {filteredVideos.length > 0 && filteredVideos.length < 4 && filteredVideos.map((video) => (
-            <VideoCard key={`${video.id}-dup`} video={{...video, id: `${video.id}-dup`}} />
+            <VideoCard key={`${video.id}-dup`} video={{...video, id: `${video.id}-dup`}} onClick={onUseTemplate} />
           ))}
         </div>
       </div>
