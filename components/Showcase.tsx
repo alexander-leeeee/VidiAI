@@ -25,10 +25,12 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
 
   const MOCK_VIDEOS: VideoItem[] = [
     {
-      id: '1',
-      url: 'https://cdn.coverr.co/videos/coverr-surfer-at-sunset-4606/1080p.mp4',
-      prompt: 'Киберпанк серфер на закате в неоновом океане',
-      category: 'move'
+      id: 'template-dancing-child',
+      url: 'https://alexander-lee.obuchenie-taro.online/uploads/vidiai/dancing.mp4',
+      // Рекомендую сделать скриншот видео и положить рядом на сервер
+      thumbnail: 'https://alexander-lee.obuchenie-taro.online/uploads/vidiai/dancing.jpg', 
+      prompt: 'Танцующий ребенок, кинематографичное освещение, стиль Kling AI, 4k',
+      category: 'move' // Категория 'Движ'
     },
     {
       id: '2',
