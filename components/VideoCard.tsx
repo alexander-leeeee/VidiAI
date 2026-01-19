@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { VideoItem } from '../types';
+import { Volume2, VolumeX } from 'lucide-react'; // Импортируем иконки
 
 interface VideoCardProps {
   video: VideoItem;
@@ -8,42 +9,46 @@ interface VideoCardProps {
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Изначально ставим false, чтобы не ждать лоадера, если видео в кэше
   const [isLoading, setIsLoading] = useState(true);
+  const [isMuted, setIsMuted] = useState(true); // Состояние звука
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Попытка принудительного воспроизведения при появлении в кадре
-            const playPromise = videoRef.current?.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(() => {
-                // Если заблокировано, попробуем еще раз при клике или взаимодействии
-              });
-            }
+            videoRef.current?.play().catch(() => {});
           } else {
             videoRef.current?.pause();
           }
         });
       },
-      { threshold: 0.1 } // Начинаем играть раньше (при 10% видимости)
+      { threshold: 0.1 }
     );
 
-    if (videoRef.current) {
-      observer.observe(videoRef.current);
-    }
-
+    if (videoRef.current) observer.observe(videoRef.current);
     return () => observer.disconnect();
-  }, [video.url]); // Перезапускаем при смене ссылки
+  }, [video.url]);
+
+  // Функция переключения звука
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Чтобы не срабатывал переход в генератор при нажатии на звук
+    setIsMuted(!isMuted);
+  };
 
   return (
     <div 
         className="relative w-full aspect-[9/16] bg-neutral-900 rounded-xl overflow-hidden shadow-lg border border-white/5 group cursor-pointer active:scale-95 transition-transform duration-200"
         onClick={() => onClick && onClick(video)}
     >
-      {/* Лоадер показываем только поверх видео, не скрывая его */}
+      {/* Кнопка звука */}
+      <button 
+        onClick={toggleMute}
+        className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all"
+      >
+        {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+      </button>
+
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -53,15 +58,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
       <video
         ref={videoRef}
         src={video.url}
-        // Убираем poster, чтобы не было статичной картинки
         className="w-full h-full object-cover"
-        muted
+        muted={isMuted} // Управляем звуком через состояние
         loop
         playsInline
-        autoPlay // Пытаемся запустить сразу
-        preload="auto" // Грузим видео максимально быстро
-        onCanPlay={() => setIsLoading(false)} // Убираем лоадер, как только можно играть
-        onWaiting={() => setIsLoading(true)} // Возвращаем лоадер, если видео зависло (буферизация)
+        autoPlay
+        preload="auto"
+        onCanPlay={() => setIsLoading(false)}
+        onWaiting={() => setIsLoading(true)}
         onPlaying={() => setIsLoading(false)}
       />
       
