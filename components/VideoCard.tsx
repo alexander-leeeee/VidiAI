@@ -8,63 +8,67 @@ interface VideoCardProps {
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Изначально ставим false, чтобы не ждать лоадера, если видео в кэше
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Observer to play video only when in view (saves battery/performance)
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            videoRef.current?.play().catch(() => {
-              // Auto-play might be blocked or low power mode
-            });
+            // Попытка принудительного воспроизведения при появлении в кадре
+            const playPromise = videoRef.current?.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(() => {
+                // Если заблокировано, попробуем еще раз при клике или взаимодействии
+              });
+            }
           } else {
             videoRef.current?.pause();
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.1 } // Начинаем играть раньше (при 10% видимости)
     );
 
     if (videoRef.current) {
       observer.observe(videoRef.current);
     }
 
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+    return () => observer.disconnect();
+  }, [video.url]); // Перезапускаем при смене ссылки
 
   return (
     <div 
-        className="relative w-full aspect-[9/16] bg-surface rounded-xl overflow-hidden shadow-lg border border-white/10 group cursor-pointer active:scale-95 transition-transform duration-200"
+        className="relative w-full aspect-[9/16] bg-neutral-900 rounded-xl overflow-hidden shadow-lg border border-white/5 group cursor-pointer active:scale-95 transition-transform duration-200"
         onClick={() => onClick && onClick(video)}
     >
-      {/* Loading Skeleton */}
+      {/* Лоадер показываем только поверх видео, не скрывая его */}
       {isLoading && (
-        <div className="absolute inset-0 bg-neutral-900 animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
       
       <video
         ref={videoRef}
         src={video.url}
-        poster={video.thumbnail}
-        className={`w-full h-full object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        // Убираем poster, чтобы не было статичной картинки
+        className="w-full h-full object-cover"
         muted
         loop
         playsInline
-        onLoadedData={() => setIsLoading(false)}
+        autoPlay // Пытаемся запустить сразу
+        preload="auto" // Грузим видео максимально быстро
+        onCanPlay={() => setIsLoading(false)} // Убираем лоадер, как только можно играть
+        onWaiting={() => setIsLoading(true)} // Возвращаем лоадер, если видео зависло (буферизация)
+        onPlaying={() => setIsLoading(false)}
       />
       
-      {/* Overlay Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
       
-      {/* Text Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3">
-        <p className="text-xs font-medium text-gray-200 line-clamp-2 leading-snug">
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
+        <p className="text-[10px] font-medium text-gray-100 line-clamp-2 leading-tight opacity-90">
           {video.prompt}
         </p>
       </div>
