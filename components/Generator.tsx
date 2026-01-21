@@ -58,50 +58,66 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     if (!prompt.trim() || !selectedImage) return;
 
     setIsGenerating(true);
-    setStatusMessage("Загрузка фото на сервер...");
+    setStatusMessage("Загрузка фото...");
 
     try {
-      // 1. Подготовка файла для вашего сервера
+      // 1. Подготовка фото
       const formData = new FormData();
-      // Превращаем Base64 в Blob, чтобы отправить как файл
       const response = await fetch(selectedImage.preview);
       const blob = await response.blob();
       formData.append('photo', blob, 'upload.jpg');
 
-      // 2. Загрузка на ваш сервер (vidiai.top)
-      const uploadRes = await fetch('https://vidiai.top/api/upload.php', {
+      // 2. Загрузка на твой API (теперь на поддомене)
+      const uploadRes = await fetch('https://app.vidiai.top/api/upload', {
         method: 'POST',
         body: formData,
-        // CORS заголовки не нужны здесь, их должен отдавать сервер в ответе
       });
       
       const uploadData = await uploadRes.json();
       
       if (!uploadData.fileUrl) {
-          throw new Error("Ошибка загрузки файла на сервер");
+          throw new Error("Ошибка загрузки");
       }
 
-      setStatusMessage("Запуск генерации Kling AI...");
+      setStatusMessage("Запуск Kling 2.6...");
 
-      // 3. Вызов вашего сервиса (который теперь работает через taskId)
+      // 3. Генерация через taskId
       const taskId = await generateVideo({
         prompt, 
         aspectRatio, 
-        imageUrl: uploadData.fileUrl // Передаем ссылку на ваш сервер
+        imageUrl: uploadData.fileUrl 
       });
       
       if (taskId) {
-        setStatusMessage("Видео создается... Это займет 1-2 минуты.");
+        setStatusMessage("Видео создается... (1-2 мин)");
         
-        // Здесь должен начаться цикл проверки статуса (Polling)
-        // как мы обсуждали ранее, чтобы дождаться готовности
+        // Запускаем цикл проверки (Polling)
+        const pollInterval = setInterval(async () => {
+          const status = await getTaskStatus(taskId);
+          
+          if (status.status === 'succeeded' && status.video_url) {
+            clearInterval(pollInterval);
+            
+            onVideoGenerated({
+              id: Date.now().toString(),
+              url: status.video_url,
+              prompt: prompt,
+              isLocal: false
+            });
+            
+            setStatusMessage("Готово!");
+            setIsGenerating(false);
+          } else if (status.status === 'failed') {
+            clearInterval(pollInterval);
+            setStatusMessage("Ошибка генерации");
+            setIsGenerating(false);
+          }
+        }, 10000); // Проверка каждые 10 секунд
       }
     } catch (error: any) {
       console.error(error);
-      setStatusMessage("Произошла ошибка. Попробуйте снова.");
-    } finally {
-      // Важно: не выключайте setIsGenerating(false) здесь, 
-      // если вы используете Polling внутри этой же функции.
+      setStatusMessage("Ошибка. Попробуйте снова.");
+      setIsGenerating(false);
     }
   };
 
