@@ -55,34 +55,53 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim() && !selectedImage) return;
+    if (!prompt.trim() || !selectedImage) return;
 
     setIsGenerating(true);
-    setStatusMessage(t.gen_status_init);
+    setStatusMessage("Загрузка фото на сервер...");
 
     try {
-      const url = await generateVideo({
-        prompt, 
-        aspectRatio, 
-        image: selectedImage ? { data: selectedImage.data, mimeType: selectedImage.mimeType } : undefined
+      // 1. Подготовка файла для вашего сервера
+      const formData = new FormData();
+      // Превращаем Base64 в Blob, чтобы отправить как файл
+      const response = await fetch(selectedImage.preview);
+      const blob = await response.blob();
+      formData.append('photo', blob, 'upload.jpg');
+
+      // 2. Загрузка на ваш сервер (vidiai.top)
+      const uploadRes = await fetch('https://vidiai.top/api/upload.php', {
+        method: 'POST',
+        body: formData,
+        // CORS заголовки не нужны здесь, их должен отдавать сервер в ответе
       });
       
-      if (url) {
-        const newVideo: VideoItem = {
-          id: Date.now().toString(),
-          url: url,
-          prompt: prompt,
-          isLocal: true
-        };
-        onVideoGenerated(newVideo);
-        setStatusMessage(t.gen_status_done);
-        // Do not clear prompt immediately so user can iterate
+      const uploadData = await uploadRes.json();
+      
+      if (!uploadData.fileUrl) {
+          throw new Error("Ошибка загрузки файла на сервер");
+      }
+
+      setStatusMessage("Запуск генерации Kling AI...");
+
+      // 3. Вызов вашего сервиса (который теперь работает через taskId)
+      const taskId = await generateVideo({
+        prompt, 
+        aspectRatio, 
+        imageUrl: uploadData.fileUrl // Передаем ссылку на ваш сервер
+      });
+      
+      if (taskId) {
+        setStatusMessage("Видео создается... Это займет 1-2 минуты.");
+        
+        // Здесь должен начаться цикл проверки статуса (Polling)
+        // как мы обсуждали ранее, чтобы дождаться готовности
       }
     } catch (error: any) {
       console.error(error);
-      setStatusMessage(t.gen_status_error);
+      setStatusMessage("Произошла ошибка. Попробуйте снова.");
     } finally {
-      setIsGenerating(false);
+      // Важно: не выключайте setIsGenerating(false) здесь, 
+      // если вы используете Polling внутри этой же функции.
     }
   };
 
