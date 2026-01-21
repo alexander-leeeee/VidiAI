@@ -1,67 +1,38 @@
-import { GoogleGenAI } from "@google/genai";
+const KIE_API_KEY = 'da0d7cfd03a440fa71bf1701dae4ee6f';
 
-const MODEL_NAME = 'veo-3.1-fast-generate-preview';
+// Перечень доступных URL для разных задач
+const ENDPOINTS = {
+  KLING_GENERATE: 'https://api.kie.ai/api/v1/jobs/createTask',
+  KLING_STATUS: 'https://api.kie.ai/api/v1/jobs/getTask',
+  // Сюда можно будет добавить другие сервисы
+};
 
-interface GenerateVideoOptions {
-  prompt: string;
-  aspectRatio?: '16:9' | '9:16';
-  image?: {
-    data: string; // base64 string
-    mimeType: string;
-  };
-}
-
-export const generateVideo = async ({
-  prompt,
-  aspectRatio = '9:16',
-  image
-}: GenerateVideoOptions): Promise<string | null> => {
+export const generateVideo = async (params: { 
+  prompt: string, 
+  image?: { data: string, mimeType: string },
+  modelType?: 'kling' | 'other' // Добавляем переключатель
+}) => {
   
-  // Directly use the environment variable. 
-  // It is assumed the host sets process.env.API_KEY correctly.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  try {
-    const requestPayload: any = {
-      model: MODEL_NAME,
-      prompt: prompt,
-      config: {
-        numberOfVideos: 1,
-        resolution: '720p',
-        aspectRatio: aspectRatio
-      }
-    };
-
-    if (image) {
-      requestPayload.image = {
-        imageBytes: image.data,
-        mimeType: image.mimeType
-      };
-    }
-
-    let operation = await ai.models.generateVideos(requestPayload);
-
-    // Polling loop
-    while (!operation.done) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      operation = await ai.operations.getVideosOperation({ operation: operation });
-      console.log('Generation status:', operation.metadata);
-    }
-
-    const videoUri = operation.response?.generatedVideos?.[0]?.video?.uri;
-
-    if (!videoUri) {
-      throw new Error("No video URI returned from API");
-    }
-
-    const downloadUrl = `${videoUri}&key=${process.env.API_KEY}`;
-    
-    const response = await fetch(downloadUrl);
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-
-  } catch (error) {
-    console.error("Video generation failed:", error);
-    throw error;
+  // Логика для Kie.ai (Kling)
+  if (!params.modelType || params.modelType === 'kling') {
+    const response = await fetch(ENDPOINTS.KLING_GENERATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${KIE_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'kling-2.6/image-to-video',
+        input: {
+          "prompt": params.prompt,
+          "image_urls": [ `data:${params.image?.mimeType};base64,${params.image?.data}` ],
+          "duration": "5"
+        }
+      })
+    });
+    const result = await response.json();
+    return result.taskId;
   }
+
+  // Здесь можно добавить блок else if для других URL/сервисов
 };
