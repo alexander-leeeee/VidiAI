@@ -53,8 +53,11 @@ const App: React.FC = () => {
   };
 
   const handleUseTemplate = (video: VideoItem) => {
-    setTemplatePrompt(video.prompt);
-    setActiveTab(Tab.CREATE);
+    // Проверяем наличие systemPrompt, если его нет — берем обычный prompt
+    // Это позволит работать и старым шаблонам, и новым длинным через обратные кавычки
+    setTemplatePrompt(video.systemPrompt || video.prompt); 
+    
+    setActiveTab(Tab.CREATE); 
   };
 
   return (
