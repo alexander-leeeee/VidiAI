@@ -1,4 +1,5 @@
 const KIE_API_KEY = 'da0d7cfd03a440fa71bf1701dae4ee6f';
+const SERVER_URL = 'https://vidiai.top';
 
 // Перечень доступных URL для разных задач
 const ENDPOINTS = {
