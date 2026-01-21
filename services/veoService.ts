@@ -1,20 +1,16 @@
 const KIE_API_KEY = 'da0d7cfd03a440fa71bf1701dae4ee6f';
-const SERVER_URL = 'https://vidiai.top';
 
-// Перечень доступных URL для разных задач
 const ENDPOINTS = {
   KLING_GENERATE: 'https://api.kie.ai/api/v1/jobs/createTask',
   KLING_STATUS: 'https://api.kie.ai/api/v1/jobs/getTask',
-  // Сюда можно будет добавить другие сервисы
 };
 
 export const generateVideo = async (params: { 
   prompt: string, 
-  image?: { data: string, mimeType: string },
-  modelType?: 'kling' | 'other' // Добавляем переключатель
+  imageUrl?: string, // Меняем с image на imageUrl
+  modelType?: 'kling' | 'other'
 }) => {
   
-  // Логика для Kie.ai (Kling)
   if (!params.modelType || params.modelType === 'kling') {
     const response = await fetch(ENDPOINTS.KLING_GENERATE, {
       method: 'POST',
@@ -26,14 +22,26 @@ export const generateVideo = async (params: {
         model: 'kling-2.6/image-to-video',
         input: {
           "prompt": params.prompt,
-          "image_urls": [ `data:${params.image?.mimeType};base64,${params.image?.data}` ],
+          // Передаем массив прямых ссылок, как требует API Kie.ai
+          "image_urls": params.imageUrl ? [params.imageUrl] : [], 
           "duration": "5"
         }
       })
     });
+    
     const result = await response.json();
-    return result.taskId;
+    if (result.taskId) return result.taskId;
+    throw new Error(result.error || 'Failed to create task');
   }
+};
 
-  // Здесь можно добавить блок else if для других URL/сервисов
+// Добавляем экспорт этой функции для проверки готовности видео
+export const getTaskStatus = async (taskId: string) => {
+  const response = await fetch(`${ENDPOINTS.KLING_STATUS}?taskId=${taskId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${KIE_API_KEY}`
+    }
+  });
+  return await response.json();
 };
