@@ -60,6 +60,14 @@ const App: React.FC = () => {
     setActiveTab(Tab.CREATE); 
   };
 
+  const handleTabChange = (tab: Tab) => {
+    // Если пользователь нажимает на вкладку CREATE (центральный "+")
+    if (tab === Tab.CREATE) {
+      setTemplatePrompt(''); // Очищаем промпт, чтобы открылась "Свободная генерация"
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-background text-black dark:text-white font-sans selection:bg-primary/30 transition-colors duration-300">
       
@@ -109,7 +117,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} lang={lang} />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} lang={lang} />
 
       {/* Credits Modal */}
       <CreditsModal 
