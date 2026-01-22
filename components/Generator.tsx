@@ -112,7 +112,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
             setStatusMessage("Ошибка генерации");
             setIsGenerating(false);
           }
-        }, 10000); // Проверка каждые 10 секунд
+        }, 30000); // Проверка каждые 30 секунд
       }
     } catch (error: any) {
       console.error(error);
