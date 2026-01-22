@@ -103,6 +103,7 @@ const App: React.FC = () => {
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.CREATE ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Generator 
+                key={templatePrompt}
                 onVideoGenerated={handleVideoGenerated} 
                 lang={lang} 
                 initialPrompt={templatePrompt}
