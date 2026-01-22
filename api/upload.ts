@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // В Vercel лучше использовать стандартный поток данных для пересылки
-    const externalResponse = await axios.post('https://vidiai.top/api/save_file.php', req, {
+    const externalResponse = await axios.post('https://app.vidiai.top/api/save_file.php', req, {
       headers: {
         'content-type': req.headers['content-type'],
       },
