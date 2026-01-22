@@ -26,7 +26,7 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
   const MOCK_VIDEOS: VideoItem[] = [
     {
       id: 'template-dancing-child',
-      url: 'https://app.vidiai.top/uploads/move/dancing-test.mp4',
+      url: 'https://server.vidiai.top/uploads/move/dancing-test.mp4',
       prompt: `Animate the subject in the photo into an energetic dance performance.
               Keep the original location, background, lighting, and camera position exactly the same as in the photo.
               Only the main subject moves and dances.
