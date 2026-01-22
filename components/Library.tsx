@@ -1,23 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import VideoCard from './VideoCard';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
 
 interface LibraryProps {
-  videos: VideoItem[];
   lang: Language;
 }
 
-const Library: React.FC<LibraryProps> = ({ videos, lang }) => {
+const Library: React.FC<LibraryProps> = ({ lang }) => {
   const t = getTranslation(lang);
-  
+  // Создаем внутреннее состояние для видео, загруженных из БД
+  const [dbVideos, setDbVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch('https://server.vidiai.top/api/get_history.php');
+        const data = await response.json();
+        
+        // Преобразуем данные из БД под формат VideoItem
+        const formatted: VideoItem[] = data.map((v: any) => ({
+          id: v.task_id,
+          url: v.video_url || '', // Если видео еще нет, будет пустая строка
+          prompt: v.prompt,
+          status: v.status, // processing, succeeded, failed
+          isLocal: false
+        }));
+
+        setDbVideos(formatted);
+      } catch (error) {
+        console.error("Ошибка загрузки истории:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, []);
+
   return (
-    <div className="pb-24 pt-4 px-3 h-full">
+    <div className="pb-24 pt-4 px-3 h-full overflow-y-auto">
       <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent px-1">
         {t.lib_title}
       </h2>
       
-      {videos.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center h-[50vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : dbVideos.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[60vh] text-gray-500 space-y-4">
           <div className="w-16 h-16 rounded-full bg-surface flex items-center justify-center border border-gray-200 dark:border-white/5">
              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 opacity-50">
@@ -31,7 +63,7 @@ const Library: React.FC<LibraryProps> = ({ videos, lang }) => {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {videos.map((video) => (
+          {dbVideos.map((video) => (
             <VideoCard key={video.id} video={video} />
           ))}
         </div>
