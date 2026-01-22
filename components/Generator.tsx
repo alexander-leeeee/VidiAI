@@ -126,27 +126,35 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
         <div className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-purple-900/50">
            <SparklesIcon />
         </div>
-        <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{t.gen_title}</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">{t.gen_subtitle}</p>
+        <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">
+          {initialPrompt ? "Создание по шаблону" : "Свободная генерация"}
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          {initialPrompt ? "Стиль уже настроен, просто добавь фото" : "Опиши свою идею и загрузи референс"}
+        </p>
       </div>
-
+  
       <div className="space-y-6">
-          {/* Prompt Input */}
-          <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_prompt}</label>
-              <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder={t.gen_placeholder}
-              className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 transition-all shadow-sm text-sm"
-              disabled={isGenerating}
-              />
-          </div>
-
-          {/* Image Upload */}
+          {/* Поле Prompt - показываем ТОЛЬКО если это свободная генерация */}
+          {!initialPrompt ? (
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_prompt}</label>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={t.gen_placeholder}
+                  className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 transition-all shadow-sm text-sm"
+                  disabled={isGenerating}
+                />
+            </div>
+          ) : (
+            /* Если это шаблон, промпт скрыт, но работает "под капотом" */
+            <textarea value={prompt} className="hidden" readOnly />
+          )}
+  
+          {/* Image Upload - Всегда активно */}
           <div className="space-y-2">
              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_image}</label>
-             
              {!selectedImage ? (
                  <div 
                     onClick={() => fileInputRef.current?.click()}
@@ -156,22 +164,13 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
                         <PhotoIcon />
                      </div>
                      <span className="text-sm font-medium">{t.gen_upload_text}</span>
-                     <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleImageUpload}
-                     />
+                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                  </div>
              ) : (
                  <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 group">
                      <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
                      <button 
-                        onClick={() => {
-                            setSelectedImage(null);
-                            if (fileInputRef.current) fileInputRef.current.value = '';
-                        }}
+                        onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                         className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
                      >
                          <TrashIcon />
@@ -179,64 +178,50 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
                  </div>
              )}
           </div>
-
-          {/* Settings */}
-          <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_format}</label>
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={() => setAspectRatio('9:16')}
-                        className={`py-3 rounded-xl border font-medium text-sm transition-all shadow-sm ${
-                            aspectRatio === '9:16' 
-                            ? 'bg-primary border-primary text-white shadow-primary/30' 
-                            : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}
-                    >
-                        {t.gen_fmt_vertical}
-                    </button>
-                    <button
-                        onClick={() => setAspectRatio('16:9')}
-                        className={`py-3 rounded-xl border font-medium text-sm transition-all shadow-sm ${
-                            aspectRatio === '16:9' 
-                            ? 'bg-primary border-primary text-white shadow-primary/30' 
-                            : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
-                        }`}
-                    >
-                        {t.gen_fmt_landscape}
-                    </button>
-                </div>
-            </div>
-
-            {/* Generate Button */}
-            <button
-                onClick={handleGenerate}
-                disabled={isGenerating || (!prompt.trim() && !selectedImage)}
-                className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${
-                isGenerating || (!prompt.trim() && !selectedImage)
-                    ? 'bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40 hover:brightness-110'
-                }`}
-            >
-                {isGenerating ? (
-                <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>{t.gen_btn_generating}</span>
-                </>
-                ) : (
-                <>
-                    <SparklesIcon />
-                    <span>{t.gen_btn_generate}</span>
-                </>
-                )}
-            </button>
-
-            {/* Status Text */}
-            {statusMessage && (
-                <div className={`p-4 rounded-xl text-center text-sm ${isGenerating ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-200 animate-pulse' : 'bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5'}`}>
+  
+          {/* Выбор формата - показываем ТОЛЬКО если это свободная генерация */}
+          {!initialPrompt && (
+            <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_format}</label>
+                  <div className="grid grid-cols-2 gap-3">
+                      <button
+                          onClick={() => setAspectRatio('9:16')}
+                          className={`py-3 rounded-xl border font-medium text-sm transition-all shadow-sm ${
+                              aspectRatio === '9:16' ? 'bg-primary border-primary text-white shadow-primary/30' : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400'
+                          }`}
+                      >
+                          {t.gen_fmt_vertical}
+                      </button>
+                      <button
+                          onClick={() => setAspectRatio('16:9')}
+                          className={`py-3 rounded-xl border font-medium text-sm transition-all shadow-sm ${
+                              aspectRatio === '16:9' ? 'bg-primary border-primary text-white shadow-primary/30' : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400'
+                          }`}
+                      >
+                          {t.gen_fmt_landscape}
+                      </button>
+                  </div>
+              </div>
+          )}
+  
+          {/* Кнопка генерации */}
+          <button
+              onClick={handleGenerate}
+              disabled={isGenerating || (!prompt.trim() && !selectedImage)}
+              className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${
+              isGenerating || (!prompt.trim() && !selectedImage)
+                  ? 'bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40'
+              }`}
+          >
+              {isGenerating ? <span>{t.gen_btn_generating}</span> : <span>{t.gen_btn_generate}</span>}
+          </button>
+  
+          {statusMessage && (
+              <div className="p-4 rounded-xl text-center text-sm bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5">
                 {statusMessage}
-                {isGenerating && <p className="text-xs mt-1 opacity-70">1-2 min</p>}
-                </div>
-            )}
+              </div>
+          )}
       </div>
     </div>
   );
