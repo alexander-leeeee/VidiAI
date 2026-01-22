@@ -2,7 +2,7 @@ const KIE_API_KEY = 'da0d7cfd03a440fa71bf1701dae4ee6f';
 
 const ENDPOINTS = {
   KLING_GENERATE: 'https://api.kie.ai/api/v1/jobs/createTask',
-  KLING_STATUS: 'https://api.kie.ai/api/v1/jobs/getTask',
+  KLING_STATUS: 'https://api.kie.ai/api/v1/jobs/recordInfo',
 };
 
 export const generateVideo = async (params: { 
@@ -24,7 +24,8 @@ export const generateVideo = async (params: {
           "prompt": params.prompt,
           // Передаем массив прямых ссылок, как требует API Kie.ai
           "image_urls": params.imageUrl ? [params.imageUrl] : [], 
-          "duration": "5"
+          "sound": true,
+          "duration": "10"
         }
       })
     });
