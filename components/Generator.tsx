@@ -68,7 +68,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
       formData.append('photo', blob, 'upload.jpg');
 
       // 2. Загрузка на твой API (теперь на поддомене)
-      const uploadRes = await fetch('https://app.vidiai.top/api/upload', {
+      const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
