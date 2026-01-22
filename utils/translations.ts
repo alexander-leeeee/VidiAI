@@ -5,7 +5,7 @@ export const translations = {
     nav_home: 'Главная',
     nav_sub: 'Подписка',
     nav_create: 'Создать',
-    nav_library: 'Мои',
+    nav_library: 'Галерея',
     nav_settings: 'Настройки',
     
     showcase_title: 'Тренды',
@@ -33,7 +33,7 @@ export const translations = {
     gen_upload_text: 'Загрузить фото',
     gen_remove_image: 'Удалить фото',
 
-    lib_title: 'Моя Библиотека',
+    lib_title: 'Моя Галерея',
     lib_empty: 'Здесь пока пусто.',
     lib_empty_sub: 'Сгенерируйте свое первое видео!',
 
@@ -74,7 +74,7 @@ export const translations = {
     nav_home: 'Home',
     nav_sub: 'Plans',
     nav_create: 'Create',
-    nav_library: 'Library',
+    nav_library: 'Gallery',
     nav_settings: 'Settings',
 
     showcase_title: 'Trending',
@@ -102,7 +102,7 @@ export const translations = {
     gen_upload_text: 'Upload Photo',
     gen_remove_image: 'Remove Photo',
 
-    lib_title: 'My Library',
+    lib_title: 'My Gallery',
     lib_empty: 'Nothing here yet.',
     lib_empty_sub: 'Generate your first video!',
 
@@ -143,7 +143,7 @@ export const translations = {
     nav_home: 'Головна',
     nav_sub: 'Плани',
     nav_create: 'Створити',
-    nav_library: 'Мої',
+    nav_library: 'Галерея',
     nav_settings: 'Налаштування',
 
     showcase_title: 'Тренди',
