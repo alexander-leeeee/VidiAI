@@ -1,42 +1,39 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import formidable from 'formidable';
-import fs from 'fs';
 import FormData from 'form-data';
 import axios from 'axios';
 
 export const config = {
-  api: { bodyParser: false }, // Отключаем стандартный парсер для работы с файлами
+  api: {
+    bodyParser: false, // Обязательно для передачи файлов
+  },
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 1. Разрешаем CORS (исправляем твою ошибку)
+  // Исправляем CORS: разрешаем запросы с твоего фронтенда
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-  const form = formidable();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: 'Parse error' });
+  try {
+    // В Vercel лучше использовать стандартный поток данных для пересылки
+    const externalResponse = await axios.post('https://vidiai.top/api/save_file.php', req, {
+      headers: {
+        'content-type': req.headers['content-type'],
+      },
+    });
 
-    const file = Array.isArray(files.photo) ? files.photo[0] : files.photo;
-    if (!file) return res.status(400).json({ error: 'No file uploaded' });
-
-    try {
-      // 2. Пересылаем файл на твой основной сервер vidiai.top
-      const formData = new FormData();
-      formData.append('photo', fs.createReadStream(file.filepath));
-
-      const response = await axios.post('https://vidiai.top/api/save_file.php', formData, {
-        headers: formData.getHeaders(),
-      });
-
-      // 3. Возвращаем фронтенду итоговую ссылку
-      res.status(200).json(response.data);
-    } catch (error) {
-      res.status(500).json({ error: 'External server error' });
-    }
-  });
+    // Возвращаем фронтенду то, что ответил PHP скрипт (ссылку на файл)
+    return res.status(200).json(externalResponse.data);
+  } catch (error: any) {
+    console.error('Upload error:', error.message);
+    return res.status(500).json({ error: 'Failed to upload to main server' });
+  }
 }
