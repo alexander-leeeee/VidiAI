@@ -31,14 +31,23 @@ export const generateVideo = async (params: {
     
     const result = await response.json();
 
-    // === ДОБАВЛЯЕМ ЭТОТ БЛОК ДЛЯ ОТЛАДКИ ===
-    if (!response.ok || !result.taskId) {
-      console.error("Kie.ai Full Error Response:", result); // Выведет точную причину в консоль
-      throw new Error(result.error?.message || result.error || 'Failed to create task');
+    // 1. Извлекаем ID именно из data.taskId
+    const taskId = result.data?.taskId;
+
+    // 2. Если ID нет — обрабатываем ошибку
+    if (!taskId) {
+      console.error("Kie.ai Full Error Response:", result);
+      
+      // Специальное сообщение для ошибки баланса (402)
+      if (result.code === 402) {
+          throw new Error("Недостаточно кредитов на Kie.ai. Пожалуйста, пополните счет.");
+      }
+      
+      throw new Error(result.message || result.error || 'Failed to create task');
     }
-    // ======================================
     
-    return result.taskId;
+    // 3. ВОЗВРАЩАЕМ ПРАВИЛЬНУЮ ПЕРЕМЕННУЮ
+    return taskId; 
   }
 };
 
@@ -52,10 +61,26 @@ export const getTaskStatus = async (taskId: string) => {
 
   const result = await response.json();
   
-  // Добавим логирование и сюда на всякий случай
-  if (!response.ok) {
-    console.error("Status Check Error:", result);
-  }
+  if (result.code === 200 && result.data) {
+    const data = result.data;
+    let videoUrl = null;
 
-  return result;
+    // Распаковываем resultJson, так как Kie.ai присылает его строкой
+    if (data.resultJson) {
+      try {
+        const parsedResult = JSON.parse(data.resultJson);
+        videoUrl = parsedResult.resultUrls?.[0] || null;
+      } catch (e) {
+        console.error("Ошибка парсинга resultJson:", e);
+      }
+    }
+
+    return {
+      // Маппинг: твой Generator.tsx ждет 'succeeded', а Kie.ai шлет 'success'
+      status: data.state === 'success' ? 'succeeded' : data.state, 
+      video_url: videoUrl
+    };
+  }
+  
+  return { status: 'error' };
 };
