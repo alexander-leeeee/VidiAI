@@ -61,27 +61,23 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     setStatusMessage("Загрузка фото...");
 
     try {
-      // 1. Подготовка фото
+      // 1. Загрузка фото на сервер
       const formData = new FormData();
       const response = await fetch(selectedImage.preview);
       const blob = await response.blob();
       formData.append('photo', blob, 'upload.jpg');
 
-      // 2. Загрузка на твой API (теперь на поддомене)
-      const uploadRes = await fetch('/api/upload', {
+      const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
         method: 'POST',
         body: formData,
       });
-      
       const uploadData = await uploadRes.json();
       
-      if (!uploadData.fileUrl) {
-          throw new Error("Ошибка загрузки");
-      }
+      if (!uploadData.fileUrl) throw new Error("Ошибка загрузки фото");
 
       setStatusMessage("Запуск Kling 2.6...");
 
-      // 3. Генерация через taskId
+      // 2. Создание задачи в Kling AI
       const taskId = await generateVideo({
         prompt, 
         aspectRatio, 
@@ -89,15 +85,28 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
       });
       
       if (taskId) {
+        // === НОВОЕ: Сохраняем начало генерации в твою базу данных ===
+        await fetch('https://server.vidiai.top/api/save_video.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task_id: taskId, prompt: prompt })
+        });
+
         setStatusMessage("Видео создается... (1-2 мин)");
         
-        // Запускаем цикл проверки (Polling)
         const pollInterval = setInterval(async () => {
           const status = await getTaskStatus(taskId);
           
           if (status.status === 'succeeded' && status.video_url) {
             clearInterval(pollInterval);
             
+            // === НОВОЕ: Обновляем статус в базе как SUCCESS ===
+            await fetch('https://server.vidiai.top/api/update_video_status.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: taskId, video_url: status.video_url, status: 'succeeded' })
+            });
+
             onVideoGenerated({
               id: Date.now().toString(),
               url: status.video_url,
@@ -109,6 +118,14 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
             setIsGenerating(false);
           } else if (status.status === 'failed') {
             clearInterval(pollInterval);
+            
+            // === НОВОЕ: Обновляем статус в базе как FAILED ===
+            await fetch('https://server.vidiai.top/api/update_video_status.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: taskId, status: 'failed' })
+            });
+
             setStatusMessage("Ошибка генерации");
             setIsGenerating(false);
           }
