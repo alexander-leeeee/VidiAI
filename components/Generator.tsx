@@ -117,6 +117,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     } catch (error: any) {
       console.error(error);
       setStatusMessage("Ошибка. Попробуйте снова.");
+      setIsGenerating(false);
     }
   };
 
