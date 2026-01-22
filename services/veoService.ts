@@ -7,7 +7,7 @@ const ENDPOINTS = {
 
 export const generateVideo = async (params: { 
   prompt: string, 
-  imageUrl?: string, // Меняем с image на imageUrl
+  imageUrl?: string, 
   modelType?: 'kling' | 'other'
 }) => {
   
@@ -22,7 +22,6 @@ export const generateVideo = async (params: {
         model: 'kling-2.6/image-to-video',
         input: {
           "prompt": params.prompt,
-          // Передаем массив прямых ссылок, как требует API Kie.ai
           "image_urls": params.imageUrl ? [params.imageUrl] : [], 
           "sound": true,
           "duration": "10"
@@ -31,12 +30,18 @@ export const generateVideo = async (params: {
     });
     
     const result = await response.json();
-    if (result.taskId) return result.taskId;
-    throw new Error(result.error || 'Failed to create task');
+
+    // === ДОБАВЛЯЕМ ЭТОТ БЛОК ДЛЯ ОТЛАДКИ ===
+    if (!response.ok || !result.taskId) {
+      console.error("Kie.ai Full Error Response:", result); // Выведет точную причину в консоль
+      throw new Error(result.error?.message || result.error || 'Failed to create task');
+    }
+    // ======================================
+    
+    return result.taskId;
   }
 };
 
-// Добавляем экспорт этой функции для проверки готовности видео
 export const getTaskStatus = async (taskId: string) => {
   const response = await fetch(`${ENDPOINTS.KLING_STATUS}?taskId=${taskId}`, {
     method: 'GET',
@@ -44,5 +49,13 @@ export const getTaskStatus = async (taskId: string) => {
       'Authorization': `Bearer ${KIE_API_KEY}`
     }
   });
-  return await response.json();
+
+  const result = await response.json();
+  
+  // Добавим логирование и сюда на всякий случай
+  if (!response.ok) {
+    console.error("Status Check Error:", result);
+  }
+
+  return result;
 };
