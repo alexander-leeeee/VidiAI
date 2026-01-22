@@ -110,7 +110,7 @@ const App: React.FC = () => {
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
-             <Library videos={generatedVideos} lang={lang} />
+             <Library lang={lang} />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.SETTINGS ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Settings lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />
