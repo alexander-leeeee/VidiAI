@@ -17,6 +17,7 @@ export interface VideoItem {
   prompt: string;
   category?: string;
   isLocal?: boolean;
+  hasMusic?: boolean;
 }
 
 export interface GenerationConfig {
