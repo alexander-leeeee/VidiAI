@@ -22,7 +22,7 @@ export const generateVideo = async (params: {
         model: 'kling/v2-1-standard',
         input: {
           "prompt": params.prompt,
-          "image_urls": params.imageUrl ? [params.imageUrl] : [], 
+          "image_url": params.imageUrl ? [params.imageUrl] : [], 
           "duration": "5"
         }
       })
