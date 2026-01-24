@@ -115,7 +115,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
         
         <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
           <p className="text-[10px] font-medium text-gray-100 line-clamp-2 opacity-90">
-            {video.prompt}
+            {video.title || 'Без названия'}
           </p>
         </div>
       </div>
