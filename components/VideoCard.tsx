@@ -100,6 +100,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           <video
             ref={videoRef}
             src={video.url}
+            poster={video.thumbnail}
             className="w-full h-full object-cover"
             muted={isMuted}
             loop
