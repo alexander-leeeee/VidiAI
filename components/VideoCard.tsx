@@ -109,7 +109,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           {video.hasMusic && (
             <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-primary/30 animate-pulse">
               <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                <Music size={10} className="text-white" fill="currentColor" />
+                <Music2 size={10} className="text-white" strokeWidth={3} />
               </div>
               <span className="text-[9px] font-bold text-white uppercase tracking-widest">
                 С музыкой
