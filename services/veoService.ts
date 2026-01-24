@@ -19,12 +19,11 @@ export const generateVideo = async (params: {
         'Authorization': `Bearer ${KIE_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'kling-2.6/image-to-video',
+        model: 'kling/v2-1-standard',
         input: {
           "prompt": params.prompt,
           "image_urls": params.imageUrl ? [params.imageUrl] : [], 
-          "sound": true,
-          "duration": "10"
+          "duration": "5"
         }
       })
     });
