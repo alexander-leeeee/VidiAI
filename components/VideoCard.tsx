@@ -11,7 +11,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true); // Для отображения иконки паузы/плея
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const isProcessing = video.status === 'processing';
   const isFailed = video.status === 'failed';
@@ -40,11 +40,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
 
   // Управление видео по клику
   const handleVideoClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Важно: не даем сработать клику всей карточки
+    e.stopPropagation();
     if (videoRef.current) {
       if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
+        // Пытаемся запустить и сразу обновляем иконку
+        videoRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch((err) => console.error("Ошибка воспроизведения:", err));
       } else {
         videoRef.current.pause();
         setIsPlaying(false);
@@ -109,10 +111,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
               muted={isMuted}
               loop
               playsInline
-              autoPlay
+              preload="metadata"
               onCanPlay={() => setIsLoading(false)}
               onPlaying={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
+              onClick={handleVideoClick}
             />
           </>
         )}
