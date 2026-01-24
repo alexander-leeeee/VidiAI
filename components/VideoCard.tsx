@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { VideoItem } from '../types';
-import { Volume2, VolumeX, Loader2, Play } from 'lucide-react'; 
+import { Volume2, VolumeX, Play } from 'lucide-react'; 
 
 interface VideoCardProps {
   video: VideoItem;
@@ -9,23 +9,21 @@ interface VideoCardProps {
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false); // Видео изначально стоит
 
   const isProcessing = video.status === 'processing';
   const isFailed = video.status === 'failed';
 
+  // IntersectionObserver теперь только ставит на паузу, если видео ушло с экрана
   useEffect(() => {
     if (isProcessing || isFailed || !video.url) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            videoRef.current?.play().catch(() => {});
-            setIsPlaying(true);
-          } else {
+          // Если видео вышло из кадра, останавливаем его
+          if (!entry.isIntersecting && isPlaying) {
             videoRef.current?.pause();
             setIsPlaying(false);
           }
@@ -36,14 +34,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
 
     if (videoRef.current) observer.observe(videoRef.current);
     return () => observer.disconnect();
-  }, [video.url, isProcessing, isFailed]);
+  }, [isPlaying, isProcessing, isFailed]);
 
-  // Управление видео по клику
+  // Управление видео по клику: запускает и останавливает мгновенно
   const handleVideoClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
       if (videoRef.current.paused) {
-        // Пытаемся запустить и сразу обновляем иконку
         videoRef.current.play()
           .then(() => setIsPlaying(true))
           .catch((err) => console.error("Ошибка воспроизведения:", err));
@@ -67,18 +64,16 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
         onClick={handleVideoClick} 
       >
         {isProcessing ? (
+          /* Состояние генерации: только текст и мягкий фон, никаких крутилок */
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-neutral-900 p-4 text-center">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-purple-500/5 to-transparent animate-pulse" />
-            <div className="relative z-10 flex flex-col items-center">
-              <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
-              <span className="text-[12px] font-bold tracking-wider uppercase bg-gradient-to-r from-primary via-purple-400 to-primary bg-[length:200%_auto] animate-gradient-text bg-clip-text text-transparent">
-                Генерация...
-              </span>
-            </div>
+            <span className="relative z-10 text-[12px] font-bold tracking-wider uppercase bg-gradient-to-r from-primary via-purple-400 to-primary bg-[length:200%_auto] animate-gradient-text bg-clip-text text-transparent">
+              Генерация шедевра
+            </span>
           </div>
         ) : isFailed ? (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-900/20 backdrop-blur-sm p-4 text-center">
-            <p className="text-[11px] font-medium text-red-400">Ошибка</p>
+            <p className="text-[11px] font-medium text-red-400">Ошибка генерации</p>
           </div>
         ) : (
           <>
@@ -90,17 +85,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
               {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             </button>
 
-            {/* Иконка паузы (появляется если видео на паузе) */}
-            {!isPlaying && !isLoading && (
-               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 pointer-events-none">
-                  <Play size={40} className="text-white opacity-80" fill="currentColor" />
+            {/* Иконка Play - видна только когда видео на паузе */}
+            {!isPlaying && (
+               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 pointer-events-none">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                    <Play size={24} className="text-white ml-1" fill="currentColor" />
+                  </div>
                </div>
-            )}
-
-            {isLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
             )}
             
             <video
@@ -111,8 +102,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
               muted={isMuted}
               loop
               playsInline
+              // autoPlay полностью убран
               preload="metadata"
-              onCanPlay={() => setIsLoading(false)}
               onPlaying={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onClick={handleVideoClick}
@@ -129,7 +120,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
         </div>
       </div>
 
-      {/* Кнопка "Создать" теперь отдельно снизу */}
+      {/* Кнопка действия под видео */}
       {!isProcessing && !isFailed && (
         <button 
           onClick={(e) => {
@@ -138,7 +129,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           }}
           className="w-full py-2.5 bg-primary text-white text-[11px] font-bold rounded-lg shadow-lg active:scale-95 transition-all"
         >
-          Сгенерировать
+          Згенерувати таке
         </button>
       )}
     </div>
