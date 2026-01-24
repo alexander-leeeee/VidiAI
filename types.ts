@@ -13,6 +13,7 @@ export interface VideoItem {
   id: string;
   url: string;
   thumbnail?: string;
+  title?: string;
   prompt: string;
   category?: string;
   isLocal?: boolean;
