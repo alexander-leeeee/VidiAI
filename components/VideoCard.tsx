@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { VideoItem } from '../types';
-import { Volume2, VolumeX, Play, Music } from 'lucide-react'; // Добавили Music сюда!
+import { Volume2, VolumeX, Play, Music2 } from 'lucide-react'; // Добавили Music сюда!
 
 interface VideoCardProps {
   video: VideoItem;
@@ -112,7 +112,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
                 <Music size={10} className="text-white" fill="currentColor" />
               </div>
               <span className="text-[9px] font-bold text-white uppercase tracking-widest">
-                З музикою
+                С музыкой
               </span>
             </div>
           )}
