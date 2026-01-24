@@ -102,7 +102,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
               muted={isMuted}
               loop
               playsInline
-              // autoPlay полностью убран
               preload="metadata"
               onPlaying={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
@@ -111,15 +110,30 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           </>
         )}
 
+        {/* ГРАДИЕНТ И ИНФО */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
         
-        <div className="absolute bottom-0 left-0 right-0 p-3 z-20">
-          <p className="text-[10px] font-medium text-gray-100 line-clamp-2 opacity-90">
+        <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex flex-col items-start gap-1.5">
+          
+          {/* ИКОНКА НОТЫ И ТЕКСТ (Показываем, если есть музыка) */}
+          {video.hasMusic && (
+            <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-primary/30 animate-pulse">
+              <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center shadow-[0_0_10px_rgba(109,40,217,0.5)]">
+                <Music size={10} className="text-white" fill="currentColor" />
+              </div>
+              <span className="text-[9px] font-bold text-white uppercase tracking-widest">
+                З музикою
+              </span>
+            </div>
+          )}
+
+          {/* НАЗВАНИЕ ВИДЕО */}
+          <p className="text-[13px] font-bold text-white line-clamp-1 shadow-sm">
             {video.title || 'Без названия'}
           </p>
         </div>
       </div>
-
+        
       {/* Кнопка действия под видео */}
       {!isProcessing && !isFailed && (
         <button 
