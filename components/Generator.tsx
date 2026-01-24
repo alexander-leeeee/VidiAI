@@ -65,7 +65,10 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
       const formData = new FormData();
       const response = await fetch(selectedImage.preview);
       const blob = await response.blob();
-      formData.append('photo', blob, 'upload.jpg');
+      const extension = selectedImage.mimeType.split('/')[1] || 'jpg'; 
+      const fileName = `upload_${Date.now()}.${extension}`;
+      
+      formData.append('photo', blob, fileName);
 
       const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
         method: 'POST',
