@@ -129,7 +129,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           }}
           className="w-full py-2.5 bg-primary text-white text-[11px] font-bold rounded-lg shadow-lg active:scale-95 transition-all"
         >
-          Згенерувати таке
+          Сгенерировать
         </button>
       )}
     </div>
