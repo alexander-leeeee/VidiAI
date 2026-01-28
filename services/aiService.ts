@@ -5,6 +5,24 @@ const ENDPOINTS = {
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
 };
 
+export const syncUserWithDb = async (tgId: number, username: string) => {
+  const response = await fetch(`${import.meta.env.VITE_SERVER_BASE_URL}/sync_user.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ telegram_id: tgId, username })
+  });
+  return await response.json();
+};
+
+// Функция списания кредитов в БД
+export const deductCreditsInDb = async (tgId: number, amount: number) => {
+  await fetch(`${import.meta.env.VITE_SERVER_BASE_URL}/deduct_credits.php`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ telegram_id: tgId, amount })
+  });
+};
+
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
 export const TEMPLATE_COSTS: Record<string, number> = {
   '1': 25,      // Видео 10 сек + звук = 25 кредитов
