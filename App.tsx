@@ -34,6 +34,28 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
+  // НОВЫЙ код для авторизации и загрузки кредитов
+  useEffect(() => {
+    // 1. Пытаемся достать данные из Telegram WebApp
+    const tg = (window as any).Telegram?.WebApp;
+    const tgUser = tg?.initDataUnsafe?.user;
+    
+    if (tgUser) {
+      // 2. Если мы в телеге, синхронизируем баланс с БД
+      import('./services/aiService').then(({ syncUserWithDb }) => {
+        syncUserWithDb(tgUser.id, tgUser.username || 'User').then(res => {
+          if (res.status === 'success') {
+            setCredits(res.credits); // Устанавливаем баланс из твоей таблицы users
+            console.log(`Баланс загружен из БД: ${res.credits}`);
+          }
+        });
+      });
+    } else {
+      // 3. Если открыли просто в браузере (для тестов)
+      console.log("Запущено вне Telegram. Используется локальный баланс.");
+    }
+  }, []); // Пустые скобки означают: выполнить один раз при старте
+
   const handleVideoGenerated = (video: VideoItem, cost: number = 10) => {
     setGeneratedVideos(prev => [video, ...prev]);
 
