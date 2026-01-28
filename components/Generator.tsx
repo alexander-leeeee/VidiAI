@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { SparklesIcon, PhotoIcon, TrashIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
