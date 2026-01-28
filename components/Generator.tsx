@@ -61,41 +61,55 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     setStatusMessage("Загрузка фото...");
 
     try {
-      // 1. Загрузка фото на сервер
+      // 1. Сначала загружаем файл на твой сервер
       const formData = new FormData();
-      const response = await fetch(selectedImage.preview);
-      const blob = await response.blob();
-      const extension = selectedImage.mimeType.split('/')[1] || 'jpg'; 
-      const fileName = `upload_${Date.now()}.${extension}`;
-      
-      formData.append('photo', blob, fileName);
+      const imgResponse = await fetch(selectedImage!.preview);
+      const blob = await imgResponse.blob();
+        
+      // Исправляем расширение, о котором говорили раньше
+      const extension = selectedImage!.mimeType.split('/')[1] || 'png';
+      formData.append('photo', blob, `upload_${Date.now()}.${extension}`);
 
       const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
-        method: 'POST',
-        body: formData,
-      });
-      const uploadData = await uploadRes.json();
-      
-      if (!uploadData.fileUrl) throw new Error("Ошибка загрузки фото");
-
-      setStatusMessage("Запуск Kling 2.6...");
-
-      // 2. Создание задачи в Kling AI
-      const taskId = await generateVideo({
-        prompt, 
-        aspectRatio, 
-        imageUrl: uploadData.fileUrl 
-      });
-      
-      if (taskId) {
-        // === НОВОЕ: Сохраняем начало генерации в твою базу данных ===
-        await fetch('https://server.vidiai.top/api/save_video.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ task_id: taskId, prompt: prompt })
-        });
+          body: formData
+      });
+        
+      const uploadData = await uploadRes.json();
+      if (uploadData.status !== 'success') throw new Error('Не вдалося зберегти фото на сервері');
 
-        setStatusMessage("Видео создается... (1-2 мин)");
+      const imageUrl = uploadData.fileUrl;
+      setStatusMessage('Створення завдання в Kie.ai...');
+
+      // 2. ОТПРАВКА В KIE.AI (Вот здесь добавляем проверку ошибок)
+      const kieResponse = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ТВОЙ_API_KEY'
+          },
+          body: JSON.stringify({
+              model: 'kling/v2-1-standard',
+              input: {
+                  "prompt": prompt,
+                  "image_url": imageUrl,
+                  "duration": 5
+              }
+          })
+      });
+
+      const result = await kieResponse.json();
+
+        // ПРОВЕРКА: Если Kie.ai вернул ошибку (код не 0 или статус не ok)
+        if (!kieResponse.ok || (result.code !== 0 && result.code !== 200)) {
+            // Выбрасываем ошибку, чтобы она ушла в блок catch ниже
+            const errorText = result.msg || `Помилка Kie.ai (${kieResponse.status})`;
+            throw new Error(errorText);
+        }
+  
+        // Если всё ок, получаем ID задачи
+        const taskId = result.data.jobId;
+        setStatusMessage('Відео генерується... (1-2 хв)');
         
         const pollInterval = setInterval(async () => {
           const status = await getTaskStatus(taskId);
@@ -135,9 +149,9 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
         }, 30000); // Проверка каждые 30 секунд
       }
     } catch (error: any) {
-      console.error(error);
-      setStatusMessage("Ошибка. Попробуйте снова.");
-      setIsGenerating(false);
+        console.error("Ошибка генерации:", error);
+        setStatusMessage(`Помилка: ${error.message}`);
+        setIsGenerating(false); 
     }
   };
 
