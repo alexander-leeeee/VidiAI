@@ -1,13 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { VideoItem } from '../types';
-import { Volume2, VolumeX, Play, Music2 } from 'lucide-react'; // Добавили Music сюда!
+import { Volume2, VolumeX, Play, Music2, Download } from 'lucide-react'; // Добавили Music сюда!
 
 interface VideoCardProps {
   video: VideoItem;
   onClick?: (video: VideoItem) => void;
+  canDownload?: boolean;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = false }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -53,6 +54,20 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
     setIsMuted(!isMuted);
   };
 
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!video.url) return;
+
+    const link = document.createElement('a');
+    link.href = video.url;
+    link.download = `vidiai_${video.id || 'video'}.mp4`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex flex-col space-y-2 group">
       <div 
@@ -72,6 +87,24 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick }) => {
           </div>
         ) : (
           <>
+            {/* Кнопка скачивания: появится только если видео готово и мы в библиотеке */}
+            {canDownload && !isProcessing && !isFailed && video.url && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const link = document.createElement('a');
+                  link.href = video.url;
+                  link.download = `vidiai_${video.id}.mp4`;
+                  link.target = "_blank";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="absolute top-2 left-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-primary transition-colors"
+              >
+                <Download size={14} />
+              </button>
+            )}
             <button 
               onClick={toggleMute}
               className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white"
