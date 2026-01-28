@@ -209,7 +209,10 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
                 <span>{t.gen_btn_generating}</span>
               ) : (
                 <span className="flex items-center gap-2">
-                  {t.gen_btn_generate} <span className="opacity-70 text-sm font-mono">({currentCost} 🪙)</span>
+                  {t.gen_btn_generate} 
+                  <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs font-mono">
+                      -{currentCost} 🪙
+                  </span>
                 </span>
               )}
           </button>
