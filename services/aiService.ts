@@ -5,6 +5,18 @@ const ENDPOINTS = {
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
 };
 
+// --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
+export const TEMPLATE_COSTS: Record<string, number> = {
+  '1': 25,      // Видео 10 сек + звук = 25 кредитов
+  '2': 10,      // Видео 5 сек = 10 кредитов
+  'default': 15 // Свободная генерация = 15 кредитов
+};
+
+// Функция для получения цены по ID
+export const getCostByTemplateId = (id: string | undefined): number => {
+  return TEMPLATE_COSTS[id || 'default'] || TEMPLATE_COSTS['default'];
+};
+
 // --- ВНУТРЕННЯЯ ФУНКЦИЯ (не экспортируем, она нужна только здесь) ---
 // Помогает отправить запрос с любыми параметрами
 const baseGenerateKling = async (payload: any) => {
