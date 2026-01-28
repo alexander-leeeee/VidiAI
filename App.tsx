@@ -45,7 +45,6 @@ const App: React.FC = () => {
     });
     
     setActiveTab(Tab.LIBRARY);
-    setCredits(prev => Math.max(0, prev - 10)); // Deduct credits example
   };
 
   const handleSubscribe = (planId: string) => {
