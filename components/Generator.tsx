@@ -9,6 +9,7 @@ interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
   lang: Language;
   initialPrompt?: string;
+  templateId?: string;
 }
 
 interface ImageFile {
@@ -56,9 +57,9 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
   };
 
   const handleGenerate = async () => {
-    // Проверка: промпт и фото обязательны
+    // Проверка: текст и фото обязательны
     if (!prompt.trim() || !selectedImage) {
-        alert(t.gen_label_image); 
+        alert(t.gen_label_image); // Покажет "Вихідне фото (обов'язково)"
         return;
     }
 
@@ -66,7 +67,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     setStatusMessage("Завантаження фото...");
 
     try {
-        // 1. Загружаем фото на твой сервер
+        // 1. Загрузка фото на сервер
         const formData = new FormData();
         const imgResponse = await fetch(selectedImage.preview);
         const blob = await imgResponse.blob();
@@ -80,28 +81,23 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
         if (uploadData.status !== 'success') throw new Error('Помилка завантаження фото');
 
         const imageUrl = uploadData.fileUrl;
-        setStatusMessage('Запуск генерації...');
+        setStatusMessage('Запуск Kling AI...');
 
-        // 2. ВЫБОР ФУНКЦИИ ГЕНЕРАЦИИ (ТО, ЧТО ТЫ ХОТЕЛ)
-        let taskId;
-        
-        // Если передан initialPrompt — значит это Шаблон №1
-        if (initialPrompt) {
-            taskId = await generateTemplate1(prompt, imageUrl);
-        } else {
-            // Иначе — Шаблон №2 (или свободная генерация)
-            taskId = await generateTemplate2(prompt, imageUrl);
-        }
+        // 2. ВЫЗОВ УМНОГО ДИСПЕТЧЕРА
+        // Теперь сервис сам решит, какой шаблон запустить по его ID
+        const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
 
-        // 3. Сохраняем в твою БД и уходим в библиотеку
-        // Мы убрали лишний polling здесь, так как Library теперь сама обновляет статус!
-        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Створення по шаблону" : "Власна генерація");
-        
+        // 3. СОХРАНЕНИЕ В БАЗУ
+        // Библиотека сама подхватит это видео и начнет опрос статуса
+        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Своя ідея");
+
         setStatusMessage('Відео додано в чергу!');
         
-        // Сразу перекидываем в библиотеку через секунду
+        // 4. ПЕРЕХОД В БИБЛИОТЕКУ (через 1.5 секунды)
         setTimeout(() => {
-            window.location.hash = '/library'; 
+            // Если используешь хэш-роутинг:
+            window.location.hash = '/library';
+            // Если обычный роутинг, лучше использовать navigate('/library')
         }, 1500);
 
     } catch (error: any) {
