@@ -3,6 +3,7 @@ import { generateVideo, getTaskStatus } from '../services/aiService';
 import { SparklesIcon, PhotoIcon, TrashIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
+import { generateTemplate1, generateTemplate2, saveVideoToHistory } from '../services/aiService';
 
 interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
