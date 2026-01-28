@@ -17,19 +17,19 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        // Используем сервис вместо прямого fetch
-        const data = await getUserHistory();
+        const response = await fetch('https://server.vidiai.top/api/get_history.php');
+        const data = await response.json();
         
-        // Преобразуем данные из БД под формат VideoItem
-        const formatted: VideoItem[] = data.map((v: any) => ({
-          id: v.task_id,
-          url: v.video_url || '', 
-          prompt: v.prompt,
-          status: v.status, // processing, succeeded, failed
-          isLocal: false
-        }));
-
-        setDbVideos(formatted);
+        if (data.status === "success" && data.videos) {
+           const formatted: VideoItem[] = data.videos.map((v: any) => ({
+            id: v.task_id,
+            url: v.video_url || '',
+            prompt: v.prompt,
+            status: v.status,
+            isLocal: false
+          }));
+          setDbVideos(formatted);
+        }
       } catch (error) {
         console.error("Ошибка загрузки истории:", error);
       } finally {
@@ -38,6 +38,9 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
     };
 
     fetchHistory();
+    // Опрашиваем сервер каждые 5 секунд, пока есть видео в статусе 'processing'
+    const interval = setInterval(fetchHistory, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
