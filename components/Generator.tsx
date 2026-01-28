@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { generateVideo, getTaskStatus } from '../services/aiService';
 import { SparklesIcon, PhotoIcon, TrashIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
-import { generateTemplate1, generateTemplate2, saveVideoToHistory } from '../services/aiService';
+import { generateByTemplateId, saveVideoToHistory } from '../services/aiService';
 
 interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
@@ -18,7 +16,7 @@ interface ImageFile {
   mimeType: string;
 }
 
-const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPrompt }) => {
+const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPrompt, templateId }) => {
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -57,9 +55,9 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
   };
 
   const handleGenerate = async () => {
-    // Проверка: текст и фото обязательны
+    // Проверка: текст и фото теперь обязательны
     if (!prompt.trim() || !selectedImage) {
-        alert(t.gen_label_image); // Покажет "Вихідне фото (обов'язково)"
+        alert(t.gen_label_image); 
         return;
     }
 
@@ -67,7 +65,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     setStatusMessage("Завантаження фото...");
 
     try {
-        // 1. Загрузка фото на сервер
+        // 1. Загрузка фото на твой сервер
         const formData = new FormData();
         const imgResponse = await fetch(selectedImage.preview);
         const blob = await imgResponse.blob();
@@ -77,27 +75,25 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
             method: 'POST',
             body: formData
         });
+        
         const uploadData = await uploadRes.json();
         if (uploadData.status !== 'success') throw new Error('Помилка завантаження фото');
 
         const imageUrl = uploadData.fileUrl;
-        setStatusMessage('Запуск Kling AI...');
+        setStatusMessage('Запуск генерації...');
 
-        // 2. ВЫЗОВ УМНОГО ДИСПЕТЧЕРА
-        // Теперь сервис сам решит, какой шаблон запустить по его ID
+        // 2. Вызов диспетчера по ID шаблона
         const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
 
-        // 3. СОХРАНЕНИЕ В БАЗУ
-        // Библиотека сама подхватит это видео и начнет опрос статуса
-        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Своя ідея");
+        // 3. Сохранение в твою БД (MySQL)
+        // Мы передаем taskId, текст и название для библиотеки
+        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація");
 
         setStatusMessage('Відео додано в чергу!');
         
-        // 4. ПЕРЕХОД В БИБЛИОТЕКУ (через 1.5 секунды)
+        // 4. Переход в библиотеку через 1.5 сек
         setTimeout(() => {
-            // Если используешь хэш-роутинг:
             window.location.hash = '/library';
-            // Если обычный роутинг, лучше использовать navigate('/library')
         }, 1500);
 
     } catch (error: any) {
