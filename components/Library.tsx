@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import VideoCard from './VideoCard';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
-// Импортируем функцию из твоего нового сервиса
-import { getUserHistory } from '../services/aiService';
+import { getTaskStatus, updateVideoInDb } from '../services/aiService';
 
 interface LibraryProps {
   lang: Language;
@@ -21,13 +20,28 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
         const data = await response.json();
         
         if (data.status === "success" && data.videos) {
-           const formatted: VideoItem[] = data.videos.map((v: any) => ({
+          const formatted: VideoItem[] = data.videos.map((v: any) => ({
             id: v.task_id,
             url: v.video_url || '',
             prompt: v.prompt,
+            title: v.title, // Теперь title подтянется из базы
             status: v.status,
             isLocal: false
           }));
+
+          // Проверяем статус через API для тех видео, что еще в обработке
+          for (const video of formatted) {
+            if (video.status === 'processing') {
+              const freshStatus = await getTaskStatus(video.id);
+              if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
+                video.status = 'succeeded';
+                video.url = freshStatus.video_url;
+                // Сразу сохраняем готовую ссылку в твою БД
+                await updateVideoInDb(video.id, 'succeeded', freshStatus.video_url);
+              }
+            }
+          }
+
           setDbVideos(formatted);
         }
       } catch (error) {
@@ -38,8 +52,7 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
     };
 
     fetchHistory();
-    // Опрашиваем сервер каждые 5 секунд, пока есть видео в статусе 'processing'
-    const interval = setInterval(fetchHistory, 5000);
+    const interval = setInterval(fetchHistory, 5000); // Опрос каждые 5 сек
     return () => clearInterval(interval);
   }, []);
 
@@ -63,7 +76,11 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {dbVideos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard 
+              key={video.id} 
+              video={video} 
+              canDownload={true} // Кнопка "Скачать" появится только здесь
+            />
           ))}
         </div>
       )}
