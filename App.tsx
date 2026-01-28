@@ -34,8 +34,16 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
-  const handleVideoGenerated = (video: VideoItem) => {
+  const handleVideoGenerated = (video: VideoItem, cost: number = 10) => {
     setGeneratedVideos(prev => [video, ...prev]);
+
+    // Списываем кредиты в зависимости от того, что выбрал юзер
+    setCredits(prev => {
+      const newBalance = Math.max(0, prev - cost);
+      console.log(`Списано ${cost} кр. Остаток: ${newBalance}`);
+      return newBalance;
+    });
+    
     setActiveTab(Tab.LIBRARY);
     setCredits(prev => Math.max(0, prev - 10)); // Deduct credits example
   };
