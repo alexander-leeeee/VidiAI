@@ -6,6 +6,16 @@ const ENDPOINTS = {
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
 };
 
+export const getUserHistory = async () => {
+  const response = await fetch(`${import.meta.env.VITE_SERVER_BASE_URL}/get_history.php`);
+  const result = await response.json();
+  
+  if (result.status === 'success') {
+    return result.videos; // Возвращаем массив видео из базы
+  }
+  return [];
+};
+
 export const generateVideo = async (params: { 
   prompt: string, 
   imageUrl?: string, 
