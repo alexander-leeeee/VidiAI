@@ -6,6 +6,27 @@ const ENDPOINTS = {
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
 };
 
+// Функция для сохранения задачи в твою БД
+export const saveVideoToHistory = async (taskId: string, prompt: string, title: string) => {
+  try {
+    const response = await fetch('https://server.vidiai.top/api/save_video.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        task_id: taskId,
+        prompt: prompt,
+        title: title // Передаем название шаблона сюда
+      }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Ошибка сохранения в историю:", error);
+    throw error;
+  }
+};
+
 export const getUserHistory = async () => {
   const response = await fetch(`${import.meta.env.VITE_SERVER_BASE_URL}/get_history.php`);
   const result = await response.json();
