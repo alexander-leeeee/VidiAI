@@ -55,72 +55,54 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     }
   };
 
-const handleGenerate = async () => {
-    if (!prompt.trim() || !selectedImage) return;
+  const handleGenerate = async () => {
+    // Проверка: промпт и фото обязательны
+    if (!prompt.trim() || !selectedImage) {
+        alert(t.gen_label_image); 
+        return;
+    }
 
     setIsGenerating(true);
-    setStatusMessage("Загрузка фото...");
+    setStatusMessage("Завантаження фото...");
 
     try {
-      // 1. Загрузка файла на твой сервер
-      const formData = new FormData();
-      const imgResponse = await fetch(selectedImage!.preview);
-      const blob = await imgResponse.blob();
-      const extension = selectedImage!.mimeType.split('/')[1] || 'png';
-      formData.append('photo', blob, `upload_${Date.now()}.${extension}`);
+        // 1. Загружаем фото на твой сервер
+        const formData = new FormData();
+        const imgResponse = await fetch(selectedImage.preview);
+        const blob = await imgResponse.blob();
+        formData.append('photo', blob, `upload_${Date.now()}.png`);
 
-      const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
-          method: 'POST',
-          body: formData
-      });
-        
-      const uploadData = await uploadRes.json();
-      if (uploadData.status !== 'success') throw new Error('Не удалось сохранить фото');
-
-      const imageUrl = uploadData.fileUrl;
-      setStatusMessage('Запуск Kling AI...');
-
-      // --- ВОТ ЭТО ТО САМОЕ ИЗМЕНЕНИЕ ---
-      // 2. Используем функцию из veoService.ts
-      const taskId = await generateVideo({ prompt, imageUrl }); 
-      // ----------------------------------
-
-      setStatusMessage('Відео генерується... (1-2 хв)');
-        
-      // Сохраняем начало генерации в БД
-      await fetch('https://server.vidiai.top/api/save_video.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task_id: taskId, prompt: prompt })
-      });
-
-      const pollInterval = setInterval(async () => {
-        const status = await getTaskStatus(taskId);
-        
-        if (status.status === 'succeeded' && status.video_url) {
-          clearInterval(pollInterval);
-          
-          await fetch('https://server.vidiai.top/api/update_video_status.php', {
+        const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ task_id: taskId, video_url: status.video_url, status: 'succeeded' })
-          });
+            body: formData
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.status !== 'success') throw new Error('Помилка завантаження фото');
 
-          onVideoGenerated({
-            id: Date.now().toString(),
-            url: status.video_url,
-            prompt: prompt,
-            isLocal: false
-          });
-          
-          setStatusMessage("Готово!");
-          setIsGenerating(false);
-        } else if (status.status === 'failed') {
-          clearInterval(pollInterval);
-          setStatusMessage("Ошибка генерации");
-          setIsGenerating(false);
+        const imageUrl = uploadData.fileUrl;
+        setStatusMessage('Запуск генерації...');
+
+        // 2. ВЫБОР ФУНКЦИИ ГЕНЕРАЦИИ (ТО, ЧТО ТЫ ХОТЕЛ)
+        let taskId;
+        
+        // Если передан initialPrompt — значит это Шаблон №1
+        if (initialPrompt) {
+            taskId = await generateTemplate1(prompt, imageUrl);
+        } else {
+            // Иначе — Шаблон №2 (или свободная генерация)
+            taskId = await generateTemplate2(prompt, imageUrl);
         }
-      }, 30000);
+
+        // 3. Сохраняем в твою БД и уходим в библиотеку
+        // Мы убрали лишний polling здесь, так как Library теперь сама обновляет статус!
+        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Створення по шаблону" : "Власна генерація");
+        
+        setStatusMessage('Відео додано в чергу!');
+        
+        // Сразу перекидываем в библиотеку через секунду
+        setTimeout(() => {
+            window.location.hash = '/library'; 
+        }, 1500);
 
     } catch (error: any) {
         console.error("Ошибка:", error);
@@ -128,7 +110,7 @@ const handleGenerate = async () => {
         setIsGenerating(false); 
     }
   };
-
+  
   return (
     <div className="flex flex-col h-full px-4 pt-6 pb-24 max-w-md mx-auto w-full overflow-y-auto no-scrollbar">
       <div className="mb-6 text-center">
