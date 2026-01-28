@@ -63,6 +63,15 @@ const App: React.FC = () => {
     setCredits(prev => {
       const newBalance = Math.max(0, prev - cost);
       console.log(`Списано ${cost} кр. Остаток: ${newBalance}`);
+
+      // Списываем в БД через API, если есть Telegram ID
+      const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+      if (tgUser) {
+        import('./services/aiService').then(({ deductCreditsInDb }) => {
+          deductCreditsInDb(tgUser.id, cost);
+        });
+      }
+      
       return newBalance;
     });
     
