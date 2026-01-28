@@ -38,7 +38,7 @@ export const saveVideoToHistory = async (taskId: string, prompt: string, title: 
       body: JSON.stringify({
         task_id: taskId,
         prompt: prompt,
-        title: title // Передаем название шаблона сюда
+        title: title
       }),
     });
     return await response.json();
@@ -72,11 +72,12 @@ export const generateVideo = async (params: {
         'Authorization': `Bearer ${KIE_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'kling/v2-1-standard',
+        model: 'kling-2.6/image-to-video',
         input: {
           "prompt": params.prompt,
-          "image_url": params.imageUrl || "", 
-          "duration": "5"
+          "image_urls": params.imageUrl || "", 
+          "sound": true,
+          "duration": "10"
         }
       })
     });
