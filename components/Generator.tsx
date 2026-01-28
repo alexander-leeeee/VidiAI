@@ -87,19 +87,17 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
         // 2. Вызов диспетчера по ID шаблона
         const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
 
-        // 3. Сохранение в твою БД (MySQL)
-        // Мы передаем taskId, текст и название для библиотеки
+        // 3. Сохранение в твою БД
         await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація");
 
-        setStatusMessage('Відео додано в чергу!');
-
-        // Сообщаем приложению, что видео создано и сколько оно стоило
-        onVideoGenerated({ 
-            id: taskId, 
-            prompt, 
+        onVideoGenerated({
+            id: taskId,
+            prompt,
             status: 'processing',
-            title: initialPrompt ? "Шаблон" : "Своя ідея"
+            title: initialPrompt ? "Шаблон" : "Власна генерація"
         } as any, currentCost);
+
+        setStatusMessage('Відео додано в чергу!');
       
         // 4. Переход в библиотеку через 1.5 сек
         setTimeout(() => {
@@ -211,7 +209,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
                 <span>{t.gen_btn_generating}</span>
               ) : (
                 <span className="flex items-center gap-2">
-                  {t.gen_btn_generate} <span className="opacity-70 text-sm">({currentCost} 🪙)</span>
+                  {t.gen_btn_generate} <span className="opacity-70 text-sm font-mono">({currentCost} 🪙)</span>
                 </span>
               )}
           </button>
