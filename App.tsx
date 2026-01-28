@@ -107,7 +107,7 @@ const App: React.FC = () => {
                 onVideoGenerated={handleVideoGenerated} 
                 lang={lang} 
                 initialPrompt={templatePrompt}
-                templateId={selectedTemplate?.id}
+                templateId={templates.find(t => t.prompt === templatePrompt)?.id || 'default'}
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
