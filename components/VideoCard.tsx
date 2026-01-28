@@ -8,6 +8,13 @@ interface VideoCardProps {
   canDownload?: boolean;
 }
 
+const getMediaType = (url: string): 'image' | 'audio' | 'video' => {
+  const ext = url.split('.').pop()?.toLowerCase();
+  if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '')) return 'image';
+  if (['mp3', 'wav', 'ogg'].includes(ext || '')) return 'audio';
+  return 'video';
+};
+
 const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = false }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
@@ -120,19 +127,50 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = fal
                </div>
             )}
             
-            <video
-              ref={videoRef}
-              src={video.url}
-              poster={video.thumbnail}
-              className="w-full h-full object-cover"
-              muted={isMuted}
-              loop
-              playsInline
-              preload="metadata"
-              onPlaying={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onClick={handleVideoClick}
-            />
+            {/* Умный рендер контента */}
+            {(() => {
+              const type = getMediaType(video.url || '');
+              
+              if (type === 'image') {
+                return (
+                  <img 
+                    src={video.url} 
+                    className="w-full h-full object-cover" 
+                    alt={video.title || 'Generated image'} 
+                  />
+                );
+              }
+            
+              if (type === 'audio') {
+                return (
+                  <div className="flex flex-col items-center justify-center w-full h-full bg-neutral-800 p-4">
+                    <Music2 size={48} className="text-primary mb-4 animate-bounce" />
+                    <audio 
+                      src={video.url} 
+                      controls 
+                      className="w-full h-8 opacity-70 custom-audio-player" 
+                    />
+                  </div>
+                );
+              }
+            
+              // По умолчанию оставляем твой видео-плеер
+              return (
+                <video
+                  ref={videoRef}
+                  src={video.url}
+                  poster={video.thumbnail}
+                  className="w-full h-full object-cover"
+                  muted={isMuted}
+                  loop
+                  playsInline
+                  preload="metadata"
+                  onPlaying={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onClick={handleVideoClick}
+                />
+              );
+            })()}
           </>
         )}
 
