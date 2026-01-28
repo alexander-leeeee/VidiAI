@@ -20,6 +20,7 @@ const App: React.FC = () => {
   
   // State for passing template prompt to generator
   const [templatePrompt, setTemplatePrompt] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
 
   // Handle Theme Change
   useEffect(() => {
@@ -58,8 +59,6 @@ const App: React.FC = () => {
     setTemplatePrompt(video.systemPrompt || video.prompt); 
     setSelectedTemplateId(video.id || '1');
     setActiveTab(Tab.CREATE);
-    
-    setActiveTab(Tab.CREATE); 
   };
 
   const handleTabChange = (tab: Tab) => {
