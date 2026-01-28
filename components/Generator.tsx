@@ -54,19 +54,17 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
     }
   };
 
-  const handleGenerate = async () => {
+const handleGenerate = async () => {
     if (!prompt.trim() || !selectedImage) return;
 
     setIsGenerating(true);
     setStatusMessage("Загрузка фото...");
 
     try {
-      // 1. Сначала загружаем файл на твой сервер
+      // 1. Загрузка файла на твой сервер
       const formData = new FormData();
       const imgResponse = await fetch(selectedImage!.preview);
       const blob = await imgResponse.blob();
-        
-      // Исправляем расширение, о котором говорили раньше
       const extension = selectedImage!.mimeType.split('/')[1] || 'png';
       formData.append('photo', blob, `upload_${Date.now()}.${extension}`);
 
@@ -76,81 +74,57 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
       });
         
       const uploadData = await uploadRes.json();
-      if (uploadData.status !== 'success') throw new Error('Не вдалося зберегти фото на сервері');
+      if (uploadData.status !== 'success') throw new Error('Не удалось сохранить фото');
 
       const imageUrl = uploadData.fileUrl;
-      setStatusMessage('Створення завдання в Kie.ai...');
+      setStatusMessage('Запуск Kling AI...');
 
-      // 2. ОТПРАВКА В KIE.AI (Вот здесь добавляем проверку ошибок)
-      const kieResponse = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ТВОЙ_API_KEY'
-          },
-          body: JSON.stringify({
-              model: 'kling/v2-1-standard',
-              input: {
-                  "prompt": prompt,
-                  "image_url": imageUrl,
-                  "duration": 5
-              }
-          })
+      // --- ВОТ ЭТО ТО САМОЕ ИЗМЕНЕНИЕ ---
+      // 2. Используем функцию из veoService.ts
+      const taskId = await generateVideo({ prompt, imageUrl }); 
+      // ----------------------------------
+
+      setStatusMessage('Відео генерується... (1-2 хв)');
+        
+      // Сохраняем начало генерации в БД
+      await fetch('https://server.vidiai.top/api/save_video.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId, prompt: prompt })
       });
 
-      const result = await kieResponse.json();
-
-        // ПРОВЕРКА: Если Kie.ai вернул ошибку (код не 0 или статус не ok)
-        if (!kieResponse.ok || (result.code !== 0 && result.code !== 200)) {
-            // Выбрасываем ошибку, чтобы она ушла в блок catch ниже
-            const errorText = result.msg || `Помилка Kie.ai (${kieResponse.status})`;
-            throw new Error(errorText);
-        }
-  
-        // Если всё ок, получаем ID задачи
-        const taskId = result.data.jobId;
-        setStatusMessage('Відео генерується... (1-2 хв)');
+      const pollInterval = setInterval(async () => {
+        const status = await getTaskStatus(taskId);
         
-        const pollInterval = setInterval(async () => {
-          const status = await getTaskStatus(taskId);
+        if (status.status === 'succeeded' && status.video_url) {
+          clearInterval(pollInterval);
           
-          if (status.status === 'succeeded' && status.video_url) {
-            clearInterval(pollInterval);
-            
-            // === НОВОЕ: Обновляем статус в базе как SUCCESS ===
-            await fetch('https://server.vidiai.top/api/update_video_status.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ task_id: taskId, video_url: status.video_url, status: 'succeeded' })
-            });
+          await fetch('https://server.vidiai.top/api/update_video_status.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: taskId, video_url: status.video_url, status: 'succeeded' })
+          });
 
-            onVideoGenerated({
-              id: Date.now().toString(),
-              url: status.video_url,
-              prompt: prompt,
-              isLocal: false
-            });
-            
-            setStatusMessage("Готово!");
-            setIsGenerating(false);
-          } else if (status.status === 'failed') {
-            clearInterval(pollInterval);
-            
-            // === НОВОЕ: Обновляем статус в базе как FAILED ===
-            await fetch('https://server.vidiai.top/api/update_video_status.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ task_id: taskId, status: 'failed' })
-            });
+          onVideoGenerated({
+            id: Date.now().toString(),
+            url: status.video_url,
+            prompt: prompt,
+            isLocal: false
+          });
+          
+          setStatusMessage("Готово!");
+          setIsGenerating(false);
+        } else if (status.status === 'failed') {
+          clearInterval(pollInterval);
+          setStatusMessage("Ошибка генерации");
+          setIsGenerating(false);
+        }
+      }, 30000);
 
-            setStatusMessage("Ошибка генерации");
-            setIsGenerating(false);
-          }
-        }, 30000); // Проверка каждые 30 секунд
-      } catch (error: any) {
-          console.error("Ошибка генерации:", error);
-          setStatusMessage(`Помилка: ${error.message}`);
-          setIsGenerating(false); 
+    } catch (error: any) {
+        console.error("Ошибка:", error);
+        setStatusMessage(`Помилка: ${error.message}`);
+        setIsGenerating(false); 
     }
   };
 
