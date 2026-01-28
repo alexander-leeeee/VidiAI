@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { generateVideo, getTaskStatus } from '../services/veoService';
+import { generateVideo, getTaskStatus } from '../services/aiService';
 import { SparklesIcon, PhotoIcon, TrashIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
