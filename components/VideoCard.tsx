@@ -44,6 +44,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = fal
 
   const handleVideoClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (getMediaType(video.url || '') !== 'video' || !videoRef.current) return;
+    
     if (videoRef.current) {
       if (videoRef.current.paused) {
         videoRef.current.play()
@@ -64,12 +66,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = fal
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!video.url) return;
-
+    
+    const ext = video.url.split('.').pop() || 'file'; // Берем реальное расширение
     const link = document.createElement('a');
     link.href = video.url;
-    link.download = `vidiai_${video.id || 'video'}.mp4`;
+    link.download = `vidiai_${video.id || 'media'}.${ext}`; 
     link.target = "_blank";
-    link.rel = "noopener noreferrer";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -94,37 +96,34 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = fal
           </div>
         ) : (
           <>
-            {/* Кнопка скачивания: появится только если видео готово и мы в библиотеке */}
+            {/* Кнопка скачивания универсальная */}
             {canDownload && !isProcessing && !isFailed && video.url && (
               <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const link = document.createElement('a');
-                  link.href = video.url;
-                  link.download = `vidiai_${video.id}.mp4`;
-                  link.target = "_blank";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
+                onClick={handleDownload}
                 className="absolute top-2 left-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-primary transition-colors"
               >
                 <Download size={14} />
               </button>
             )}
-            <button 
-              onClick={toggleMute}
-              className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white"
-            >
-              {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-            </button>
 
-            {!isPlaying && (
-               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 pointer-events-none">
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-                    <Play size={24} className="text-white ml-1" fill="currentColor" />
-                  </div>
-               </div>
+            {/* Интерфейс плеера только для видео */}
+            {getMediaType(video.url || '') === 'video' && (
+              <>
+                <button 
+                  onClick={toggleMute}
+                  className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white"
+                >
+                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+
+                {!isPlaying && (
+                   <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 pointer-events-none">
+                      <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                        <Play size={24} className="text-white ml-1" fill="currentColor" />
+                      </div>
+                   </div>
+                )}
+              </>
             )}
             
             {/* Умный рендер контента */}
@@ -154,7 +153,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = fal
                 );
               }
             
-              // По умолчанию оставляем твой видео-плеер
               return (
                 <video
                   ref={videoRef}
@@ -172,7 +170,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, canDownload = fal
               );
             })()}
           </>
-        )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
         
