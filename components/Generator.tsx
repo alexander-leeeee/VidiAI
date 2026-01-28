@@ -92,7 +92,15 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
         await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація");
 
         setStatusMessage('Відео додано в чергу!');
-        
+
+        // Сообщаем приложению, что видео создано и сколько оно стоило
+        onVideoGenerated({ 
+            id: taskId, 
+            prompt, 
+            status: 'processing',
+            title: initialPrompt ? "Шаблон" : "Своя ідея"
+        } as any, currentCost);
+      
         // 4. Переход в библиотеку через 1.5 сек
         setTimeout(() => {
             window.location.hash = '/library';
@@ -199,7 +207,13 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
                   : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40'
               }`}
           >
-              {isGenerating ? <span>{t.gen_btn_generating}</span> : <span>{t.gen_btn_generate}</span>}
+              {isGenerating ? (
+                <span>{t.gen_btn_generating}</span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  {t.gen_btn_generate} <span className="opacity-70 text-sm">({currentCost} 🪙)</span>
+                </span>
+              )}
           </button>
   
           {statusMessage && (
