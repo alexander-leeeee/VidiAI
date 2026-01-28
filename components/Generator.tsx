@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SparklesIcon, PhotoIcon, TrashIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
-import { generateByTemplateId, saveVideoToHistory } from '../services/aiService';
+import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId } from '../services/aiService';
 
 interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
@@ -25,6 +25,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentCost = getCostByTemplateId(templateId);
 
   // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
