@@ -122,4 +122,4 @@ export const getUserHistory = async () => {
   const response = await fetch(`${import.meta.env.VITE_SERVER_BASE_URL}/get_history.php`);
   const result = await response.json();
   return result.status === 'success' ? result.videos : [];
-};1
+};
