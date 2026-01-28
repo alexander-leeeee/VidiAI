@@ -6,6 +6,27 @@ const ENDPOINTS = {
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
 };
 
+// Обновление статуса и ссылки в твоей БД
+export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null) => {
+  try {
+    const response = await fetch('https://server.vidiai.top/api/update_video_status.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        task_id: taskId,
+        status: status,
+        video_url: videoUrl
+      }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Ошибка обновления статуса в БД:", error);
+    throw error;
+  }
+};
+
 // Функция для сохранения задачи в твою БД
 export const saveVideoToHistory = async (taskId: string, prompt: string, title: string) => {
   try {
