@@ -56,6 +56,21 @@ export const generateTemplate2 = async (prompt: string, imageUrl: string) => {
   });
 };
 
+// 1. Создаем карту соответствия (какой ID какой функцией генерируется)
+const templateActions: Record<string, (prompt: string, imageUrl: string) => Promise<string>> = {
+  '1': generateTemplate1, // Первый шаблон — 10 сек + звук
+  '2': generateTemplate2, // Второй шаблон — 5 сек без звука
+  '3': generateTemplate1, // Третий шаблон может тоже использовать настройки первого
+  // Сюда ты просто дописываешь новые ID по мере появления шаблонов
+};
+
+// 2. Создаем одну универсальную функцию-диспетчер
+export const generateByTemplateId = async (templateId: string, prompt: string, imageUrl: string) => {
+  // Ищем функцию по ID. Если ID нет в списке — берем стандартный generateTemplate2
+  const action = templateActions[templateId] || generateTemplate2;
+  return await action(prompt, imageUrl);
+};
+
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
 
 export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null) => {
