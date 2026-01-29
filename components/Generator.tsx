@@ -31,7 +31,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentCost = getCostByTemplateId(templateId);
-  const [showLowBalanceModal, setShowLowBalanceModal] = useState(false);
+  const [isLowBalanceOpen, setIsLowBalanceOpen] = useState(false);
 
   // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
@@ -81,7 +81,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const handleGenerate = async () => {
     const currentBalance = (window as any).userCredits; // Или возьми из пропса credits
     if (currentCredits < currentCost) {
-        setShowLowBalanceModal(true);
+        setIsLowBalanceOpen(true);
         return;
     }
     
@@ -274,9 +274,10 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       </div>
       
       <LowBalanceModal 
-        isOpen={showLowBalanceModal} 
-        onClose={() => setShowLowBalanceModal(false)} 
-        balance={currentCredits} 
+        isOpen={isLowBalanceOpen}
+        onClose={() => setIsLowBalanceOpen(false)}
+        balance={currentCredits}
+        lang={lang}
       />
     </div>
   );
