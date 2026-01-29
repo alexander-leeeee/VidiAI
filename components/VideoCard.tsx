@@ -120,12 +120,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 <video
                   ref={videoRef}
                   src={video.url}
-                  poster={video.thumbnail || video.url + '#t=0.1'} // Пробуем взять первый кадр если нет постера
+                  poster={video.thumbnail || video.url + '#t=0.01'} // Трюк для подгрузки первого кадра
                   className="w-full h-full object-cover bg-neutral-900"
                   muted={isMuted}
+                  autoPlay={!canDownload} 
                   loop
                   playsInline
-                  preload="metadata"
+                  preload="auto"
+                  onPlaying={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
                 />
               );
             })()}
