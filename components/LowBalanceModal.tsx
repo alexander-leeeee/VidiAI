@@ -38,7 +38,6 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, bala
             <button 
                 onClick={() => {
                     onGetMore();
-                    onClose();
                 }}
                 className="w-full py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-lg shadow-primary/30 transition-all active:scale-95"
             >
