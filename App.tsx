@@ -199,7 +199,7 @@ const App: React.FC = () => {
                 templateId={selectedTemplateId}
                 setCredits={setCredits}
                 currentCredits={credits}
-                onGetMore={handleOpenSubscription}
+                onGetMore={() => setActiveTab(Tab.SUBSCRIPTION)}
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
