@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [generatedVideos, setGeneratedVideos] = useState<VideoItem[]>([]);
   const [lang, setLang] = useState<Language>('ru');
   const [theme, setTheme] = useState<Theme>('dark');
-  const [credits, setCredits] = useState<number>(10000); // Поставить на 0, чтобы пользователи не получали кредиты с браузера
+  const [credits, setCredits] = useState<number>(0); // Поставить на 0, чтобы пользователи не получали кредиты с браузера
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string>('free');
   
