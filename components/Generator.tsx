@@ -80,7 +80,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
-    const currentBalance = (window as any).userCredits; // Или возьми из пропса credits
     if (currentCredits < currentCost) {
         setIsLowBalanceOpen(true);
         return;
