@@ -8,6 +8,7 @@ import Subscription from './components/Subscription';
 import CreditsModal from './components/CreditsModal';
 import { CoinsIcon } from './components/Icons';
 import { Tab, VideoItem, Language, Theme } from './types';
+import BrowserWarningOverlay from './components/BrowserWarningOverlay';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SHOWCASE);
