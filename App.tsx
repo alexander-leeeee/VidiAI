@@ -199,8 +199,7 @@ const App: React.FC = () => {
                 templateId={selectedTemplateId}
                 setCredits={setCredits}
                 currentCredits={credits}
-                onGetMore={() => {
-                  window.location.hash = '#subscriptions'; 
+                onGetMore={handleOpenSubscription}
                 }}
              />
         </div>
