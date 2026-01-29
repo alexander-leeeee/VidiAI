@@ -3,6 +3,7 @@ import { SparklesIcon, PhotoIcon, TrashIcon, CoinsIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
 import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, deductCreditsInDb } from '../services/aiService';
+import LowBalanceModal from './LowBalanceModal';
 
 interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
@@ -29,6 +30,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentCost = getCostByTemplateId(templateId);
+  const [showLowBalanceModal, setShowLowBalanceModal] = useState(false);
 
   // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
@@ -269,6 +271,12 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
               </div>
           )}
       </div>
+      
+      <LowBalanceModal 
+        isOpen={showLowBalanceModal} 
+        onClose={() => setShowLowBalanceModal(false)} 
+        balance={currentCredits} 
+      />
     </div>
   );
 };
