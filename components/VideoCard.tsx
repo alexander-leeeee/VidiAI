@@ -120,13 +120,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 <video
                   ref={videoRef}
                   src={video.url}
+                  /* poster гарантирует, что вместо черного экрана будет первый кадр видео */
                   poster={video.thumbnail || video.url + '#t=0.01'}
                   className="w-full h-full object-cover bg-neutral-900"
                   muted={isMuted}
                   loop
                   playsInline
-                  preload={canDownload ? "none" : "auto"} 
-                  autoPlay={!canDownload}
+                  /* preload="auto" подгрузит кадр для poster, но не запустит видео */
+                  preload="auto" 
+                  /* autoPlay УДАЛЕН ПОЛНОСТЬЮ — видео само не запустится ни на главной, ни в галерее */
                   onPlaying={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   onClick={handleVideoClick}
