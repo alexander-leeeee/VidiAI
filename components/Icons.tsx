@@ -43,18 +43,15 @@ export const CoinsIcon = ({ className = "w-4 h-4 text-yellow-500" }: { className
     viewBox="0 0 24 24" 
     fill="none" 
     stroke="currentColor" 
-    strokeWidth="2" 
+    strokeWidth="2.5" 
     strokeLinecap="round" 
     strokeLinejoin="round" 
     className={className}
   >
-    {/* Основная монета */}
-    <circle cx="8" cy="8" r="6" />
-    {/* Декоративная линия (эффект стопки) */}
-    <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
-    {/* Символ внутри или декор */}
-    <path d="M7 6v4" />
-    <path d="M17 10v4" />
+    {/* Окружность монетки */}
+    <circle cx="12" cy="12" r="9" />
+    {/* Вертикальная полоса (символ монеты) */}
+    <path d="M12 8v8" />
   </svg>
 );
 
