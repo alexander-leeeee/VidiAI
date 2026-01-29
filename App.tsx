@@ -147,9 +147,16 @@ const App: React.FC = () => {
       
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 px-4 h-14 flex items-center justify-between transition-colors duration-300">
-        <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
-            <h1 className="text-lg font-bold tracking-tight">VidiAI</h1>
+        <div className="flex items-center gap-3 mb-6">
+          {/* Твой логотип */}
+          <img 
+            src="/logo.png" 
+            alt="VidiAI Logo" 
+            className="w-10 h-10 object-contain"
+          />
+          <h1 className="text-3xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            VidiAI
+          </h1>
         </div>
         
         {/* Credits Counter */}
