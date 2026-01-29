@@ -9,7 +9,7 @@ interface GeneratorProps {
   lang: Language;
   initialPrompt?: string;
   initialImage?: string | null;
-  initialAspectRatio?: '16:9' | '9:16';
+  initialAspectRatio?: '16:9' | '9:16' | '1:1';
   templateId?: string;
 }
 
@@ -23,7 +23,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16'>('9:16');
+  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('9:16');
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -192,24 +192,32 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
           {!initialPrompt && (
             <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_format}</label>
-                  <div className="grid grid-cols-2 gap-3">
-                      <button
-                          onClick={() => setAspectRatio('9:16')}
-                          className={`py-3 rounded-xl border font-medium text-sm transition-all shadow-sm ${
-                              aspectRatio === '9:16' ? 'bg-primary border-primary text-white shadow-primary/30' : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400'
-                          }`}
-                      >
-                          {t.gen_fmt_vertical}
-                      </button>
-                      <button
-                          onClick={() => setAspectRatio('16:9')}
-                          className={`py-3 rounded-xl border font-medium text-sm transition-all shadow-sm ${
-                              aspectRatio === '16:9' ? 'bg-primary border-primary text-white shadow-primary/30' : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400'
-                          }`}
-                      >
-                          {t.gen_fmt_landscape}
-                      </button>
-                  </div>
+                  <div className="grid grid-cols-3 gap-2"> {/* Поменяли на grid-cols-3 */}
+                  <button
+                    onClick={() => setAspectRatio('9:16')}
+                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                      aspectRatio === '9:16' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                    }`}
+                  >
+                    9:16
+                  </button>
+                  <button
+                    onClick={() => setAspectRatio('1:1')}
+                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                      aspectRatio === '1:1' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                    }`}
+                  >
+                    1:1
+                  </button>
+                  <button
+                    onClick={() => setAspectRatio('16:9')}
+                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                      aspectRatio === '16:9' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                    }`}
+                  >
+                    16:9
+                  </button>
+                </div>
               </div>
           )}
   
