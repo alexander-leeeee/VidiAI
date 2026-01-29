@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SparklesIcon, PhotoIcon, TrashIcon, CoinsIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
-import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId } from '../services/aiService';
+import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, deductCreditsInDb {/*убрать потом*/} } from '../services/aiService';
 
 interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
