@@ -55,3 +55,5 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang, welcomeAmount }) => {
     </div>
   );
 };
+
+export default BrowserWarningOverlay;
