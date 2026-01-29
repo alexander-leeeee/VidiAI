@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SparklesIcon, PhotoIcon, TrashIcon } from './Icons';
+import { SparklesIcon, PhotoIcon, TrashIcon, CoinsIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
 import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId } from '../services/aiService';
@@ -210,9 +210,13 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
               ) : (
                 <span className="flex items-center gap-2">
                   {t.gen_btn_generate} 
-                  <span className="bg-white/20 px-2 py-0.5 rounded-lg text-xs font-mono">
-                      -{currentCost} 🪙
-                  </span>
+                  <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
+                    {/* Используем наш компонент вместо эмодзи */}
+                    <CoinsIcon className="w-4 h-4 text-yellow-400" />
+                    <span className="text-sm font-bold">
+                      {currentCost}
+                    </span>
+                  </div>
                 </span>
               )}
           </button>
