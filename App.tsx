@@ -200,7 +200,7 @@ const App: React.FC = () => {
                 setCredits={setCredits}
                 currentCredits={credits}
                 onGetMore={handleOpenSubscription}
-                }}
+                }
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
