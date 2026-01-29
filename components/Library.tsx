@@ -27,6 +27,8 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
             prompt: v.prompt,
             title: v.title, // Теперь title подтянется из базы
             status: v.status,
+            sourceImage: v.source_image_url || '',
+            aspectRatio: v.aspect_ratio || '9:16',
             isLocal: false
           }));
 
@@ -82,14 +84,17 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
     };
 
     const handleGenerateMore = (video: VideoItem) => {
-      // Перенаправляем пользователя на главную страницу с тем же промптом
-      // Если у тебя используется навигация через state или router, укажи её здесь.
-      // Самый простой вариант для Telegram Mini App — вызвать callback, если он есть, 
-      // или просто вывести промпт в консоль для теста:
-      console.log("Re-generating video with prompt:", video.prompt);
+      // Нам нужно передать эти данные в главный компонент
+      // Обычно это делается через функцию-callback, переданную из App.tsx
       
-      // Если хочешь, чтобы при нажатии что-то происходило, например переход на главную:
-      // window.location.href = '/'; 
+      const replayData = {
+        prompt: video.prompt,
+        image: video.sourceImage, // Та самая картинка
+        aspectRatio: video.aspectRatio
+      };
+    
+      // Вызываем функцию, которую мы передадим из App
+      onReplayRequest?.(replayData); 
     };
 
     return (
