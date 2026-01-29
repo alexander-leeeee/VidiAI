@@ -150,7 +150,7 @@ const App: React.FC = () => {
         <div className="flex items-center gap-3 mb-6">
           {/* Твой логотип */}
           <img 
-            src="/logo.png" 
+            src="/logo.webp" 
             alt="VidiAI Logo" 
             className="w-10 h-10 object-contain"
           />
