@@ -56,6 +56,30 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
     return () => clearInterval(interval);
   }, []);
 
+    const handleDelete = async (videoId: number) => {
+      if (!window.confirm(t.lib_delete_confirm || "Видалити це відео?")) return;
+    
+      try {
+        const response = await fetch('https://server.vidiai.top/delete_video.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            video_id: videoId, 
+            telegram_id: tgUser?.id 
+          })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+          setDbVideos(prev => prev.filter(v => v.id !== videoId));
+        } else {
+          alert(data.message);
+        }
+      } catch (error) {
+        console.error("Помилка видалення:", error);
+      }
+    };
+
     return (
     <div className="pb-24 pt-4 px-3 h-full overflow-y-auto no-scrollbar">
       <h2 className="text-xl font-bold dark:text-white mb-4 px-1">{t.nav_library}</h2>
@@ -88,6 +112,8 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
               key={video.id} 
               video={video} 
               canDownload={true}
+              onDelete={handleDelete}
+              onClick={handleGenerateMore}
             />
           ))}
         </div>
