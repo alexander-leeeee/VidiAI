@@ -21,6 +21,8 @@ const App: React.FC = () => {
   const [currentPlanId, setCurrentPlanId] = useState<string>('free');
   const [isBrowserWarningOpen, setIsBrowserWarningOpen] = useState(false);
   const [welcomeCredits, setWelcomeCredits] = useState<number>(40);
+  const [templatePrompt, setTemplatePrompt] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
