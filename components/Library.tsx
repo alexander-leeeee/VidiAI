@@ -6,9 +6,10 @@ import { getTaskStatus, updateVideoInDb } from '../services/aiService';
 
 interface LibraryProps {
   lang: Language;
+  onReplayRequest: (video: VideoItem) => void;
 }
 
-const Library: React.FC<LibraryProps> = ({ lang }) => {
+const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
   const t = getTranslation(lang);
   const [dbVideos, setDbVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,17 +85,8 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
     };
 
     const handleGenerateMore = (video: VideoItem) => {
-      // Нам нужно передать эти данные в главный компонент
-      // Обычно это делается через функцию-callback, переданную из App.tsx
-      
-      const replayData = {
-        prompt: video.prompt,
-        image: video.sourceImage, // Та самая картинка
-        aspectRatio: video.aspectRatio
-      };
-    
-      // Вызываем функцию, которую мы передадим из App
-      onReplayRequest?.(replayData); 
+      // Просто передаем всё видео целиком в App.tsx
+      onReplayRequest?.(video);
     };
 
     return (
