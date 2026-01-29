@@ -14,7 +14,7 @@ const App: React.FC = () => {
   const [generatedVideos, setGeneratedVideos] = useState<VideoItem[]>([]);
   const [lang, setLang] = useState<Language>('ru');
   const [theme, setTheme] = useState<Theme>('dark');
-  const [credits, setCredits] = useState<number>(120);
+  const [credits, setCredits] = useState<number>(10000); // Поставить на 0, чтобы пользователи не получали кредиты с браузера
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string>('free');
   
@@ -22,6 +22,21 @@ const App: React.FC = () => {
   const [templatePrompt, setTemplatePrompt] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
 
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    const tgUser = tg?.initDataUnsafe?.user;
+    
+    if (tgUser) {
+      // Если в Telegram — синхронизируем баланс
+      syncUserWithDb(tgUser.id, tgUser.username).then(res => {
+        if (res.status === 'success') setCredits(res.credits);
+      });
+    } else {
+      // Если в браузере — просим перейти в бот
+      console.log("Пользователь не авторизован через Telegram");
+    }
+  }, []);
+  
   // Handle Theme Change
   useEffect(() => {
     const html = document.documentElement;
