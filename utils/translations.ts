@@ -36,6 +36,7 @@ export const translations = {
     lib_title: 'Моя Галерея',
     lib_empty: 'Здесь пока пусто.',
     lib_empty_sub: 'Сгенерируйте свое первое видео!',
+    lib_storage_info: 'Все созданные видео хранятся в течение 14 дней, после чего будут автоматически удалены.',
 
     set_title: 'Настройки',
     set_lang: 'Язык',
@@ -105,6 +106,7 @@ export const translations = {
     lib_title: 'My Gallery',
     lib_empty: 'Nothing here yet.',
     lib_empty_sub: 'Generate your first video!',
+    lib_storage_info: 'All created videos are stored for 14 days, after which they will be automatically deleted.',
 
     set_title: 'Settings',
     set_lang: 'Language',
@@ -174,6 +176,7 @@ export const translations = {
     lib_title: 'Моя Бібліотека',
     lib_empty: 'Тут поки порожньо.',
     lib_empty_sub: 'Згенеруйте своє перше відео!',
+    lib_storage_info: 'Всі створені відео зберігаються протягом 14 днів, після чого будуть автоматично видалені.',
 
     set_title: 'Налаштування',
     set_lang: 'Мова',
