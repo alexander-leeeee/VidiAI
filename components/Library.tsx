@@ -12,6 +12,7 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
   const t = getTranslation(lang);
   const [dbVideos, setDbVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -78,6 +79,17 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
       } catch (error) {
         console.error("Помилка видалення:", error);
       }
+    };
+
+    const handleGenerateMore = (video: VideoItem) => {
+      // Перенаправляем пользователя на главную страницу с тем же промптом
+      // Если у тебя используется навигация через state или router, укажи её здесь.
+      // Самый простой вариант для Telegram Mini App — вызвать callback, если он есть, 
+      // или просто вывести промпт в консоль для теста:
+      console.log("Re-generating video with prompt:", video.prompt);
+      
+      // Если хочешь, чтобы при нажатии что-то происходило, например переход на главную:
+      // window.location.href = '/'; 
     };
 
     return (
