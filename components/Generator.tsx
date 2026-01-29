@@ -8,6 +8,8 @@ interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
   lang: Language;
   initialPrompt?: string;
+  initialImage?: string | null;
+  initialAspectRatio?: '16:9' | '9:16';
   templateId?: string;
 }
 
@@ -17,7 +19,7 @@ interface ImageFile {
   mimeType: string;
 }
 
-const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPrompt, templateId }) => {
+const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId }) => {
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -33,6 +35,22 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
       setPrompt(initialPrompt);
     }
   }, [initialPrompt]);
+
+  useEffect(() => {
+    if (initialImage) {
+      setSelectedImage({
+        preview: initialImage, // URL из базы
+        data: '',
+        mimeType: ''
+      });
+    }
+  }, [initialImage]);
+
+  useEffect(() => {
+    if (initialAspectRatio) {
+      setAspectRatio(initialAspectRatio);
+    }
+  }, [initialAspectRatio]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
