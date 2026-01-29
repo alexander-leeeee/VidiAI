@@ -78,7 +78,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const handleGenerate = async () => {
     const currentBalance = (window as any).userCredits; // Или возьми из пропса credits
     if (currentBalance < currentCost) {
-        alert("Недостатньо кредитів для генерації!");
+        setShowLowBalanceModal(true);
         return;
     }
     
