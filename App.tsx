@@ -29,6 +29,20 @@ const App: React.FC = () => {
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     
+    // Показываем кнопку назад, если мы не на главной
+    if (window.location.hash !== '#' && window.location.hash !== '') {
+      tg.BackButton.show();
+      tg.BackButton.onClick(() => {
+        window.history.back();
+      });
+    } else {
+      tg.BackButton.hide();
+    }
+  }, [window.location.hash]); // Срабатывает при каждой смене страницы
+
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    
     if (tg) {
       tg.ready();
       tg.expand();
