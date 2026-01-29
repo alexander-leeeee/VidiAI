@@ -76,6 +76,12 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
+    const currentBalance = (window as any).userCredits; // Или возьми из пропса credits
+    if (currentBalance < currentCost) {
+        alert("Недостатньо кредитів для генерації!");
+        return;
+    }
+    
     const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
     // Проверка: текст и фото теперь обязательны
     if (!prompt.trim() || !selectedImage) {
