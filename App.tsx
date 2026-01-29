@@ -144,7 +144,7 @@ const App: React.FC = () => {
       
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-gray-200 dark:border-white/5 px-4 h-14 flex items-center justify-between transition-colors duration-300">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-8 mt-4">
           {/* Твой логотип */}
           <img 
             src="/logo.webp" 
