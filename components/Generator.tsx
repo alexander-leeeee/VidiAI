@@ -75,6 +75,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
   };
 
   const handleGenerate = async () => {
+    const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
     // Проверка: текст и фото теперь обязательны
     if (!prompt.trim() || !selectedImage) {
         alert(t.gen_label_image); 
