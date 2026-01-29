@@ -28,40 +28,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
-    const backButton = tg?.BackButton;
-  
-    if (!backButton) return;
-  
-    // 1. Логика показа кнопки: скрываем только на главной (Home)
-    // Замени 'home' на твой начальный таб, если он называется иначе
-    if (activeTab === Tab.HOME) {
-      backButton.hide();
-    } else {
-      backButton.show();
-    }
-  
-    // 2. Функция возврата
-    const handleBack = () => {
-      // Если ты используешь табы, лучше возвращать на главную
-      if (activeTab !== Tab.HOME) {
-        setActiveTab(Tab.HOME);
-      } else {
-        // Если используешь историю браузера/хеши
-        window.history.back();
-      }
-    };
-  
-    // 3. Подписываемся на событие
-    backButton.onClick(handleBack);
-  
-    // 4. ОЧЕНЬ ВАЖНО: Убираем обработчик при уходе, чтобы не было дублей
-    return () => {
-      backButton.offClick(handleBack);
-    };
-  }, [activeTab]); // Перезапускаем при смене таба
-
-  useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
     
     if (tg) {
       tg.ready();
