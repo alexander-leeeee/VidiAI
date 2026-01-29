@@ -106,7 +106,7 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
         const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
 
         // 3. Сохранение в твою БД
-        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація");
+        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація", tgUser?.id || 0, imageUrl, aspectRatio);
 
         onVideoGenerated({
             id: taskId,
