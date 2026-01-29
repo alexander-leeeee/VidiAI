@@ -25,8 +25,13 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang }) => {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="bg-white dark:bg-neutral-900 w-full max-w-md rounded-3xl p-8 text-center border border-white/10 shadow-2xl">
-        <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-6 text-4xl">
-          🚀
+        {/* Вместо старого div с ракетой */}
+        <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-full h-full object-contain animate-pulse-slow" 
+          />
         </div>
         
         <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
