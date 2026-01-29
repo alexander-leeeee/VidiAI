@@ -13,6 +13,7 @@ interface GeneratorProps {
   initialAspectRatio?: '16:9' | '9:16' | '1:1';
   templateId?: string;
   currentCredits: number;
+  onGetMore: () => void;
 }
 
 interface ImageFile {
@@ -22,7 +23,7 @@ interface ImageFile {
 }
 
 const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.SetStateAction<number>> }> = 
-({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId, setCredits, currentCredits }) => {
+({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId, setCredits, currentCredits, onGetMore }) => {
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -278,6 +279,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         onClose={() => setIsLowBalanceOpen(false)}
         balance={currentCredits}
         lang={lang}
+        onGetMore={onGetMore}
       />
     </div>
   );
