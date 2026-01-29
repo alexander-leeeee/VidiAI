@@ -23,6 +23,8 @@ const App: React.FC = () => {
   const [welcomeCredits, setWelcomeCredits] = useState<number>(40);
   const [templatePrompt, setTemplatePrompt] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
+  const [replayImage, setReplayImage] = useState<string | null>(null);
+  const [replayAspectRatio, setReplayAspectRatio] = useState<string>('9:16');
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -139,6 +141,13 @@ const App: React.FC = () => {
     setActiveTab(tab);
   };
 
+  const handleReplayRequest = (video: any) => {
+    setTemplatePrompt(video.prompt); // Устанавливаем текст
+    setReplayImage(video.sourceImage || null); // Устанавливаем картинку (если была)
+    setReplayAspectRatio(video.aspectRatio || '9:16'); // Устанавливаем формат
+    setActiveTab(Tab.CREATE); // Перекидываем на вкладку создания
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-background text-black dark:text-white font-sans selection:bg-primary/30 transition-colors duration-300">
       
@@ -181,15 +190,17 @@ const App: React.FC = () => {
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.CREATE ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Generator 
-                key={templatePrompt}
+                key={`${templatePrompt}-${replayImage}`}
                 onVideoGenerated={handleVideoGenerated} 
                 lang={lang} 
                 initialPrompt={templatePrompt}
+                initialImage={replayImage} // Передаем картинку
+                initialAspectRatio={replayAspectRatio} // Передаем формат
                 templateId={selectedTemplateId}
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
-             <Library lang={lang} />
+             <Library lang={lang} onReplayRequest={handleReplayRequest} />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.SETTINGS ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Settings lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />
