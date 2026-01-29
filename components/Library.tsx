@@ -62,12 +62,6 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
       
       {loading ? (
         {/* Блок с информацией о хранении */}
-        <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3">
-          <div className="text-xl">⏳</div>
-          <p className="text-sm text-blue-200/80 leading-relaxed font-medium">
-            {t.lib_storage_info}
-          </p>
-        </div>
         <div className="flex items-center justify-center h-[50vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -81,6 +75,13 @@ const Library: React.FC<LibraryProps> = ({ lang }) => {
           <p className="text-sm">{t.lib_empty || "У вас ще немає створених відео"}</p>
         </div>
       ) : (
+        {/* Блок с информацией о хранении */}
+        <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3">
+          <div className="text-xl">⏳</div>
+          <p className="text-sm text-blue-200/80 leading-relaxed font-medium">
+            {t.lib_storage_info}
+          </p>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {dbVideos.map((video) => (
             <VideoCard 
