@@ -33,16 +33,6 @@ const CreditsModal: React.FC<CreditsModalProps> = ({ isOpen, onClose, credits, l
           <p className="text-sm text-gray-500">{t.credits_balance}: <span className="font-bold text-gray-900 dark:text-white">{credits}</span></p>
         </div>
 
-        <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 mb-6 relative">
-             <div className="flex justify-between items-center mb-1">
-                 <span className="text-sm text-gray-500 dark:text-gray-400">{t.credits_cost_title}</span>
-             </div>
-             <div className="flex items-center space-x-2 text-gray-900 dark:text-white font-medium">
-                 <SparklesIcon />
-                 <span>{t.credits_cost_value}</span>
-             </div>
-        </div>
-
         <button 
             onClick={() => {
                 onGetMore();
