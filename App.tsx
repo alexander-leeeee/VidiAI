@@ -9,6 +9,7 @@ import CreditsModal from './components/CreditsModal';
 import { CoinsIcon } from './components/Icons';
 import { Tab, VideoItem, Language, Theme } from './types';
 import BrowserWarningOverlay from './components/BrowserWarningOverlay';
+import { syncUserWithDb } from './services/aiService';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SHOWCASE);
@@ -22,17 +23,28 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
+    
+    // 1. Обязательно сообщаем Телеграму, что приложение готово (убирает черный экран)
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
     const tgUser = tg?.initDataUnsafe?.user;
 
     if (tgUser) {
-      // Если в Telegram — синхронизируем как обычно
-      import('./services/aiService').then(({ syncUserWithDb }) => {
-        syncUserWithDb(tgUser.id, tgUser.username || 'User').then(res => {
-          if (res.status === 'success') setCredits(res.credits);
+      // 2. Теперь вызываем функцию напрямую, так как мы её импортировали вверху
+      syncUserWithDb(tgUser.id, tgUser.username || 'User')
+        .then(res => {
+          if (res.status === 'success') {
+            setCredits(res.credits);
+          }
+        })
+        .catch(err => {
+          console.error("Ошибка базы данных:", err);
+          // Можно оставить начальные кредиты, если сервер упал
         });
-      });
     } else {
-      // Если открыли в браузере — ставим 0 кредитов и открываем предупреждение
       setCredits(0);
       setIsBrowserWarningOpen(true);
     }
