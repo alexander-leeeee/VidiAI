@@ -14,7 +14,7 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang, welcomeAmount }) => {
     title: "VidiAI",
     desc: isUk 
       ? `Для використання сервісу переходь в Telegram Bot і отримуй ${welcomeAmount} безкоштовних кредитів.` 
-      : `Для использования сервиса переходи в Telegram Bot и бесплатно получай ${welcomeAmount} бесплатных кредитов.`,
+      : `Для использования сервиса переходи в Telegram Bot и получай ${welcomeAmount} бесплатных кредитов.`,
     btn: isUk ? "Відкрити в Telegram" : "Открыть в Telegram"
   };
 
