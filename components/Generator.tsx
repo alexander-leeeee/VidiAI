@@ -12,6 +12,7 @@ interface GeneratorProps {
   initialImage?: string | null;
   initialAspectRatio?: '16:9' | '9:16' | '1:1';
   templateId?: string;
+  currentCredits: number;
 }
 
 interface ImageFile {
@@ -21,7 +22,7 @@ interface ImageFile {
 }
 
 const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.SetStateAction<number>> }> = 
-({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId, setCredits }) => {
+({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId, setCredits, currentCredits }) => {
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -79,7 +80,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
   const handleGenerate = async () => {
     const currentBalance = (window as any).userCredits; // Или возьми из пропса credits
-    if (currentBalance < currentCost) {
+    if (currentCredits < currentCost) {
         setShowLowBalanceModal(true);
         return;
     }
