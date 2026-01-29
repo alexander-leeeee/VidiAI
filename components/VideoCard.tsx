@@ -118,21 +118,19 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
               );
               return (
                 <video
-                  ref={videoRef}
-                  src={video.url}
-                  /* poster гарантирует, что вместо черного экрана будет первый кадр видео */
-                  poster={video.thumbnail || video.url + '#t=0.01'}
-                  className="w-full h-full object-cover bg-neutral-900"
-                  muted={isMuted}
-                  loop
-                  playsInline
-                  /* preload="auto" подгрузит кадр для poster, но не запустит видео */
-                  preload="auto" 
-                  /* autoPlay УДАЛЕН ПОЛНОСТЬЮ — видео само не запустится ни на главной, ни в галерее */
-                  onPlaying={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onClick={handleVideoClick}
-                />
+                    key={video.id}
+                    ref={videoRef}
+                    src={video.url}
+                    poster={video.thumbnail || video.url + '#t=0.01'}
+                    className="w-full h-full object-cover bg-neutral-900"
+                    muted={isMuted}
+                    loop
+                    preload="metadata" 
+                    onPlaying={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onClick={handleVideoClick}
+                    onLoadedData={(e) => e.currentTarget.pause()} 
+                  />
               );
             })()}
           </>
