@@ -29,7 +29,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
 
   useEffect(() => {
     if (isProcessing || isFailed || !video.url) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -41,7 +40,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
       },
       { threshold: 0.1 }
     );
-
     if (videoRef.current) observer.observe(videoRef.current);
     return () => observer.disconnect();
   }, [isPlaying, isProcessing, isFailed]);
@@ -49,7 +47,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
   const handleVideoClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (getMediaType(video.url || '') !== 'video' || !videoRef.current) return;
-    
     if (videoRef.current.paused) {
       videoRef.current.play().then(() => setIsPlaying(true)).catch(err => console.error(err));
     } else {
@@ -94,27 +91,22 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
           </div>
         ) : (
           <>
-            {/* Скрываем кнопки на самом видео, если мы в Галерее */}
-            {!canDownload && (
-              <>
-                {getMediaType(video.url || '') === 'video' && (
-                  <>
-                    <button onClick={toggleMute} className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white">
-                      {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                    </button>
-                    {!isPlaying && (
-                       <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 pointer-events-none">
-                          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-                            <Play size={24} className="text-white ml-1" fill="currentColor" />
-                          </div>
-                       </div>
-                    )}
-                  </>
-                )}
-              </>
+            {/* Кнопка Play теперь видна везде, если видео на паузе */}
+            {getMediaType(video.url || '') === 'video' && !isPlaying && (
+               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 pointer-events-none">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                    <Play size={24} className="text-white ml-1" fill="currentColor" />
+                  </div>
+               </div>
+            )}
+
+            {/* Иконка звука сверху только для Главной */}
+            {!canDownload && getMediaType(video.url || '') === 'video' && (
+              <button onClick={toggleMute} className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white">
+                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              </button>
             )}
             
-            {/* Контент (Видео/Фото/Аудио) — сохранил всю твою логику */}
             {(() => {
               const type = getMediaType(video.url || '');
               if (type === 'image') return <img src={video.url} className="w-full h-full object-cover" alt="" />;
@@ -128,8 +120,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 <video
                   ref={videoRef}
                   src={video.url}
-                  poster={video.thumbnail}
-                  className="w-full h-full object-cover"
+                  poster={video.thumbnail || video.url + '#t=0.1'} // Пробуем взять первый кадр если нет постера
+                  className="w-full h-full object-cover bg-neutral-900"
                   muted={isMuted}
                   loop
                   playsInline
@@ -158,8 +150,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
       {!isProcessing && !isFailed && (
         <div className="w-full">
           {canDownload ? (
-            /* Компактная панель управления для Галереи */
-            <div className="flex items-center justify-between bg-white/5 dark:bg-white/5 border border-white/10 rounded-2xl p-1 shadow-sm">
+            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl p-1 shadow-sm">
               <button onClick={handleDownload} className="p-2.5 text-gray-400 hover:text-white transition-colors">
                 <Download size={18} />
               </button>
@@ -168,7 +159,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
 
-              {/* Повторная генерация (Стрелка) */}
               <button onClick={(e) => { e.stopPropagation(); onClick?.(video); }} className="p-2.5 text-primary hover:opacity-80 transition-opacity">
                 <RotateCcw size={18} />
               </button>
@@ -184,7 +174,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
               </button>
             </div>
           ) : (
-            /* Обычная кнопка для главной */
             <button 
               onClick={(e) => { e.stopPropagation(); onClick?.(video); }}
               className="w-full py-2.5 bg-primary text-white text-[11px] font-bold rounded-lg shadow-lg active:scale-95 transition-all"
