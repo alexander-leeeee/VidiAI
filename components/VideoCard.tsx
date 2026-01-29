@@ -97,10 +97,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
               {/* Вращающееся высокотехнологичное кольцо */}
               <div className="w-16 h-16 rounded-full border-2 border-transparent border-t-primary border-r-secondary animate-spin shadow-[0_0_20px_rgba(168,85,247,0.3)]" />
               
-              {/* Маленькая точка-импульс в центре */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-              </div>
             </div>
         
             {/* 3. Текст с градиентом и анимацией */}
