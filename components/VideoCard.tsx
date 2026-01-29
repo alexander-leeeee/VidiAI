@@ -91,7 +91,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
           </div>
         ) : (
           <>
-            {/* Кнопка Play теперь видна везде, если видео на паузе */}
+            {/* Кнопка Play видна всегда, когда видео стоит на паузе */}
             {getMediaType(video.url || '') === 'video' && !isPlaying && (
                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 pointer-events-none">
                   <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
@@ -100,7 +100,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                </div>
             )}
 
-            {/* Иконка звука сверху только для Главной */}
+            {/* Звук на самом видео скрываем в Галерее, он есть в панели */}
             {!canDownload && getMediaType(video.url || '') === 'video' && (
               <button onClick={toggleMute} className="absolute top-2 right-2 z-30 p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white">
                 {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
@@ -120,12 +120,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 <video
                   ref={videoRef}
                   src={video.url}
-                  poster={video.thumbnail || video.url + '#t=0.01'} // Трюк для подгрузки первого кадра
+                  poster={video.thumbnail || video.url + '#t=0.01'}
                   className="w-full h-full object-cover bg-neutral-900"
                   muted={isMuted}
                   loop
                   playsInline
-                  preload="auto"
+                  preload="metadata"
                   onPlaying={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                 />
@@ -135,8 +135,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
-        
-        <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex flex-col items-start gap-1.5">
+        <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex flex-col items-start gap-1.5 text-left">
           {video.hasMusic && (
             <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-primary/30">
               <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
@@ -152,26 +151,18 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
       {!isProcessing && !isFailed && (
         <div className="w-full">
           {canDownload ? (
-            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl p-1 shadow-sm">
-              <button onClick={handleDownload} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+            /* Компактная панель управления в рамке */
+            <div className="flex items-center justify-around bg-white/5 border border-white/10 rounded-2xl p-1 shadow-sm mt-1">
+              <button onClick={handleDownload} className="p-2 text-gray-400 hover:text-white transition-colors">
                 <Download size={18} />
               </button>
-
-              <button onClick={toggleMute} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+              <button onClick={toggleMute} className="p-2 text-gray-400 hover:text-white transition-colors">
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
-
-              <button onClick={(e) => { e.stopPropagation(); onClick?.(video); }} className="p-2.5 text-primary hover:opacity-80 transition-opacity">
+              <button onClick={(e) => { e.stopPropagation(); onClick?.(video); }} className="p-2 text-primary hover:opacity-80 transition-opacity">
                 <RotateCcw size={18} />
               </button>
-
-              <button 
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  if (video.id && onDelete) onDelete(Number(video.id)); 
-                }} 
-                className="p-2.5 text-red-500/60 hover:text-red-500 transition-colors"
-              >
+              <button onClick={(e) => { e.stopPropagation(); if (video.id && onDelete) onDelete(Number(video.id)); }} className="p-2 text-red-500/60 hover:text-red-500 transition-colors">
                 <Trash2 size={18} />
               </button>
             </div>
