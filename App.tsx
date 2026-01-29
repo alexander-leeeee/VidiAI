@@ -197,6 +197,8 @@ const App: React.FC = () => {
                 initialImage={replayImage} // Передаем картинку
                 initialAspectRatio={replayAspectRatio} // Передаем формат
                 templateId={selectedTemplateId}
+                setCredits={setCredits}
+                currentCredits={credits}
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
