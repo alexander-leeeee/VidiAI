@@ -30,7 +30,7 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, bala
 
         <div className="flex flex-col w-full gap-3">
           <button 
-            onClick={() => window.location.hash = '/buy'} 
+            onClick={() => window.location.hash = '/subscriptions'} 
             className="w-full py-4 bg-primary rounded-2xl font-bold text-white hover:opacity-90 active:scale-95 transition-all"
           >
             Отримати кредити
