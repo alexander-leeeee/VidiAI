@@ -28,7 +28,7 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang }) => {
         {/* Вместо старого div с ракетой */}
         <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center">
           <img 
-            src="/logo.png" 
+            src="/logo.webp" 
             alt="Logo" 
             className="w-full h-full object-contain animate-pulse-slow" 
           />
