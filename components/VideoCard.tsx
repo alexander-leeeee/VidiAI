@@ -85,15 +85,42 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
         onClick={handleVideoClick} 
       >
         {isProcessing ? (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-neutral-900 p-4 text-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-purple-500/5 to-transparent animate-pulse" />
-            <span className="relative z-10 text-[12px] font-bold tracking-wider uppercase bg-gradient-to-r from-primary via-purple-400 to-primary bg-[length:200%_auto] animate-gradient-text bg-clip-text text-transparent text-white">
-              Генерація...
-            </span>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#050505] p-4 text-center overflow-hidden">
+            {/* 1. Живой фон с глубоким градиентом */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-secondary/10 animate-pulse" />
+            
+            {/* 2. Центральный анимированный элемент */}
+            <div className="relative mb-6">
+              {/* Мягкое свечение сзади */}
+              <div className="absolute inset-0 rounded-full bg-primary/30 blur-2xl animate-pulse" />
+              
+              {/* Вращающееся высокотехнологичное кольцо */}
+              <div className="w-16 h-16 rounded-full border-2 border-transparent border-t-primary border-r-secondary animate-spin shadow-[0_0_20px_rgba(168,85,247,0.3)]" />
+              
+              {/* Маленькая точка-импульс в центре */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+              </div>
+            </div>
+        
+            {/* 3. Текст с градиентом и анимацией */}
+            <div className="relative z-10 flex flex-col items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] bg-gradient-to-r from-primary via-purple-300 to-secondary bg-clip-text text-transparent animate-pulse">
+                Створюємо магію
+              </span>
+              
+              {/* 4. Полоска прогресса (shimmer effect) */}
+              <div className="w-24 h-1 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                <div className="h-full bg-gradient-to-r from-primary via-secondary to-primary w-full animate-[shimmer_2s_infinite_linear]" />
+              </div>
+            </div>
           </div>
         ) : isFailed ? (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-900/20 p-4 text-center">
-            <p className="text-[11px] font-medium text-red-400">Ошибка</p>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-red-950/40 p-4 text-center backdrop-blur-sm">
+            <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center mb-2 border border-red-500/30">
+                <span className="text-red-500 text-xl font-bold">!</span>
+            </div>
+            <p className="text-[11px] font-black uppercase tracking-wider text-red-400">Помилка</p>
           </div>
         ) : (
           <>
