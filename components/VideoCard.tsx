@@ -121,14 +121,15 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                   ref={videoRef}
                   src={video.url}
                   poster={video.thumbnail || video.url + '#t=0.01'}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover bg-neutral-900"
                   muted={isMuted}
                   loop
                   playsInline
-                  /* 2. АВТОПЛЕЙ УБРАН СОВСЕМ, ЧТОБЫ НЕ БЫЛО ПРОБЛЕМ НА ТЕЛЕФОНЕ */
-                  preload="metadata"
+                  preload={canDownload ? "none" : "auto"} 
+                  autoPlay={!canDownload}
                   onPlaying={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
+                  onClick={handleVideoClick}
                 />
               );
             })()}
