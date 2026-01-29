@@ -18,7 +18,10 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch('https://server.vidiai.top/api/get_history.php');
+        const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        if (!tgId) return;
+        
+        const response = await fetch(`https://server.vidiai.top/api/get_history.php?telegram_id=${tgId}`);
         const data = await response.json();
         
         if (data.status === "success" && data.videos) {
