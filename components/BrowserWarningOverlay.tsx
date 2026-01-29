@@ -1,6 +1,5 @@
 import React from 'react';
 import { Language } from '../types';
-import { CoinsIcon } from './Icons'; // Импортируем твою новую иконку
 
 interface Props {
   lang: Language;
@@ -8,17 +7,14 @@ interface Props {
 }
 
 const BrowserWarningOverlay: React.FC<Props> = ({ lang, welcomeAmount }) => {
+  // Простая логика перевода
   const isUk = lang === 'uk';
 
   const t = {
     title: "VidiAI",
-    // Разделяем текст на "до" и "после" иконки
-    descStart: isUk 
-      ? "Для використання сервісу переходь в Telegram Bot і отримуй" 
-      : "Для использования сервиса переходи в Telegram Bot и получай",
-    descEnd: isUk 
-      ? "безкоштовних кредитів." 
-      : "бесплатных кредитов.",
+    desc: isUk 
+      ? `Для використання сервісу переходь в Telegram Bot і отримуй ${welcomeAmount} безкоштовних кредитів.` 
+      : `Для использования сервиса переходи в Telegram Bot и бесплатно получай ${welcomeAmount} бесплатных кредитов.`,
     btn: isUk ? "Відкрити в Telegram" : "Открыть в Telegram"
   };
 
@@ -26,7 +22,7 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang, welcomeAmount }) => {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="bg-white dark:bg-neutral-900 w-full max-w-md rounded-3xl p-8 text-center border border-white/10 shadow-2xl">
         
-        {/* Логотип VidiAI */}
+        {/* Логотип */}
         <div className="w-24 h-24 mx-auto mb-6 flex items-center justify-center">
           <img src="/logo.webp" alt="Logo" className="w-full h-full object-contain animate-pulse-slow" />
         </div>
@@ -35,15 +31,10 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang, welcomeAmount }) => {
           {t.title}
         </h2>
         
-        {/* Контейнер для текста с иконкой */}
-        <div className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed text-lg flex flex-wrap justify-center items-center gap-1">
-          <span>{t.descStart}</span>
-          <span className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
-            {welcomeAmount} 
-            <CoinsIcon className="w-5 h-5 text-yellow-500 inline-block" /> 
-          </span>
-          <span>{t.descEnd}</span>
-        </div>
+        {/* Чистый текст без иконок */}
+        <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed text-lg">
+          {t.desc}
+        </p>
 
         <a 
           href="https://t.me/vidiai_bot" 
@@ -56,4 +47,5 @@ const BrowserWarningOverlay: React.FC<Props> = ({ lang, welcomeAmount }) => {
   );
 };
 
+// Тот самый экспорт, который просит Vercel
 export default BrowserWarningOverlay;
