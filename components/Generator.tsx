@@ -19,7 +19,8 @@ interface ImageFile {
   mimeType: string;
 }
 
-const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId }) => {
+const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.SetStateAction<number>> }> = 
+({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId, setCredits }) => {
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -105,6 +106,14 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
 
         // 2. Вызов диспетчера по ID шаблона
         const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
+
+        const tgId = tgUser?.id || 0;
+        if (tgId) {
+            // 1. Списываем в базе данных
+            await deductCreditsInDb(tgId, currentCost);
+            // 2. Обновляем цифру на экране мгновенно
+            if (setCredits) setCredits(prev => prev - currentCost);
+        }
 
         // 3. Сохранение в твою БД
         await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація", tgUser?.id || 0, imageUrl, aspectRatio);
