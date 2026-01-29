@@ -123,7 +123,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                   poster={video.thumbnail || video.url + '#t=0.01'} // Трюк для подгрузки первого кадра
                   className="w-full h-full object-cover bg-neutral-900"
                   muted={isMuted}
-                  autoPlay={!canDownload} 
                   loop
                   playsInline
                   preload="auto"
