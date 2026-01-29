@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const [templatePrompt, setTemplatePrompt] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
   const [replayImage, setReplayImage] = useState<string | null>(null);
-  const [replayAspectRatio, setReplayAspectRatio] = useState<string>('9:16');
+  const [replayAspectRatio, setReplayAspectRatio] = useState<'16:9' | '9:16'>('9:16');
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -142,10 +142,10 @@ const App: React.FC = () => {
   };
 
   const handleReplayRequest = (video: any) => {
-    setTemplatePrompt(video.prompt); // Устанавливаем текст
-    setReplayImage(video.sourceImage || null); // Устанавливаем картинку (если была)
-    setReplayAspectRatio(video.aspectRatio || '9:16'); // Устанавливаем формат
-    setActiveTab(Tab.CREATE); // Перекидываем на вкладку создания
+    setTemplatePrompt(video.prompt); // Подставляем текст
+    setReplayImage(video.sourceImage || null); // Подставляем картинку
+    setReplayAspectRatio(video.aspectRatio || '9:16'); // Подставляем формат
+    setActiveTab(Tab.CREATE); // Переходим к созданию
   };
 
   return (
