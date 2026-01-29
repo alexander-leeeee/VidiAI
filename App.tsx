@@ -20,51 +20,34 @@ const App: React.FC = () => {
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string>('free');
   const [isBrowserWarningOpen, setIsBrowserWarningOpen] = useState(false);
+  const [welcomeCredits, setWelcomeCredits] = useState<number>(40);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     
-    // 1. Обязательно сообщаем Телеграму, что приложение готово (убирает черный экран)
     if (tg) {
       tg.ready();
       tg.expand();
     }
-
-    const tgUser = tg?.initDataUnsafe?.user;
-
-    if (tgUser) {
-      // 2. Теперь вызываем функцию напрямую, так как мы её импортировали вверху
-      syncUserWithDb(tgUser.id, tgUser.username || 'User')
-        .then(res => {
-          if (res.status === 'success') {
-            setCredits(res.credits);
-          }
-        })
-        .catch(err => {
-          console.error("Ошибка базы данных:", err);
-          // Можно оставить начальные кредиты, если сервер упал
-        });
-    } else {
-      setCredits(0);
-      setIsBrowserWarningOpen(true);
-    }
-  }, []);
   
-  // State for passing template prompt to generator
-  const [templatePrompt, setTemplatePrompt] = useState<string>('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
-
-  useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
     const tgUser = tg?.initDataUnsafe?.user;
-    
+  
     if (tgUser) {
-      // Если в Telegram — синхронизируем баланс
-      syncUserWithDb(tgUser.id, tgUser.username).then(res => {
-        if (res.status === 'success') setCredits(res.credits);
+      // Единый вызов синхронизации
+      syncUserWithDb(tgUser.id, tgUser.username || 'User').then(res => {
+        if (res.status === 'success') {
+          setCredits(res.credits); // Баланс юзера
+          
+          // Обновляем текст в модалке актуальной цифрой с сервера
+          if (res.welcome_limit) {
+            setWelcomeCredits(res.welcome_limit);
+          }
+        }
       });
     } else {
-      // Если в браузере — просим перейти в бот
+      // Если зашли через обычный браузер в Украине
+      setCredits(0);
+      setIsBrowserWarningOpen(true);
       console.log("Пользователь не авторизован через Telegram");
     }
   }, []);
