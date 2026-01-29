@@ -17,6 +17,25 @@ const App: React.FC = () => {
   const [credits, setCredits] = useState<number>(0); // Поставить на 0, чтобы пользователи не получали кредиты с браузера
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string>('free');
+  const [isBrowserWarningOpen, setIsBrowserWarningOpen] = useState(false);
+
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    const tgUser = tg?.initDataUnsafe?.user;
+
+    if (tgUser) {
+      // Если в Telegram — синхронизируем как обычно
+      import('./services/aiService').then(({ syncUserWithDb }) => {
+        syncUserWithDb(tgUser.id, tgUser.username || 'User').then(res => {
+          if (res.status === 'success') setCredits(res.credits);
+        });
+      });
+    } else {
+      // Если открыли в браузере — ставим 0 кредитов и открываем предупреждение
+      setCredits(0);
+      setIsBrowserWarningOpen(true);
+    }
+  }, []);
   
   // State for passing template prompt to generator
   const [templatePrompt, setTemplatePrompt] = useState<string>('');
@@ -183,6 +202,11 @@ const App: React.FC = () => {
         lang={lang}
         onGetMore={() => setActiveTab(Tab.SUBSCRIPTION)}
       />
+
+      {/* Вызываем наше новое окно поверх всего */}
+      {isBrowserWarningOpen && (
+        <BrowserWarningOverlay lang={lang} />
+      )}
       
     </div>
   );
