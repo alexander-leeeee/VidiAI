@@ -8,9 +8,10 @@ interface LowBalanceModalProps {
   onClose: () => void;
   balance: number;
   lang: Language;
+  onGetMore: () => void;
 }
 
-const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, balance, lang }) => {
+const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, balance, lang, onGetMore }) => {
   if (!isOpen) return null;
   const t = getTranslation(lang);
 
@@ -36,8 +37,8 @@ const LowBalanceModal: React.FC<LowBalanceModalProps> = ({ isOpen, onClose, bala
         <div className="flex flex-col gap-2">
             <button 
                 onClick={() => {
+                    onGetMore();
                     onClose();
-                    window.location.hash = '#subscriptions'; // Твой переход
                 }}
                 className="w-full py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-lg shadow-primary/30 transition-all active:scale-95"
             >
