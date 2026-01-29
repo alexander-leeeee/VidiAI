@@ -115,12 +115,12 @@ export const updateVideoInDb = async (taskId: string, status: string, videoUrl: 
   }
 };
 
-export const saveVideoToHistory = async (taskId: string, prompt: string, title: string) => {
+export const saveVideoToHistory = async (taskId: string, prompt: string, title: string, tgId: number, imageUrl: string | null, aspectRatio: string) => {
   try {
     await fetch('https://server.vidiai.top/api/save_media.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task_id: taskId, prompt, title }),
+      body: JSON.stringify({ task_id: taskId, prompt, title, telegram_id: tgId, imageUrl, aspectRatio }),
     });
   } catch (error) {
     console.error("Ошибка сохранения:", error);
