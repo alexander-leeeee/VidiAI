@@ -247,6 +247,35 @@ const Generator: React.FC<GeneratorProps> = ({ onVideoGenerated, lang, initialPr
                 </span>
               )}
           </button>
+
+
+
+          {/* ТЕСТОВА КНОПКА ДЛЯ ВІДЛАДКИ БАЛАНСУ */}
+          <button 
+            onClick={async () => {
+              const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+              if (!tgId) return alert("TG ID не знайдено");
+              
+              try {
+                // Викликаємо тільки списання в БД, без запиту до Kie.ai
+                await deductCreditsInDb(tgId, 5);
+                
+                // Оновлюємо стейт кредитів у самому додатку, щоб відразу побачити результат
+                // (Переконайся, що setCredits передано в пропси або доступно тут)
+                // setCredits(prev => prev - 5);
+                
+                alert("Списано 5 тест-кредитів. Перевір БД!");
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            className="mt-4 w-full py-2 border-2 border-dashed border-primary/30 rounded-xl text-[10px] text-primary/50 uppercase font-black hover:bg-primary/5 transition-all"
+          >
+            🧪 Тест списання (-5)
+          </button>
+
+
+        
   
           {statusMessage && (
               <div className="p-4 rounded-xl text-center text-sm bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5">
