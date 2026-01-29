@@ -209,9 +209,7 @@ const App: React.FC = () => {
       />
 
       {/* Вызываем наше новое окно поверх всего */}
-      {/*isBrowserWarningOpen && (*/
-      //  <BrowserWarningOverlay lang={lang} welcomeAmount={welcomeCredits} />
-      //)}
+
       
     </div>
   );
