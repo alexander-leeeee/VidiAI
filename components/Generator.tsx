@@ -206,22 +206,37 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       </div>
   
       <div className="space-y-6">
-          <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
-                  {mode === 'music' ? "Опис музики" : t.gen_label_prompt}
-                </label>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }}
-                  placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop, calm, piano..." : t.gen_placeholder}
-                  className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 transition-all shadow-sm text-sm"
-                  disabled={isGenerating}
-                />
-          </div>
-  
-          {mode !== 'music' && (
+          {/* 1. ВЫБОР МЕТОДА (Только для свободной генерации видео) */}
+          {mode === 'video' && !initialPrompt && (
             <div className="space-y-2">
-               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_image}</label>
+              <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl">
+                <button
+                  onClick={() => setVideoMethod('image')}
+                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                    videoMethod === 'image' ? 'bg-white dark:bg-surface shadow-sm dark:text-white' : 'text-gray-400'
+                  }`}
+                >
+                  З фото
+                </button>
+                <button
+                  onClick={() => setVideoMethod('text')}
+                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                    videoMethod === 'text' ? 'bg-white dark:bg-surface shadow-sm dark:text-white' : 'text-gray-400'
+                  }`}
+                >
+                  Тільки текст
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 2. ЗАГРУЗКА ФОТО (Если выбран метод "З фото" или это режим фото) */}
+          {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
+            <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                 {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
+               </label>
                {!selectedImage ? (
                    <div 
                       onClick={() => fileInputRef.current?.click()}
@@ -246,117 +261,66 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                )}
             </div>
           )}
-  
-          <div className="space-y-6">
-          
-            {/* 1. САМЫЙ ВЕРХ: Выбор метода (только для видео) */}
-            {mode === 'video' && !initialPrompt && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl">
-                  <button
-                    onClick={() => setVideoMethod('image')}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                      videoMethod === 'image' ? 'bg-white dark:bg-surface shadow-sm dark:text-white' : 'text-gray-400'
-                    }`}
-                  >
-                    З фото
-                  </button>
-                  <button
-                    onClick={() => setVideoMethod('text')}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                      videoMethod === 'text' ? 'bg-white dark:bg-surface shadow-sm dark:text-white' : 'text-gray-400'
-                    }`}
-                  >
-                    Тільки текст
-                  </button>
-                </div>
-              </div>
-            )}
-          
-            {/* 2. ЗАГРУЗКА ФОТО: Показываем только если выбран метод "З фото" ИЛИ если это режим Фото */}
-            {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
-                  {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
-                </label>
-                {!selectedImage ? (
-                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
-                    <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2"><PhotoIcon /></div>
-                    <span className="text-sm font-medium">{t.gen_upload_text}</span>
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                  </div>
-                ) : (
-                  <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10">
-                    <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
-                    <button onClick={() => setSelectedImage(null)} className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon /></button>
-                  </div>
-                )}
-              </div>
-            )}
-          
-            {/* 3. ПОЛЕ ТЕКСТА (Промпт) */}
-            <div className="space-y-2">
+
+          {/* 3. ПОЛЕ ТЕКСТА (Prompt) */}
+          <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
                 {mode === 'music' ? "Опис музики" : t.gen_label_prompt}
               </label>
               <textarea
                 value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop..." : t.gen_placeholder}
-                className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 text-sm"
+                onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }}
+                placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop, calm, piano..." : t.gen_placeholder}
+                className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 transition-all shadow-sm text-sm"
                 disabled={isGenerating}
               />
-            </div>
-          
-            {/* 4. ТЕХНИЧЕСКИЕ НАСТРОЙКИ: Длительность и Соотношение (только для видео) */}
-            {mode === 'video' && !initialPrompt && (
-              <div className="space-y-4">
-                {/* Твой код выбора длины видео */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['10', '15'].map((sec) => (
-                      <button
-                        key={sec}
-                        onClick={() => setSoraDuration(sec as '10' | '15')}
-                        className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                          soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                        }`}
-                      >
-                        {sec} сек
-                      </button>
-                    ))}
-                  </div>
-                </div>
-          
-                {/* Твой код выбора соотношения сторон */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setSoraLayout('portrait')}
-                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                        soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                      }`}
-                    >
-                      Вертикальне (9:16)
-                    </button>
-                    <button
-                      onClick={() => setSoraLayout('landscape')}
-                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                        soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                      }`}
-                    >
-                      Горизонтальне (16:9)
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          
           </div>
   
+          {/* 4. ТЕХНИЧЕСКИЕ НАСТРОЙКИ (Длительность и формат видео) */}
+          {mode === 'video' && !initialPrompt && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['10', '15'].map((sec) => (
+                    <button
+                      key={sec}
+                      onClick={() => setSoraDuration(sec as '10' | '15')}
+                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                        soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                      }`}
+                    >
+                      {sec} сек
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSoraLayout('portrait')}
+                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                      soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                    }`}
+                  >
+                    Вертикальне (9:16)
+                  </button>
+                  <button
+                    onClick={() => setSoraLayout('landscape')}
+                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                      soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                    }`}
+                  >
+                    Горизонтальне (16:9)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. КНОПКА ГЕНЕРАЦИИ */}
           <button
               onClick={handleGenerate}
               disabled={isGenerating}
@@ -373,9 +337,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                   {t.gen_btn_generate} 
                   <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
                     <CoinsIcon className="w-4 h-4 text-yellow-400" />
-                    <span className="text-sm font-bold">
-                      {currentCost}
-                    </span>
+                    <span className="text-sm font-bold">{currentCost}</span>
                   </div>
                 </span>
               )}
