@@ -204,26 +204,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{header.title}</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
       </div>
-
-      {/* Показываем загрузку фото только если режим видео "С фото" или это генерация изображения */}
-      {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
-          <div className="space-y-2">
-             <label className="text-sm font-medium dark:text-gray-300 ml-1">
-               {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
-             </label>
-             {/* Твой существующий блок с PhotoIcon и input */}
-             {!selectedImage ? (
-                 <div onClick={() => fileInputRef.current?.click()} className="...">
-                     {/* ... */}
-                 </div>
-             ) : (
-                 <div className="relative ...">
-                     <img src={selectedImage.preview} className="..." />
-                     <button onClick={() => setSelectedImage(null)} className="..."><TrashIcon /></button>
-                 </div>
-             )}
-          </div>
-      )}
   
       <div className="space-y-6">
           <div className="space-y-2">
@@ -267,10 +247,10 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
             </div>
           )}
   
-          {mode === 'video' && !initialPrompt && (
-            <div className="space-y-6">
-              
-              {/* Выбор метода генерации */}
+          <div className="space-y-6">
+          
+            {/* 1. САМЫЙ ВЕРХ: Выбор метода (только для видео) */}
+            {mode === 'video' && !initialPrompt && (
               <div className="space-y-2">
                 <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
                 <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl">
@@ -292,49 +272,90 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                   </button>
                 </div>
               </div>
-              
-              {/* Выбор длины видео */}
+            )}
+          
+            {/* 2. ЗАГРУЗКА ФОТО: Показываем только если выбран метод "З фото" ИЛИ если это режим Фото */}
+            {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
               <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['10', '15'].map((sec) => (
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                  {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
+                </label>
+                {!selectedImage ? (
+                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
+                    <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2"><PhotoIcon /></div>
+                    <span className="text-sm font-medium">{t.gen_upload_text}</span>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </div>
+                ) : (
+                  <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10">
+                    <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
+                    <button onClick={() => setSelectedImage(null)} className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon /></button>
+                  </div>
+                )}
+              </div>
+            )}
+          
+            {/* 3. ПОЛЕ ТЕКСТА (Промпт) */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                {mode === 'music' ? "Опис музики" : t.gen_label_prompt}
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop..." : t.gen_placeholder}
+                className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 text-sm"
+                disabled={isGenerating}
+              />
+            </div>
+          
+            {/* 4. ТЕХНИЧЕСКИЕ НАСТРОЙКИ: Длительность и Соотношение (только для видео) */}
+            {mode === 'video' && !initialPrompt && (
+              <div className="space-y-4">
+                {/* Твой код выбора длины видео */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['10', '15'].map((sec) => (
+                      <button
+                        key={sec}
+                        onClick={() => setSoraDuration(sec as '10' | '15')}
+                        className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                          soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                        }`}
+                      >
+                        {sec} сек
+                      </button>
+                    ))}
+                  </div>
+                </div>
+          
+                {/* Твой код выбора соотношения сторон */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
+                  <div className="grid grid-cols-2 gap-2">
                     <button
-                      key={sec}
-                      onClick={() => setSoraDuration(sec as '10' | '15')}
+                      onClick={() => setSoraLayout('portrait')}
                       className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                        soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                        soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
                       }`}
                     >
-                      {sec} сек
+                      Вертикальне (9:16)
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setSoraLayout('landscape')}
+                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                        soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                      }`}
+                    >
+                      Горизонтальне (16:9)
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
           
-              {/* Выбор соотношения сторон */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setSoraLayout('portrait')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
-                  >
-                    Вертикальне (9:16)
-                  </button>
-                  <button
-                    onClick={() => setSoraLayout('landscape')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
-                  >
-                    Горизонтальне (16:9)
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
   
           <button
               onClick={handleGenerate}
