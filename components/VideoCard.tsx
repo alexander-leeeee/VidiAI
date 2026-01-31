@@ -227,7 +227,17 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
               <button 
                 onClick={(e) => { 
                   e.stopPropagation(); 
-                  if (video.id && onDelete) onDelete(Number(video.id)); 
+                  
+                  // Пробуем все варианты, которые могут прийти из базы или API
+                  const actualId = video.id || video.video_id || (video as any)._id; 
+                  
+                  console.log("Пытаемся удалить видео с объектом:", video); // Увидим структуру в консоли
+                  
+                  if (actualId && onDelete) {
+                    onDelete(actualId); 
+                  } else {
+                    alert("Не вдалося знайти ID відео");
+                  }
                 }}
                 className="p-2.5 text-red-500/60 hover:text-red-500 transition-colors"
               >
