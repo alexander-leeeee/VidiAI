@@ -96,19 +96,23 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     setStatusMessage("Завантаження фото...");
 
     try {
-        // 1. Загрузка фото на твой сервер
-        const formData = new FormData();
-        const imgResponse = await fetch(selectedImage.preview);
-        const blob = await imgResponse.blob();
-        formData.append('photo', blob, `upload_${Date.now()}.png`);
+        let imageUrl = selectedImage.preview;
 
-        const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const uploadData = await uploadRes.json();
-        if (uploadData.status !== 'success') throw new Error('Помилка завантаження фото');
+        // Если это НОВАЯ картинка (base64), а не старый URL
+        if (selectedImage.data) {
+            setStatusMessage("Завантаження фото...");
+            const formData = new FormData();
+            const imgResponse = await fetch(selectedImage.preview);
+            const blob = await imgResponse.blob();
+            formData.append('photo', blob, `upload_${Date.now()}.png`);
+
+            const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
+                method: 'POST', body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (uploadData.status !== 'success') throw new Error('Помилка завантаження');
+            imageUrl = uploadData.fileUrl;
+        }
 
         const imageUrl = uploadData.fileUrl;
         setStatusMessage('Запуск генерації...');
