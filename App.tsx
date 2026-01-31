@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('default');
   const [replayImage, setReplayImage] = useState<string | null>(null);
   const [replayAspectRatio, setReplayAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('9:16');
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
