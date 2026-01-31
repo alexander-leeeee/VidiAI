@@ -204,6 +204,26 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{header.title}</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
       </div>
+
+      {/* Показываем загрузку фото только если режим видео "С фото" или это генерация изображения */}
+      {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
+          <div className="space-y-2">
+             <label className="text-sm font-medium dark:text-gray-300 ml-1">
+               {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
+             </label>
+             {/* Твой существующий блок с PhotoIcon и input */}
+             {!selectedImage ? (
+                 <div onClick={() => fileInputRef.current?.click()} className="...">
+                     {/* ... */}
+                 </div>
+             ) : (
+                 <div className="relative ...">
+                     <img src={selectedImage.preview} className="..." />
+                     <button onClick={() => setSelectedImage(null)} className="..."><TrashIcon /></button>
+                 </div>
+             )}
+          </div>
+      )}
   
       <div className="space-y-6">
           <div className="space-y-2">
@@ -249,25 +269,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   
           {mode === 'video' && !initialPrompt && (
             <div className="space-y-6">
-              {/* Показываем загрузку фото только если режим видео "С фото" или это генерация изображения */}
-              {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
-                  <div className="space-y-2">
-                     <label className="text-sm font-medium dark:text-gray-300 ml-1">
-                       {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
-                     </label>
-                     {/* Твой существующий блок с PhotoIcon и input */}
-                     {!selectedImage ? (
-                         <div onClick={() => fileInputRef.current?.click()} className="...">
-                             {/* ... */}
-                         </div>
-                     ) : (
-                         <div className="relative ...">
-                             <img src={selectedImage.preview} className="..." />
-                             <button onClick={() => setSelectedImage(null)} className="..."><TrashIcon /></button>
-                         </div>
-                     )}
-                  </div>
-              )}
               
               {/* Выбор метода генерации */}
               <div className="space-y-2">
