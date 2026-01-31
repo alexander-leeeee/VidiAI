@@ -74,7 +74,6 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
       if (!window.confirm(confirmText)) return;
     
       try {
-        // Добавляем проверку: берем из env или используем прямую ссылку как запасную
         const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
         
         const response = await fetch(`${apiUrl}/api/delete_media.php`, { 
@@ -90,14 +89,15 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
         const data = await response.json();
     
         if (data.status === 'success') {
-          // Обновляем нужный список в зависимости от типа
+          // Используем нестрогое сравнение != чтобы избежать проблем с типами string/number
           if (contentType === 'video') setDbVideos(prev => prev.filter(v => v.id != id));
-          // Здесь потом добавишь фильтрацию для фото и музыки
+          // Когда добавишь фото и музыку, просто допиши условия здесь
         } else {
           alert(data.message || "Помилка видалення");
         }
       } catch (error) {
         console.error(`Помилка видалення ${contentType}:`, error);
+        alert("Не вдалося зв'язатися з сервером");
       }
     };
   
