@@ -34,11 +34,12 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const currentCost = getCostByTemplateId(templateId);
   const [isLowBalanceOpen, setIsLowBalanceOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isWorking = useRef(false);
 
   useEffect(() => {
     setIsGenerating(false);
     setStatusMessage("");
-  }, [initialPrompt]); // Сброс при каждом новом шаблоне
+  }, [initialPrompt, initialImage, templateId]);
     
   // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
@@ -86,7 +87,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
-    if (isProcessing || isGenerating) return; // Если уже крутится — выходим
+    if (isWorking.current || isGenerating) return; // Мгновенная проверка
     if (currentCredits < currentCost) {
         setIsLowBalanceOpen(true);
         return;
@@ -99,7 +100,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         return;
     }
 
-    setIsProcessing(true);
+    isWorking.current = true; 
     setIsGenerating(true);
     setStatusMessage("Завантаження фото...");
 
@@ -157,7 +158,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         setStatusMessage(`Помилка: ${error.message}`);
         setIsGenerating(false);
       } finally {
-      setIsProcessing(false);
+      isWorking.current = false;
     }
   };
   
