@@ -63,27 +63,38 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
     return () => clearInterval(interval);
   }, []);
 
-    const handleDelete = async (videoId: number) => {
-      if (!window.confirm(t.lib_delete_confirm || "Видалити це відео?")) return;
+    // Добавляем параметр contentType: 'video' | 'image' | 'audio'
+    const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' = 'video') => {
+      const confirmText = {
+        video: "Видалити це відео?",
+        image: "Видалити це фото?",
+        audio: "Видалити цей трек?"
+      }[contentType];
+    
+      if (!window.confirm(confirmText)) return;
     
       try {
-        const response = await fetch('https://server.vidiai.top/delete_video.php', {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const response = await fetch(`${apiUrl}/api/delete_content.php`, { // Универсальный путь
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            video_id: videoId, 
+            content_id: id, 
+            content_type: contentType, // Сервер будет знать, из какой таблицы удалять
             telegram_id: tgUser?.id 
           })
         });
         
         const data = await response.json();
+        
         if (data.status === 'success') {
-          setDbVideos(prev => prev.filter(v => v.id !== videoId));
-        } else {
-          alert(data.message);
+          // Обновляем нужный стейт в зависимости от типа
+          if (contentType === 'video') setDbVideos(prev => prev.filter(v => v.id != id));
+          if (contentType === 'image') setDbImages(prev => prev.filter(i => i.id != id));
+          if (contentType === 'audio') setDbAudio(prev => prev.filter(a => a.id != id));
         }
       } catch (error) {
-        console.error("Помилка видалення:", error);
+        console.error(`Помилка видалення ${contentType}:`, error);
       }
     };
 
