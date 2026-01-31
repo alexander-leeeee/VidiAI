@@ -87,34 +87,35 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
-    setStatusMessage(""); 
-    setIsGenerating(false);
+    // 1. УБИРАЕМ лишние setIsGenerating(false) отсюда. 
+    // Если кнопка нажата, значит она уже была активна.
     
-    if (isWorking.current || isGenerating) return; // Мгновенная проверка
+    // Мгновенная блокировка через Ref, чтобы не было дабл-кликов
+    if (isWorking.current) return; 
+    
     if (currentCredits < currentCost) {
         setIsLowBalanceOpen(true);
         return;
     }
 
     const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
-    // Проверка: текст и фото теперь обязательны
     if (!prompt.trim() || !selectedImage) {
         alert(t.gen_label_image); 
         return;
     }
 
+    // Начинаем процесс
     isWorking.current = true; 
     setIsGenerating(true);
-    setStatusMessage("Завантаження фото...");
+    setStatusMessage("Завантаження фото..."); // Это само очистит старое сообщение "Успех"
 
     try {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-        let imageUrl = selectedImage.preview; // Создаем переменную один раз
+        let imageUrl = selectedImage.preview;
     
         if (selectedImage.data) {
-            // НОВОЕ ФОТО: Загружаем на сервер
             const formData = new FormData();
-            const imgResponse = await fetch(selectedImage.preview); // Не забудь эту часть для Blob!
+            const imgResponse = await fetch(selectedImage.preview);
             const blob = await imgResponse.blob();
             formData.append('photo', blob, `upload_${Date.now()}.png`);
 
@@ -123,25 +124,17 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                 body: formData 
             });
             const uploadData = await uploadRes.json();
-            imageUrl = uploadData.fileUrl; // Обновляем существующую imageUrl
+            imageUrl = uploadData.fileUrl;
         }
 
         setStatusMessage('Запуск генерації...');
 
-        // 2. Вызов диспетчера по ID шаблона
         const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
 
-        const tgId = tgUser?.id || 0;
-        if (tgId) {
-            // 1. Списываем в базе данных
-            // await deductCreditsInDb(tgId, currentCost);
-            // 2. Обновляем цифру на экране мгновенно
-            // if (setCredits) setCredits(prev => prev - currentCost);
-        }
-
-        // 3. Сохранение в твою БД
+        // Сохраняем в историю
         await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація", tgUser?.id || 0, imageUrl, aspectRatio);
 
+        // Уведомляем родителя (он сам спишет 15 кредитов визуально)
         onVideoGenerated({
             id: taskId,
             prompt,
@@ -150,9 +143,11 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         } as any, currentCost);
 
         setStatusMessage('Відео додано в чергу!');
-        setIsGenerating(false);
       
-        // 4. Переход в библиотеку через 1.5 сек
+        // Очищаем статус генерации, чтобы кнопка стала активной сразу
+        setIsGenerating(false);
+
+        // Переход в библиотеку
         setTimeout(() => {
             window.location.hash = '/library';
         }, 1500);
@@ -160,9 +155,10 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     } catch (error: any) {
         console.error("Ошибка:", error);
         setStatusMessage(`Помилка: ${error.message}`);
-        setIsGenerating(false);
+        setIsGenerating(false); // В случае ошибки тоже разблокируем
       } finally {
-      isWorking.current = false;
+        // ЭТО САМОЕ ВАЖНОЕ: всегда освобождаем поток
+        isWorking.current = false;
     }
   };
   
