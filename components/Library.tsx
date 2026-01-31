@@ -74,30 +74,33 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
       if (!window.confirm(confirmText)) return;
     
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const response = await fetch(`${apiUrl}/api/delete_content.php`, { // Универсальный путь
+        // Добавляем проверку: берем из env или используем прямую ссылку как запасную
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
+        
+        const response = await fetch(`${apiUrl}/api/delete_media.php`, { 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             content_id: id, 
-            content_type: contentType, // Сервер будет знать, из какой таблицы удалять
+            content_type: contentType,
             telegram_id: tgUser?.id 
           })
         });
-        
+    
         const data = await response.json();
-        
+    
         if (data.status === 'success') {
-          // Обновляем нужный стейт в зависимости от типа
+          // Обновляем нужный список в зависимости от типа
           if (contentType === 'video') setDbVideos(prev => prev.filter(v => v.id != id));
-          if (contentType === 'image') setDbImages(prev => prev.filter(i => i.id != id));
-          if (contentType === 'audio') setDbAudio(prev => prev.filter(a => a.id != id));
+          // Здесь потом добавишь фильтрацию для фото и музыки
+        } else {
+          alert(data.message || "Помилка видалення");
         }
       } catch (error) {
         console.error(`Помилка видалення ${contentType}:`, error);
       }
     };
-
+  
     const handleGenerateMore = (video: VideoItem) => {
       // Просто передаем всё видео целиком в App.tsx
       onReplayRequest?.(video);
