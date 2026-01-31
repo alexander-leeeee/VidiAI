@@ -152,6 +152,10 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
             window.location.hash = '/library';
         }, 1500);
 
+        setTimeout(() => {
+        setStatusMessage(""); 
+    }, 4000);
+
     } catch (error: any) {
         console.error("Ошибка:", error);
         setStatusMessage(`Помилка: ${error.message}`);
