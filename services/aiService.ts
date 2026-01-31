@@ -104,10 +104,10 @@ const templateActions: Record<string, (prompt: string, imageUrl: string) => Prom
 };
 
 // 2. Создаем одну универсальную функцию-диспетчер
-export const generateByTemplateId = async (templateId: string, prompt: string, imageUrl: string) => {
+export const generateByTemplateId = async (templateId: string, prompt: string, imageUrl: string, options?: any) => {
   // Ищем функцию по ID. Если ID нет в списке — берем стандартный generateTemplate2
   const action = templateActions[templateId] || generateTemplate2;
-  return await action(prompt, imageUrl);
+  return await action(prompt, imageUrl, options);
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
