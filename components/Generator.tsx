@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SparklesIcon, PhotoIcon, TrashIcon, CoinsIcon } from './Icons';
+import { SparklesIcon, PhotoIcon, TrashIcon, CoinsIcon, MusicIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
-import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, deductCreditsInDb } from '../services/aiService';
+import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId } from '../services/aiService';
 import LowBalanceModal from './LowBalanceModal';
+
+export type GeneratorMode = 'video' | 'image' | 'music';
 
 interface GeneratorProps {
   onVideoGenerated: (video: VideoItem) => void;
   lang: Language;
+  mode?: GeneratorMode;
   initialPrompt?: string;
   initialImage?: string | null;
   initialAspectRatio?: '16:9' | '9:16' | '1:1';
@@ -23,7 +26,7 @@ interface ImageFile {
 }
 
 const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.SetStateAction<number>> }> = 
-({ onVideoGenerated, lang, initialPrompt, initialImage, initialAspectRatio, templateId, setCredits, currentCredits, onGetMore }) => {
+({ onVideoGenerated, lang, mode = 'video', initialPrompt, initialImage, initialAspectRatio, templateId, setCredits, currentCredits, onGetMore }) => {
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -31,17 +34,19 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentCost = getCostByTemplateId(templateId);
   const [isLowBalanceOpen, setIsLowBalanceOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const isWorking = useRef(false);
+
+  // Определяем ID для стоимости: либо конкретный шаблон, либо "ручной" режим из меню
+  const effectiveTemplateId = templateId || `manual_${mode}`; 
+  const currentCost = getCostByTemplateId(effectiveTemplateId);
 
   useEffect(() => {
     setIsGenerating(false);
     setStatusMessage("");
-  }, [initialPrompt, initialImage, templateId]);
+    if (!initialPrompt) setPrompt("");
+  }, [initialPrompt, initialImage, templateId, mode]);
     
-  // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
     if (initialPrompt) {
       setPrompt(initialPrompt);
@@ -51,10 +56,12 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   useEffect(() => {
     if (initialImage) {
       setSelectedImage({
-        preview: initialImage, // URL из базы
+        preview: initialImage,
         data: '',
         mimeType: ''
       });
+    } else {
+      setSelectedImage(null);
     }
   }, [initialImage]);
 
@@ -70,10 +77,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        // Extract base64 data and mime type
-        // Data URL format: "data:image/png;base64,....."
         const matches = base64String.match(/^data:(.+);base64,(.+)$/);
-        
         if (matches) {
             setSelectedImage({
                 preview: base64String,
@@ -87,33 +91,31 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
-    // 1. УБИРАЕМ лишние setIsGenerating(false) отсюда. 
-    // Если кнопка нажата, значит она уже была активна.
-    
-    // Мгновенная блокировка через Ref, чтобы не было дабл-кликов
-    if (isWorking.current) return; 
-    
+    setStatusMessage(""); 
+    if (isWorking.current || isGenerating) return;
+
+    // Проверка: музыка не требует фото, фото/видео требуют
+    const needsImage = mode !== 'music';
+    if (!prompt.trim() || (needsImage && !selectedImage)) {
+        alert(mode === 'music' ? "Опишіть музику" : t.gen_label_image); 
+        return;
+    }
+
     if (currentCredits < currentCost) {
         setIsLowBalanceOpen(true);
         return;
     }
 
     const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
-    if (!prompt.trim() || !selectedImage) {
-        alert(t.gen_label_image); 
-        return;
-    }
-
-    // Начинаем процесс
     isWorking.current = true; 
     setIsGenerating(true);
-    setStatusMessage("Завантаження фото..."); // Это само очистит старое сообщение "Успех"
+    setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження фото...");
 
     try {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-        let imageUrl = selectedImage.preview;
+        let imageUrl = selectedImage?.preview || '';
     
-        if (selectedImage.data) {
+        if (needsImage && selectedImage?.data) {
             const formData = new FormData();
             const imgResponse = await fetch(selectedImage.preview);
             const blob = await imgResponse.blob();
@@ -129,141 +131,124 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
         setStatusMessage('Запуск генерації...');
 
-        const taskId = await generateByTemplateId(templateId || 'default', prompt, imageUrl);
+        const taskId = await generateByTemplateId(effectiveTemplateId, prompt, imageUrl);
 
-        // Сохраняем в историю
-        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : "Власна генерація", tgUser?.id || 0, imageUrl, aspectRatio);
+        const tgId = tgUser?.id || 0;
 
-        // Уведомляем родителя (он сам спишет 15 кредитов визуально)
+        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : `Власна (${mode})`, tgId, imageUrl, aspectRatio);
+
         onVideoGenerated({
             id: taskId,
             prompt,
             status: 'processing',
-            title: initialPrompt ? "Шаблон" : "Власна генерація"
+            title: initialPrompt ? "Шаблон" : `Власна (${mode})`
         } as any, currentCost);
 
-        setStatusMessage('Відео додано в чергу!');
-      
-        // Очищаем статус генерации, чтобы кнопка стала активной сразу
+        setStatusMessage('Додано в чергу!');
         setIsGenerating(false);
-
-        // Переход в библиотеку
+      
         setTimeout(() => {
             window.location.hash = '/library';
         }, 1500);
 
-        setTimeout(() => {
-        setStatusMessage(""); 
-    }, 4000);
-
     } catch (error: any) {
         console.error("Ошибка:", error);
         setStatusMessage(`Помилка: ${error.message}`);
-        setIsGenerating(false); // В случае ошибки тоже разблокируем
+        setIsGenerating(false);
       } finally {
-        // ЭТО САМОЕ ВАЖНОЕ: всегда освобождаем поток
-        isWorking.current = false;
+      isWorking.current = false;
     }
   };
+
+  // Динамические тексты заголовков
+  const getHeader = () => {
+    if (initialPrompt) return { title: "За шаблоном", sub: "Стиль налаштовано" };
+    switch(mode) {
+      case 'image': return { title: "Генерація фото", sub: "Опишіть ідею" };
+      case 'music': return { title: "Створення музики", sub: "Опишіть жанр та настрій" };
+      default: return { title: "Власне відео", sub: "Опишіть ідею та додайте фото" };
+    }
+  };
+
+  const header = getHeader();
   
   return (
     <div className="flex flex-col h-full px-4 pt-6 pb-24 max-w-md mx-auto w-full overflow-y-auto no-scrollbar">
       <div className="mb-6 text-center">
-        <div className="w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-purple-900/50">
-           <SparklesIcon />
+        <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-black/20 bg-gradient-to-tr 
+          ${mode === 'music' ? 'from-orange-500 to-yellow-400' : mode === 'image' ? 'from-blue-500 to-cyan-400' : 'from-primary to-secondary'}`}>
+           {mode === 'music' ? <MusicIcon className="w-8 h-8 text-white" /> : mode === 'image' ? <PhotoIcon className="w-8 h-8 text-white" /> : <SparklesIcon className="w-8 h-8 text-white" />}
         </div>
-        <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">
-          {initialPrompt ? "Создание по шаблону" : "Свободная генерация"}
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
-          {initialPrompt ? "Стиль уже настроен, просто добавь фото" : "Опиши свою идею и загрузи референс"}
-        </p>
+        <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{header.title}</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
       </div>
   
       <div className="space-y-6">
-          {/* Поле Prompt - показываем ТОЛЬКО если это свободная генерация */}
-          {!initialPrompt ? (
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_prompt}</label>
+          <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                  {mode === 'music' ? "Опис музики" : t.gen_label_prompt}
+                </label>
                 <textarea
                   value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={t.gen_placeholder}
+                  onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }}
+                  placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop, calm, piano..." : t.gen_placeholder}
                   className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 transition-all shadow-sm text-sm"
                   disabled={isGenerating}
                 />
-            </div>
-          ) : (
-            /* Если это шаблон, промпт скрыт, но работает "под капотом" */
-            <textarea value={prompt} className="hidden" readOnly />
-          )}
-  
-          {/* Image Upload - Всегда активно */}
-          <div className="space-y-2">
-             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_image}</label>
-             {!selectedImage ? (
-                 <div 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                 >
-                     <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2">
-                        <PhotoIcon />
-                     </div>
-                     <span className="text-sm font-medium">{t.gen_upload_text}</span>
-                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                 </div>
-             ) : (
-                 <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 group">
-                     <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
-                     <button 
-                        onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                        className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
-                     >
-                         <TrashIcon />
-                     </button>
-                 </div>
-             )}
           </div>
   
-          {/* Выбор формата - показываем ТОЛЬКО если это свободная генерация */}
-          {!initialPrompt && (
+          {mode !== 'music' && (
+            <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_image}</label>
+               {!selectedImage ? (
+                   <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                   >
+                       <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2">
+                          <PhotoIcon />
+                       </div>
+                       <span className="text-sm font-medium">{t.gen_upload_text}</span>
+                       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                   </div>
+               ) : (
+                   <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 group">
+                       <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
+                       <button 
+                          onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                          className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
+                       >
+                           <TrashIcon />
+                       </button>
+                   </div>
+               )}
+            </div>
+          )}
+  
+          {mode === 'video' && !initialPrompt && (
             <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_format}</label>
-                  <div className="grid grid-cols-3 gap-2"> {/* Поменяли на grid-cols-3 */}
-                  <button
-                    onClick={() => setAspectRatio('9:16')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      aspectRatio === '9:16' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
-                  >
-                    9:16
-                  </button>
-                  <button
-                    onClick={() => setAspectRatio('1:1')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      aspectRatio === '1:1' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
-                  >
-                    1:1
-                  </button>
-                  <button
-                    onClick={() => setAspectRatio('16:9')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      aspectRatio === '16:9' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
-                  >
-                    16:9
-                  </button>
+                  <div className="grid grid-cols-3 gap-2">
+                  {(['9:16', '1:1', '16:9'] as const).map((ratio) => (
+                    <button
+                      key={ratio}
+                      onClick={() => setAspectRatio(ratio)}
+                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${
+                        aspectRatio === ratio ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                      }`}
+                    >
+                      {ratio}
+                    </button>
+                  ))}
                 </div>
               </div>
           )}
   
-          {/* Кнопка генерации */}
           <button
               onClick={handleGenerate}
-              disabled={isGenerating || (!prompt.trim() && !selectedImage)}
+              disabled={isGenerating}
               className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${
-              isGenerating || (!prompt.trim() && !selectedImage)
+              isGenerating
                   ? 'bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40'
               }`}
@@ -274,7 +259,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                 <span className="flex items-center gap-2">
                   {t.gen_btn_generate} 
                   <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
-                    {/* Используем наш компонент вместо эмодзи */}
                     <CoinsIcon className="w-4 h-4 text-yellow-400" />
                     <span className="text-sm font-bold">
                       {currentCost}
