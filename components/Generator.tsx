@@ -96,25 +96,24 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     setStatusMessage("Завантаження фото...");
 
     try {
-        let imageUrl = selectedImage.preview;
-
-        // Если это НОВАЯ картинка (base64), а не старый URL
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
+        let imageUrl = selectedImage.preview; // Создаем переменную один раз
+    
         if (selectedImage.data) {
-            setStatusMessage("Завантаження фото...");
+            // НОВОЕ ФОТО: Загружаем на сервер
             const formData = new FormData();
-            const imgResponse = await fetch(selectedImage.preview);
+            const imgResponse = await fetch(selectedImage.preview); // Не забудь эту часть для Blob!
             const blob = await imgResponse.blob();
             formData.append('photo', blob, `upload_${Date.now()}.png`);
 
-            const uploadRes = await fetch('https://server.vidiai.top/api/save_file.php', {
-                method: 'POST', body: formData
+            const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { 
+                method: 'POST', 
+                body: formData 
             });
             const uploadData = await uploadRes.json();
-            if (uploadData.status !== 'success') throw new Error('Помилка завантаження');
-            imageUrl = uploadData.fileUrl;
+            imageUrl = uploadData.fileUrl; // Обновляем существующую imageUrl
         }
 
-        const imageUrl = uploadData.fileUrl;
         setStatusMessage('Запуск генерації...');
 
         // 2. Вызов диспетчера по ID шаблона
