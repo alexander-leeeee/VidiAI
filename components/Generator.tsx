@@ -134,7 +134,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         const tgId = tgUser?.id || 0;
         if (tgId) {
             // 1. Списываем в базе данных
-            await deductCreditsInDb(tgId, currentCost);
+            // await deductCreditsInDb(tgId, currentCost);
             // 2. Обновляем цифру на экране мгновенно
             if (setCredits) setCredits(prev => prev - currentCost);
         }
