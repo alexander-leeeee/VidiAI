@@ -36,13 +36,9 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // При каждом открытии страницы генерации — чистим всё
     setIsGenerating(false);
-    setIsProcessing(false);
     setStatusMessage("");
-    // Если нужно сбросить и картинку, раскомментируй ниже:
-    // setSelectedImage(null); 
-  }, []); // Пустой массив значит "сработать один раз при монтировании"
+  }, [initialPrompt]); // Сброс при каждом новом шаблоне
     
   // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
