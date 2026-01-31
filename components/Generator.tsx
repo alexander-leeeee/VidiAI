@@ -41,7 +41,9 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [videoMethod, setVideoMethod] = useState<'text' | 'image'>('image');
 
   // Определяем ID для стоимости: либо конкретный шаблон, либо "ручной" режим из меню
-  const effectiveTemplateId = templateId || (mode === 'video' ? `sora_${soraDuration}` : `manual_${mode}`);
+  const effectiveTemplateId = (!templateId || templateId === 'default') 
+  ? (mode === 'video' ? `sora_${soraDuration}` : `manual_${mode}`) 
+  : templateId;
   const currentCost = getCostByTemplateId(effectiveTemplateId);
 
   useEffect(() => {
