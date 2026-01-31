@@ -87,6 +87,9 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
+    setStatusMessage(""); 
+    setIsGenerating(false);
+    
     if (isWorking.current || isGenerating) return; // Мгновенная проверка
     if (currentCredits < currentCost) {
         setIsLowBalanceOpen(true);
@@ -147,6 +150,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         } as any, currentCost);
 
         setStatusMessage('Відео додано в чергу!');
+        setIsGenerating(false);
       
         // 4. Переход в библиотеку через 1.5 сек
         setTimeout(() => {
