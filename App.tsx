@@ -10,6 +10,8 @@ import { CoinsIcon } from './components/Icons';
 import { Tab, VideoItem, Language, Theme } from './types';
 import BrowserWarningOverlay from './components/BrowserWarningOverlay';
 import { syncUserWithDb } from './services/aiService';
+import ActionMenu from './components/ActionMenu';
+import { GeneratorMode } from './components/Generator';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.SHOWCASE);
@@ -26,6 +28,7 @@ const App: React.FC = () => {
   const [replayImage, setReplayImage] = useState<string | null>(null);
   const [replayAspectRatio, setReplayAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('9:16');
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [generatorMode, setGeneratorMode] = useState<GeneratorMode>('video');
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -135,11 +138,12 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: Tab) => {
-    // Если пользователь нажимает на вкладку CREATE (центральный "+")
     if (tab === Tab.CREATE) {
-      setTemplatePrompt(''); // Очищаем промпт, чтобы открылась "Свободная генерация"
+      // Вместо перехода сразу открываем меню
+      setIsActionMenuOpen(true);
+    } else {
+      setActiveTab(tab);
     }
-    setActiveTab(tab);
   };
 
   const handleReplayRequest = (video: any) => {
@@ -191,9 +195,10 @@ const App: React.FC = () => {
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.CREATE ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Generator 
-                key={`${templatePrompt}-${replayImage}`}
+                key={`${templatePrompt}-${replayImage}-${generatorMode}`}
                 onVideoGenerated={handleVideoGenerated} 
                 lang={lang} 
+                mode={generatorMode}
                 initialPrompt={templatePrompt}
                 initialImage={replayImage} // Передаем картинку
                 initialAspectRatio={replayAspectRatio} // Передаем формат
@@ -227,7 +232,17 @@ const App: React.FC = () => {
       {isBrowserWarningOpen && (
         <BrowserWarningOverlay lang={lang} welcomeAmount={welcomeCredits} />
       )}
-      
+
+      <ActionMenu 
+        isOpen={isActionMenuOpen} 
+        onClose={() => setIsActionMenuOpen(false)} 
+        onSelect={(mode) => {
+          setGeneratorMode(mode);   // Устанавливаем выбранный режим
+          setTemplatePrompt('');     // Очищаем промпт (свободная генерация)
+          setSelectedTemplateId(`manual_${mode}`); // Ставим ID для цены
+          setActiveTab(Tab.CREATE);  // Переходим в генератор
+        }} 
+      />
     </div>
   );
 };
