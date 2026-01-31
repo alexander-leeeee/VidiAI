@@ -206,23 +206,27 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       </div>
   
       <div className="space-y-6">
-          {/* 1. ВЫБОР МЕТОДА (Только для свободной генерации видео) */}
+          {/* 1. Метод генерації с фиолетовым выделением */}
           {mode === 'video' && !initialPrompt && (
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                 <button
                   onClick={() => setVideoMethod('image')}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                    videoMethod === 'image' ? 'bg-white dark:bg-surface shadow-sm dark:text-white' : 'text-gray-400'
+                  className={`py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    videoMethod === 'image' 
+                      ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/20' 
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                   }`}
                 >
                   З фото
                 </button>
                 <button
                   onClick={() => setVideoMethod('text')}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                    videoMethod === 'text' ? 'bg-white dark:bg-surface shadow-sm dark:text-white' : 'text-gray-400'
+                  className={`py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    videoMethod === 'text' 
+                      ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/20' 
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                   }`}
                 >
                   Тільки текст
