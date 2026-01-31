@@ -65,6 +65,13 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
 
     // Добавляем параметр contentType: 'video' | 'image' | 'audio'
     const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' = 'video') => {
+
+      // ДОБАВЛЯЕМ СЮДА:
+      console.log("ОТЛАДКА УДАЛЕНИЯ:");
+      console.log("ID контента:", id);
+      console.log("ID пользователя из Telegram:", tgUser?.id);
+      console.log("Тип контента:", contentType);
+      
       const confirmText = {
         video: "Видалити це відео?",
         image: "Видалити це фото?",
