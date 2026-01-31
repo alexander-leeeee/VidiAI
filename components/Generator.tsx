@@ -33,7 +33,17 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentCost = getCostByTemplateId(templateId);
   const [isLowBalanceOpen, setIsLowBalanceOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  useEffect(() => {
+    // При каждом открытии страницы генерации — чистим всё
+    setIsGenerating(false);
+    setIsProcessing(false);
+    setStatusMessage("");
+    // Если нужно сбросить и картинку, раскомментируй ниже:
+    // setSelectedImage(null); 
+  }, []); // Пустой массив значит "сработать один раз при монтировании"
+    
   // Update prompt when initialPrompt changes (e.g. from template)
   useEffect(() => {
     if (initialPrompt) {
@@ -80,11 +90,12 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   };
 
   const handleGenerate = async () => {
+    if (isProcessing || isGenerating) return; // Если уже крутится — выходим
     if (currentCredits < currentCost) {
         setIsLowBalanceOpen(true);
         return;
     }
-    
+
     const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
     // Проверка: текст и фото теперь обязательны
     if (!prompt.trim() || !selectedImage) {
@@ -92,6 +103,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         return;
     }
 
+    setIsProcessing(true);
     setIsGenerating(true);
     setStatusMessage("Завантаження фото...");
 
@@ -147,7 +159,9 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     } catch (error: any) {
         console.error("Ошибка:", error);
         setStatusMessage(`Помилка: ${error.message}`);
-        setIsGenerating(false); 
+        setIsGenerating(false);
+      } finally {
+      setIsProcessing(false);
     }
   };
   
