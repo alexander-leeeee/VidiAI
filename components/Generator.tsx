@@ -217,240 +217,171 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const header = getHeader();
   
   return (
-    <div className="flex flex-col h-full px-4 pt-6 pb-24 max-w-md mx-auto w-full overflow-y-auto no-scrollbar">
-      <div className="mb-6 text-center">
-        <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-black/20 bg-gradient-to-tr 
-          ${mode === 'music' ? 'from-orange-500 to-yellow-400' : mode === 'image' ? 'from-blue-500 to-cyan-400' : 'from-primary to-secondary'}`}>
-           {mode === 'music' ? <MusicIcon className="w-8 h-8 text-white" /> : mode === 'image' ? <PhotoIcon className="w-8 h-8 text-white" /> : <SparklesIcon className="w-8 h-8 text-white" />}
-        </div>
-        <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{header.title}</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
-      </div>
-
-      <div className="space-y-6">
-          {/* 1. НОВЫЙ ТОП: Выбор качества для Nano Banana (только в режиме image) */}
-          {mode === 'image' && (
-            <div className="space-y-2 animate-in fade-in duration-300">
-              <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
-              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-                {[
-                  { id: 'standard', label: 'Базова' },
-                  { id: 'pro', label: 'Висока' },
-                  { id: 'edit', label: 'Стилізація' }
-                ].map((q) => (
-                  <button
-                    key={q.id}
-                    onClick={() => setImageQuality(q.id as any)}
-                    className={`py-2.5 rounded-xl text-[10px] font-bold transition-all duration-200 ${
-                      imageQuality === q.id 
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/20' 
-                        : 'text-gray-400 hover:text-gray-200'
-                    }`}
-                  >
-                    {q.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-      <div className="space-y-6">
-          {/* 1. Метод генерації с фиолетовым выделением */}
-          {mode === 'video' && !initialPrompt && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-                <button
-                  onClick={() => setVideoMethod('image')}
-                  className={`py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
-                    videoMethod === 'image' 
-                      ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/20' 
-                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                  }`}
-                >
-                  З фото
-                </button>
-                <button
-                  onClick={() => setVideoMethod('text')}
-                  className={`py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
-                    videoMethod === 'text' 
-                      ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/20' 
-                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                  }`}
-                >
-                  Тільки текст
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 2. ЗАГРУЗКА ФОТО (Если выбран метод "З фото" или это режим фото) */}
-          {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
-            <div className="space-y-2">
-               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
-                 {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
-               </label>
-               {!selectedImage ? (
-                   <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                   >
-                       <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2">
-                          <PhotoIcon />
-                       </div>
-                       <span className="text-sm font-medium">{t.gen_upload_text}</span>
-                       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                   </div>
-               ) : (
-                   <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 group">
-                       <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
-                       <button 
-                          onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
-                          className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors backdrop-blur-sm"
-                       >
-                           <TrashIcon />
-                       </button>
-                   </div>
-               )}
-            </div>
-          )}
-
-          {/* 3. ПОЛЕ ТЕКСТА (Prompt) */}
-          <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
-                {mode === 'music' ? "Опис музики" : t.gen_label_prompt}
-              </label>
-              <textarea
-                value={prompt}
-                onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }}
-                placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop, calm, piano..." : t.gen_placeholder}
-                className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 transition-all shadow-sm text-sm"
-                disabled={isGenerating}
-              />
+      <div className="flex flex-col h-full px-4 pt-6 pb-24 max-w-md mx-auto w-full overflow-y-auto no-scrollbar">
+        {/* Header */}
+        <div className="mb-6 text-center">
+          <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-black/20 bg-gradient-to-tr 
+            ${mode === 'music' ? 'from-orange-500 to-yellow-400' : mode === 'image' ? 'from-blue-500 to-cyan-400' : 'from-primary to-secondary'}`}>
+             {mode === 'music' ? <MusicIcon className="w-8 h-8 text-white" /> : mode === 'image' ? <PhotoIcon className="w-8 h-8 text-white" /> : <SparklesIcon className="w-8 h-8 text-white" />}
           </div>
+          <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{header.title}</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
+        </div>
   
-          {/* 4. ТЕХНИЧЕСКИЕ НАСТРОЙКИ (Длительность и формат видео) */}
-          {mode === 'video' && !initialPrompt && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['10', '15'].map((sec) => (
+        <div className="space-y-6">
+            {/* 1. ТОП: Выбор качества для Nano Banana (только в режиме image) */}
+            {mode === 'image' && (
+              <div className="space-y-2 animate-in fade-in duration-300">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
+                <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                  {[
+                    { id: 'standard', label: 'Базова' },
+                    { id: 'pro', label: 'Висока' },
+                    { id: 'edit', label: 'Стилізація' }
+                  ].map((q) => (
                     <button
-                      key={sec}
-                      onClick={() => setSoraDuration(sec as '10' | '15')}
-                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                        soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
+                      key={q.id}
+                      onClick={() => setImageQuality(q.id as any)}
+                      className={`py-2.5 rounded-xl text-[10px] font-bold transition-all duration-200 ${
+                        imageQuality === q.id 
+                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md' 
+                          : 'text-gray-400'
                       }`}
                     >
-                      {sec} сек
+                      {q.label}
                     </button>
                   ))}
                 </div>
               </div>
-
+            )}
+  
+            {/* 2. Метод генерации для видео */}
+            {mode === 'video' && !initialPrompt && (
               <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                   <button
-                    onClick={() => setSoraLayout('portrait')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
+                    onClick={() => setVideoMethod('image')}
+                    className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'image' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
                   >
-                    Вертикальне (9:16)
+                    З фото
                   </button>
                   <button
-                    onClick={() => setSoraLayout('landscape')}
-                    className={`py-3 rounded-xl border text-xs font-bold transition-all ${
-                      soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'
-                    }`}
+                    onClick={() => setVideoMethod('text')}
+                    className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
                   >
-                    Горизонтальне (16:9)
+                    Тільки текст
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-
-          {mode === 'image' && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          
-              {/* 2. Сетка соотношений сторон (все 11 вариантов) */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {['1:1', '9:16', '16:9', '3:4', '4:3', '3:2', '2:3', '5:4', '4:5', '21:9', 'auto'].map((ratio) => (
-                    <button
-                      key={ratio}
-                      onClick={() => setAspectRatio(ratio as any)}
-                      className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${
-                        aspectRatio === ratio 
-                          ? 'bg-primary border-primary text-white shadow-sm' 
-                          : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-400'
-                      }`}
-                    >
-                      {ratio}
-                    </button>
-                  ))}
-                </div>
+            )}
+  
+            {/* 3. ЗАГРУЗКА ФОТО (Только для Edit или Видео-с-фото) */}
+            {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
+              <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                   {mode === 'image' ? "Фото для стилізації" : "Вихідне фото"}
+                 </label>
+                 {!selectedImage ? (
+                     <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer">
+                         <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2"><PhotoIcon /></div>
+                         <span className="text-sm font-medium">{t.gen_upload_text}</span>
+                         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                     </div>
+                 ) : (
+                     <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 group">
+                         <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
+                         <button onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors"><TrashIcon /></button>
+                     </div>
+                 )}
               </div>
-          
-              {/* 3. Формат файла */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Формат файлу</label>
-                <div className="flex gap-6 p-1">
-                  {['png', 'jpeg'].map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFileFormat(f as any)}
-                      className="flex items-center gap-2 group cursor-pointer"
-                    >
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        fileFormat === f ? 'border-primary bg-primary' : 'border-gray-300 dark:border-white/20'
-                      }`}>
-                        {fileFormat === f && <div className="w-2 h-2 bg-white rounded-full" />}
-                      </div>
-                      <span className={`text-sm font-medium uppercase ${fileFormat === f ? 'text-primary' : 'text-gray-400'}`}>
-                        {f}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-          
+            )}
+  
+            {/* 4. ПОЛЕ ТЕКСТА */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                  {mode === 'music' ? "Опис музики" : t.gen_label_prompt}
+                </label>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }}
+                  placeholder={mode === 'music' ? "Напр.: Lo-fi hip hop..." : t.gen_placeholder}
+                  className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 text-sm"
+                  disabled={isGenerating}
+                />
             </div>
-          )}
-
-          {/* 5. КНОПКА ГЕНЕРАЦИИ */}
-          <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${
-              isGenerating
-                  ? 'bg-gray-200 dark:bg-neutral-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40'
-              }`}
-          >
-              {isGenerating ? (
-                <span>{t.gen_btn_generating}</span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  {t.gen_btn_generate} 
-                  <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
-                    <CoinsIcon className="w-4 h-4 text-yellow-400" />
-                    <span className="text-sm font-bold">{currentCost}</span>
+    
+            {/* 5. НАСТРОЙКИ ВИДЕО (Sora) */}
+            {mode === 'video' && !initialPrompt && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['10', '15'].map((sec) => (
+                      <button key={sec} onClick={() => setSoraDuration(sec as '10' | '15')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>{sec} сек</button>
+                    ))}
                   </div>
-                </span>
-              )}
-          </button>
-
-          {statusMessage && (
-              <div className="p-4 rounded-xl text-center text-sm bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5">
-                {statusMessage}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => setSoraLayout('portrait')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>Вертикальне</button>
+                    <button onClick={() => setSoraLayout('landscape')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>Горизонтальне</button>
+                  </div>
+                </div>
               </div>
-          )}
+            )}
+  
+            {/* 6. НАСТРОЙКИ ФОТО (Nano Banana) */}
+            {mode === 'image' && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['1:1', '9:16', '16:9', '3:4', '4:3', '3:2', '2:3', '5:4', '4:5', '21:9', 'auto'].map((ratio) => (
+                      <button key={ratio} onClick={() => setAspectRatio(ratio)} className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${aspectRatio === ratio ? 'bg-primary border-primary text-white shadow-sm' : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-400'}`}>{ratio}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium dark:text-gray-300 ml-1">Формат файлу</label>
+                  <div className="flex gap-6 p-1">
+                    {['png', 'jpeg'].map((f) => (
+                      <button key={f} onClick={() => setFileFormat(f as any)} className="flex items-center gap-2 cursor-pointer">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${fileFormat === f ? 'border-primary bg-primary' : 'border-gray-300 dark:border-white/20'}`}>{fileFormat === f && <div className="w-2 h-2 bg-white rounded-full" />}</div>
+                        <span className={`text-sm font-medium uppercase ${fileFormat === f ? 'text-primary' : 'text-gray-400'}`}>{f}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+  
+            {/* 7. КНОПКА ГЕНЕРАЦИИ */}
+            <button
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${isGenerating ? 'bg-neutral-800 text-gray-500' : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40'}`}
+            >
+                {isGenerating ? <span>{t.gen_btn_generating}</span> : (
+                  <span className="flex items-center gap-2">
+                    {t.gen_btn_generate} 
+                    <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-lg">
+                      <CoinsIcon className="w-4 h-4 text-yellow-400" />
+                      <span className="text-sm font-bold">{currentCost}</span>
+                    </div>
+                  </span>
+                )}
+            </button>
+  
+            {statusMessage && (
+                <div className="p-4 rounded-xl text-center text-sm bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5">{statusMessage}</div>
+            )}
+        </div>
+        
+        <LowBalanceModal isOpen={isLowBalanceOpen} onClose={() => setIsLowBalanceOpen(false)} balance={currentCredits} lang={lang} onGetMore={onGetMore} />
       </div>
+    );
       
       <LowBalanceModal 
         isOpen={isLowBalanceOpen}
