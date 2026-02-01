@@ -40,10 +40,22 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [soraLayout, setSoraLayout] = useState<'portrait' | 'landscape'>('portrait');
   const [videoMethod, setVideoMethod] = useState<'text' | 'image'>('image');
 
-  // Определяем ID для стоимости: либо конкретный шаблон, либо "ручной" режим из меню
-  const effectiveTemplateId = (!templateId || templateId === 'default') 
-  ? (mode === 'video' ? `sora_${soraDuration}` : `manual_${mode}`) 
-  : templateId;
+  // 1. Сначала определяем, какой ID использовать
+  const getDynamicId = () => {
+    // Если мы пришли из конкретного шаблона (не дефолтного), используем его ID
+    if (templateId && templateId !== 'default') return templateId;
+    
+    // Иначе формируем ID на основе текущих настроек
+    if (mode === 'video') return `sora_${soraDuration}`;
+    return `manual_${mode}`;
+  };
+
+  const effectiveTemplateId = getDynamicId();
+  const currentCost = getCostByTemplateId(effectiveTemplateId);
+
+  // Добавь это для теста, потом удалишь:
+  console.log("Mode:", mode, "Duration:", soraDuration, "ID:", effectiveTemplateId, "Cost:", currentCost);
+  
   const currentCost = getCostByTemplateId(effectiveTemplateId);
 
   useEffect(() => {
