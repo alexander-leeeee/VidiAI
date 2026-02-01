@@ -239,7 +239,7 @@ const App: React.FC = () => {
         onSelect={(mode) => {
           setGeneratorMode(mode);   // Устанавливаем выбранный режим
           setTemplatePrompt('');     // Очищаем промпт (свободная генерация)
-          setSelectedTemplateId(`manual_${mode}`); // Ставим ID для цены
+          setSelectedTemplateId('default');
           setActiveTab(Tab.CREATE);  // Переходим в генератор
         }} 
       />
