@@ -42,23 +42,23 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
   // 1. Сначала определяем, какой ID использовать
   const getDynamicId = () => {
-    // 1. Если это реальный шаблон (не дефолт), используем его
+    // 1. Если это конкретный шаблон из Showcase (кроме дефолта), используем его
     if (templateId && templateId !== 'default') return templateId;
     
-    // 2. Если мы в режиме видео (даже если mode пришел как 'manual_video' или похожий)
-    if (mode === 'video') {
+    // 2. Если режим содержит слово 'video' (исправляет проблему с manual_video)
+    if (mode === 'video' || String(mode).includes('video')) {
       return `sora_${soraDuration}`;
     }
     
-    // 3. Для всех остальных режимов (image, music)
+    // 3. Для остальных режимов
     return `manual_${mode}`;
   };
 
   const effectiveTemplateId = getDynamicId();
   const currentCost = getCostByTemplateId(effectiveTemplateId);
 
-  // Добавь это для теста, потом удалишь:
-  console.log("Mode:", mode, "Duration:", soraDuration, "ID:", effectiveTemplateId, "Cost:", currentCost);
+  // Оставляем лог, чтобы убедиться, что manual_video побежден
+  console.log("FINAL CHECK -> Mode:", mode, "ID:", effectiveTemplateId, "Cost:", currentCost);
 
   useEffect(() => {
     setIsGenerating(false);
