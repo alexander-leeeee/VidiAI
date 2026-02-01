@@ -40,21 +40,20 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [soraLayout, setSoraLayout] = useState<'portrait' | 'landscape'>('portrait');
   const [videoMethod, setVideoMethod] = useState<'text' | 'image'>('image');
 
-  // 1. Сначала определяем, какой ID использовать
-  const getDynamicId = () => {
-    // 1. Если это конкретный шаблон из Showcase (кроме дефолта), используем его
+  // Определяем ID для стоимости
+  const effectiveTemplateId = (() => {
+    // 1. Если это конкретный шаблон (напр. '1', '2'), используем его
     if (templateId && templateId !== 'default') return templateId;
     
-    // 2. Если режим содержит слово 'video' (исправляет проблему с manual_video)
-    if (mode === 'video' || String(mode).includes('video')) {
+    // 2. Если это ЛЮБОЕ видео (ручное или из меню)
+    if (mode === 'video' || mode === 'manual_video') {
       return `sora_${soraDuration}`;
     }
     
-    // 3. Для остальных режимов
+    // 3. Для всего остального (image, music)
     return `manual_${mode}`;
-  };
+  })();
 
-  const effectiveTemplateId = getDynamicId();
   const currentCost = getCostByTemplateId(effectiveTemplateId);
 
   // Оставляем лог, чтобы убедиться, что manual_video побежден
