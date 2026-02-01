@@ -29,9 +29,14 @@ export const TEMPLATE_COSTS: Record<string, number> = {
   '2': 10,            // Видео 5 сек
   
   // НОВЫЕ РУЧНЫЕ РЕЖИМЫ
-  'manual_image': 5,  // Генерация фото (обычно дешевле)
   'manual_music': 10, // Генерация музыки
 
+  // Изображения
+  'image_standard': 5,
+  'image_pro': 10,
+  'image_edit': 15,
+  'default': 15,
+    
   // Цены для Sora 2 (примерные)
   'sora_10': 30, // 10 секунд
   'sora_15': 45, // 15 секунд
