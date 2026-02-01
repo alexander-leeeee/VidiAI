@@ -39,18 +39,26 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [soraDuration, setSoraDuration] = useState<'10' | '15'>('10');
   const [soraLayout, setSoraLayout] = useState<'portrait' | 'landscape'>('portrait');
   const [videoMethod, setVideoMethod] = useState<'text' | 'image'>('image');
+  const [imageQuality, setImageQuality] = useState<'standard' | 'pro' | 'edit'>('standard');
+  const [fileFormat, setFileFormat] = useState<'png' | 'jpeg'>('png');
+  const [aspectRatio, setAspectRatio] = useState<string>('1:1');
 
   // Определяем ID для стоимости
   const effectiveTemplateId = (() => {
-    // 1. Если это конкретный шаблон (напр. '1', '2'), используем его
+    // 1. Если это конкретный шаблон из Showcase
     if (templateId && templateId !== 'default') return templateId;
     
-    // 2. Если это ЛЮБОЕ видео (ручное или из меню)
+    // 2. Видео (Sora 10/15)
     if (mode === 'video' || mode === 'manual_video') {
       return `sora_${soraDuration}`;
     }
     
-    // 3. Для всего остального (image, music)
+    // 3. НОВОЕ: Фото (Nano Banana Standard/Pro/Edit)
+    if (mode === 'image') {
+      return `image_${imageQuality}`;
+    }
+    
+    // 4. Музыка и остальное
     return `manual_${mode}`;
   })();
 
@@ -336,6 +344,79 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {mode === 'image' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              
+              {/* 1. Выбор режима качества */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
+                <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                  {[
+                    { id: 'standard', label: 'Базова' },
+                    { id: 'pro', label: 'Висока' },
+                    { id: 'edit', label: 'Стилізація' }
+                  ].map((q) => (
+                    <button
+                      key={q.id}
+                      onClick={() => setImageQuality(q.id as any)}
+                      className={`py-2.5 rounded-xl text-[10px] font-bold transition-all duration-200 ${
+                        imageQuality === q.id 
+                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/20' 
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+          
+              {/* 2. Сетка соотношений сторон (все 11 вариантов) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['1:1', '9:16', '16:9', '3:4', '4:3', '3:2', '2:3', '5:4', '4:5', '21:9', 'auto'].map((ratio) => (
+                    <button
+                      key={ratio}
+                      onClick={() => setAspectRatio(ratio as any)}
+                      className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${
+                        aspectRatio === ratio 
+                          ? 'bg-primary border-primary text-white shadow-sm' 
+                          : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-400'
+                      }`}
+                    >
+                      {ratio}
+                    </button>
+                  ))}
+                </div>
+              </div>
+          
+              {/* 3. Формат файла */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-300 ml-1">Формат файлу</label>
+                <div className="flex gap-6 p-1">
+                  {['png', 'jpeg'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFileFormat(f as any)}
+                      className="flex items-center gap-2 group cursor-pointer"
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        fileFormat === f ? 'border-primary bg-primary' : 'border-gray-300 dark:border-white/20'
+                      }`}>
+                        {fileFormat === f && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                      <span className={`text-sm font-medium uppercase ${fileFormat === f ? 'text-primary' : 'text-gray-400'}`}>
+                        {f}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+          
             </div>
           )}
 
