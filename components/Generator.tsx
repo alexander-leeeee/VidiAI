@@ -258,7 +258,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
           )}
 
           {/* 2. ЗАГРУЗКА ФОТО (Если выбран метод "З фото" или это режим фото) */}
-          {(mode === 'image' || (mode === 'video' && videoMethod === 'image')) && (
+          {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
             <div className="space-y-2">
                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
                  {mode === 'image' ? "Референс (необов'язково)" : "Вихідне фото"}
