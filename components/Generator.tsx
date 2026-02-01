@@ -379,19 +379,15 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
             )}
         </div>
         
-        <LowBalanceModal isOpen={isLowBalanceOpen} onClose={() => setIsLowBalanceOpen(false)} balance={currentCredits} lang={lang} onGetMore={onGetMore} />
+        <LowBalanceModal 
+          isOpen={isLowBalanceOpen} 
+          onClose={() => setIsLowBalanceOpen(false)} 
+          balance={currentCredits} 
+          lang={lang} 
+          onGetMore={onGetMore} 
+        />
       </div>
     );
-      
-      <LowBalanceModal 
-        isOpen={isLowBalanceOpen}
-        onClose={() => setIsLowBalanceOpen(false)}
-        balance={currentCredits}
-        lang={lang}
-        onGetMore={onGetMore}
-      />
-    </div>
-  );
 };
 
 export default Generator;
