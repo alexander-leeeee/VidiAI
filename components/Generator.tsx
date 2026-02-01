@@ -55,8 +55,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
   // Добавь это для теста, потом удалишь:
   console.log("Mode:", mode, "Duration:", soraDuration, "ID:", effectiveTemplateId, "Cost:", currentCost);
-  
-  const currentCost = getCostByTemplateId(effectiveTemplateId);
 
   useEffect(() => {
     setIsGenerating(false);
