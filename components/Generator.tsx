@@ -226,7 +226,34 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         <h2 className="text-2xl font-bold dark:text-white text-gray-900 mb-2">{header.title}</h2>
         <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
       </div>
-  
+
+      <div className="space-y-6">
+          {/* 1. НОВЫЙ ТОП: Выбор качества для Nano Banana (только в режиме image) */}
+          {mode === 'image' && (
+            <div className="space-y-2 animate-in fade-in duration-300">
+              <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
+              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                {[
+                  { id: 'standard', label: 'Базова' },
+                  { id: 'pro', label: 'Висока' },
+                  { id: 'edit', label: 'Стилізація' }
+                ].map((q) => (
+                  <button
+                    key={q.id}
+                    onClick={() => setImageQuality(q.id as any)}
+                    className={`py-2.5 rounded-xl text-[10px] font-bold transition-all duration-200 ${
+                      imageQuality === q.id 
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/20' 
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
       <div className="space-y-6">
           {/* 1. Метод генерації с фиолетовым выделением */}
           {mode === 'video' && !initialPrompt && (
@@ -348,30 +375,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
           {mode === 'image' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              
-              {/* 1. Выбор режима качества */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
-                <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-                  {[
-                    { id: 'standard', label: 'Базова' },
-                    { id: 'pro', label: 'Висока' },
-                    { id: 'edit', label: 'Стилізація' }
-                  ].map((q) => (
-                    <button
-                      key={q.id}
-                      onClick={() => setImageQuality(q.id as any)}
-                      className={`py-2.5 rounded-xl text-[10px] font-bold transition-all duration-200 ${
-                        imageQuality === q.id 
-                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/20' 
-                          : 'text-gray-400 hover:text-gray-200'
-                      }`}
-                    >
-                      {q.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
           
               {/* 2. Сетка соотношений сторон (все 11 вариантов) */}
               <div className="space-y-2">
