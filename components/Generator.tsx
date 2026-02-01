@@ -42,11 +42,15 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
   // 1. Сначала определяем, какой ID использовать
   const getDynamicId = () => {
-    // Если мы пришли из конкретного шаблона (не дефолтного), используем его ID
+    // 1. Если это реальный шаблон (не дефолт), используем его
     if (templateId && templateId !== 'default') return templateId;
     
-    // Иначе формируем ID на основе текущих настроек
-    if (mode === 'video') return `sora_${soraDuration}`;
+    // 2. Если мы в режиме видео (даже если mode пришел как 'manual_video' или похожий)
+    if (mode === 'video') {
+      return `sora_${soraDuration}`;
+    }
+    
+    // 3. Для всех остальных режимов (image, music)
     return `manual_${mode}`;
   };
 
