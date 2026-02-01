@@ -30,7 +30,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const t = getTranslation(lang);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<'16:9' | '9:16' | '1:1'>('9:16');
+  const [aspectRatio, setAspectRatio] = useState<string>('9:16');
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,7 +41,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [videoMethod, setVideoMethod] = useState<'text' | 'image'>('image');
   const [imageQuality, setImageQuality] = useState<'standard' | 'pro' | 'edit'>('standard');
   const [fileFormat, setFileFormat] = useState<'png' | 'jpeg'>('png');
-  const [aspectRatio, setAspectRatio] = useState<string>('1:1');
 
   // Определяем ID для стоимости
   const effectiveTemplateId = (() => {
