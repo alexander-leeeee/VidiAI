@@ -301,8 +301,15 @@ return (
             <div className="space-y-4 bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border border-gray-200 dark:border-white/10">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium dark:text-gray-300">З вокалом</label>
-                <button onClick={() => setHasVocals(!hasVocals)} className={`w-10 h-5 rounded-full transition-all relative ${hasVocals ? 'bg-orange-500' : 'bg-gray-300 dark:bg-white/20'}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${hasVocals ? 'left-5.5' : 'left-0.5'}`} />
+                <button 
+                  onClick={() => setHasVocals(!hasVocals)}
+                  className={`w-11 h-6 rounded-full transition-all relative duration-300 ${
+                    hasVocals ? 'bg-orange-500' : 'bg-gray-300 dark:bg-white/20'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${
+                    hasVocals ? 'left-6' : 'left-1'
+                  }`} />
                 </button>
               </div>
               {hasVocals && (
