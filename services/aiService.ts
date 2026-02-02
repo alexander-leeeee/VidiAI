@@ -23,6 +23,34 @@ export const deductCreditsInDb = async (tgId: number, amount: number) => {
   });
 };
 
+/**
+ * Універсальна функція для генерації зображень Nano Banana
+ */
+export const generateNanoImage = async (params: {
+  prompt: string,
+  quality: 'standard' | 'pro' | 'edit',
+  aspectRatio: string,
+  outputFormat: 'png' | 'jpeg',
+  imageUrl?: string // Передаємо тільки для режиму 'edit'
+}) => {
+  // 1. Динамічно вибираємо модель залежно від якості
+  let modelName = "google/nano-banana";
+  if (params.quality === 'pro') modelName = "nano-banana-pro";
+  if (params.quality === 'edit') modelName = "google/nano-banana-edit";
+
+  // 2. Формуємо запит до API
+  return baseGenerateNano({
+    model: modelName,
+    input: {
+      "prompt": params.prompt,
+      "aspect_ratio": params.aspectRatio,
+      "output_format": params.outputFormat,
+      // Додаємо посилання на фото, якщо воно є (для режиму стилізації)
+      ...(params.imageUrl && { "image_url": params.imageUrl })
+    }
+  });
+};
+
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
 export const TEMPLATE_COSTS: Record<string, number> = {
   '1': 25,            // Видео 10 сек + звук
