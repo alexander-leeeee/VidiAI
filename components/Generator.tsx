@@ -385,6 +385,15 @@ return (
         {statusMessage && <div className="p-4 rounded-xl text-center text-sm bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5">{statusMessage}</div>}
       </div>
       
-      <LowBalanceModal isOpen={isLowBalanceOpen} onClose={() => setIsLowBalanceOpen(false)} balance={currentCredits} lang={lang} onGetMore={onGetMore} />
+      <LowBalanceModal 
+        isOpen={isLowBalanceOpen} 
+        onClose={() => setIsLowBalanceOpen(false)} 
+        balance={currentCredits} 
+        lang={lang} 
+        onGetMore={onGetMore} 
+      />
     </div>
   );
+};
+
+export default Generator;
