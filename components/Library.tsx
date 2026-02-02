@@ -68,15 +68,20 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
 
       // ДОБАВЛЯЕМ СЮДА:
       console.log("ОТЛАДКА УДАЛЕНИЯ:");
+      console.log("Тип контента из стейта:", contentType);
       console.log("ID контента:", id);
       console.log("ID пользователя из Telegram:", tgUser?.id);
       console.log("Тип контента:", contentType);
       
-      const confirmText = {
+      // Сопоставляем типы из твоего генератора с текстом
+      const confirmTextMap: Record<string, string> = {
         video: "Видалити це відео?",
         image: "Видалити це фото?",
-        audio: "Видалити цей трек?"
-      }[contentType];
+        music: "Видалити цей трек?", // Исправил audio на music, так как у нас в стейте mode === 'music'
+      };
+      
+      // Получаем текст или используем универсальный вариант, если тип не распознан
+      const finalConfirmText = confirmTextMap[contentType as string] || "Видалити цей файл?";
     
       if (!window.confirm(confirmText)) return;
     
