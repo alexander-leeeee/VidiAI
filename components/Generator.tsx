@@ -121,23 +121,20 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     }
   };
 
-  const handleGenerate = async () => {
+const handleGenerate = async () => {
     setStatusMessage(""); 
     if (isWorking.current || isGenerating) return;
 
-    // Проверка: музыка не требует фото, фото/видео требуют
-    const isTextMode = videoMethod === 'text' || mode === 'music';
+    // ОБНОВЛЕННАЯ ПРОВЕРКА: Фото нужно только для Стилизации (edit) или Видео с фото
+    const isImageEdit = mode === 'image' && imageQuality === 'edit';
+    const isVideoWithImage = mode === 'video' && videoMethod === 'image';
+    const needsImage = isImageEdit || isVideoWithImage;
+    
     const hasPrompt = prompt.trim().length > 0;
     const hasImage = !!selectedImage;
 
-    if (!hasPrompt || (!isTextMode && !hasImage)) {
-        alert(isTextMode ? "Будь ласка, введіть опис" : t.gen_label_image);
-        return;
-    }
-    
-    const needsImage = mode !== 'music';
-    if (!prompt.trim() || (needsImage && !selectedImage)) {
-        alert(mode === 'music' ? "Опишіть музику" : t.gen_label_image); 
+    if (!hasPrompt || (needsImage && !hasImage)) {
+        alert(needsImage ? t.gen_label_image : "Будь ласка, введіть опис");
         return;
     }
 
@@ -149,13 +146,14 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
     isWorking.current = true; 
     setIsGenerating(true);
-    setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження фото...");
+    setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження...");
 
     try {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
         let imageUrl = selectedImage?.preview || '';
     
-        if (needsImage && selectedImage?.data) {
+        // Загрузка фото на сервер, если оно выбрано
+        if (selectedImage?.data) {
             const formData = new FormData();
             const imgResponse = await fetch(selectedImage.preview);
             const blob = await imgResponse.blob();
@@ -171,17 +169,43 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
         setStatusMessage('Запуск генерації...');
 
-        // handleGenerate внутри Generator.tsx
-        const taskId = await generateByTemplateId(
-          effectiveTemplateId, 
-          prompt, 
-          videoMethod === 'text' ? '' : imageUrl, // Если текст, отправляем пустую строку вместо URL
-          { 
-            method: videoMethod, // 'text' или 'image'
-            duration: soraDuration, 
-            aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9'
-          }
-        );
+        let taskId;
+
+        // ВЫБОР МЕТОДА ГЕНЕРАЦИИ
+        if (templateId && templateId !== 'default') {
+            // 1. ЛОГИКА ШАБЛОНОВ (Showcase)
+            taskId = await generateByTemplateId(
+              effectiveTemplateId, 
+              prompt, 
+              videoMethod === 'text' ? '' : imageUrl,
+              { 
+                method: videoMethod, 
+                duration: soraDuration, 
+                aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9'
+              }
+            );
+        } else if (mode === 'image') {
+            // 2. УНИВЕРСАЛЬНАЯ ГЕНЕРАЦИЯ ФОТО (Nano Banana)
+            taskId = await generateNanoImage({
+                prompt: prompt,
+                quality: imageQuality,
+                aspectRatio: aspectRatio,
+                outputFormat: fileFormat,
+                imageUrl: imageUrl
+            });
+        } else {
+            // 3. ВСЕ ОСТАЛЬНОЕ (Видео и Музыка пока через старый метод)
+            taskId = await generateByTemplateId(
+              effectiveTemplateId, 
+              prompt, 
+              imageUrl,
+              { 
+                method: videoMethod, 
+                duration: soraDuration, 
+                aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9'
+              }
+            );
+        }
 
         const tgId = tgUser?.id || 0;
 
