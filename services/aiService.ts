@@ -23,6 +23,24 @@ export const deductCreditsInDb = async (tgId: number, amount: number) => {
   });
 };
 
+const baseGenerateNano = async (payload: any) => {
+  const response = await fetch('ТВОЙ_URL_ДЛЯ_NANO_BANANA', { // замени на реальный эндпоинт
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${KIE_API_KEY}`
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  const result = await response.json();
+  const taskId = result.data?.taskId || result.data?.jobId;
+
+  if (!taskId) throw new Error(result.message || 'Failed to create image task');
+  
+  return taskId;
+};
+
 /**
  * Універсальна функція для генерації зображень Nano Banana
  */
@@ -63,7 +81,6 @@ export const TEMPLATE_COSTS: Record<string, number> = {
   'image_standard': 5,
   'image_pro': 10,
   'image_edit': 15,
-  'default': 15,
     
   // Цены для Sora 2 (примерные)
   'sora_10': 30, // 10 секунд
