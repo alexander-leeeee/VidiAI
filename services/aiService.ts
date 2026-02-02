@@ -3,6 +3,10 @@ const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY;
 const ENDPOINTS = {
   KLING_GENERATE: import.meta.env.VITE_KLING_GENERATE_URL,
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
+  
+  // Для фото
+  IMAGE_GENERATE: import.meta.env.VITE_IMAGE_GENERATE_URL || 'https://api.kie.ai/api/v1/jobs/createTask',
+  IMAGE_STATUS: import.meta.env.VITE_IMAGE_STATUS_URL || 'https://api.kie.ai/api/v1/jobs/recordInfo'
 };
 
 export const syncUserWithDb = async (tgId: number, username: string) => {
@@ -24,7 +28,8 @@ export const deductCreditsInDb = async (tgId: number, amount: number) => {
 };
 
 const baseGenerateNano = async (payload: any) => {
-  const response = await fetch('ТВОЙ_URL_ДЛЯ_NANO_BANANA', { // замени на реальный эндпоинт
+  // Используем эндпоинт из .env
+  const response = await fetch(ENDPOINTS.IMAGE_GENERATE, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -36,7 +41,10 @@ const baseGenerateNano = async (payload: any) => {
   const result = await response.json();
   const taskId = result.data?.taskId || result.data?.jobId;
 
-  if (!taskId) throw new Error(result.message || 'Failed to create image task');
+  if (!taskId) {
+    if (result.code === 402) throw new Error("Недостатньо кредитів на Kie.ai.");
+    throw new Error(result.message || 'Failed to create image task');
+  }
   
   return taskId;
 };
@@ -187,23 +195,42 @@ export const saveVideoToHistory = async (taskId: string, prompt: string, title: 
 };
 
 export const getTaskStatus = async (taskId: string) => {
+  // Используем эндпоинт из .env (теперь это recordInfo?taskId=...)
   const response = await fetch(`${ENDPOINTS.KLING_STATUS}?taskId=${taskId}`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
   });
+
   const result = await response.json();
+
   if ((result.code === 200 || result.code === 0) && result.data) {
     const data = result.data;
-    let videoUrl = null;
+    let finalUrl = null;
+
+    // 1. Сначала ищем в resultJson (для видео Kling)
     if (data.resultJson) {
-      const parsed = JSON.parse(data.resultJson);
-      videoUrl = parsed.resultUrls?.[0] || null;
+      try {
+        const parsed = JSON.parse(data.resultJson);
+        finalUrl = parsed.resultUrls?.[0] || null;
+      } catch (e) {
+        console.error("Помилка парсингу JSON:", e);
+      }
     }
+
+    // 2. Если в resultJson пусто, ищем в прямых полях (для Nano Banana)
+    if (!finalUrl) {
+      finalUrl = data.imageUrl || data.videoUrl || data.url || null;
+    }
+
     return {
-      status: data.state === 'success' || data.state === 'completed' ? 'succeeded' : data.state, 
-      video_url: videoUrl
+      // Расширяем список успешных статусов (success, completed, finished)
+      status: (data.state === 'success' || data.state === 'completed' || data.state === 'finished') 
+        ? 'succeeded' 
+        : data.state, 
+      video_url: finalUrl // Оставляем это имя поля, чтобы не менять код в Library/History
     };
   }
+  
   return { status: 'error' };
 };
 
