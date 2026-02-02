@@ -1,8 +1,8 @@
 const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY;
 
 const ENDPOINTS = {
-  KLING_GENERATE: import.meta.env.VITE_KLING_GENERATE_URL,
-  KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL,
+  KLING_GENERATE: import.meta.env.VITE_KLING_GENERATE_URL || 'https://api.kie.ai/api/v1/jobs/createTask',
+  KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL || 'https://api.kie.ai/api/v1/jobs/recordInfo',
   
   // Для фото
   IMAGE_GENERATE: import.meta.env.VITE_IMAGE_GENERATE_URL || 'https://api.kie.ai/api/v1/jobs/createTask',
