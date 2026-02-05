@@ -34,6 +34,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
               return {
                 id: v.task_id,
                 url: v.video_url || '',
+                alternative_url: v.alternative_url || '',
                 prompt: v.prompt,
                 title: v.title,
                 status: v.status,
