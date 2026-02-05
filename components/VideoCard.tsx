@@ -246,24 +246,21 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 <Download size={18} />
               </button>
 
-              {/* Звук */}
-              <button onClick={toggleMute} className="p-2.5 text-gray-400 hover:text-white transition-colors">
-                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-              </button>
               {/* Звук для видео и картинок */}
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Блокируем переключение, если это не видео
-                  if (video.type === 'video' || getMediaType(video.url || '') === 'video') {
+                  // 2. Звук переключаем только если это реально видео
+                  if (isVideo) {
                     toggleMute(e);
                   }
                 }} 
-                disabled={video.type !== 'video'} // Делаем кнопку неактивной для music и image
-                className={`p-2.5 transition-colors ${
-                  video.type === 'video' 
-                    ? 'text-gray-400 hover:text-white' 
-                    : 'text-gray-600 cursor-not-allowed opacity-30' // Визуально гасим кнопку
+                // 3. Блокируем кнопку только если это НЕ видео
+                disabled={!isVideo} 
+                className={`p-2.5 transition-all duration-200 ${
+                  isVideo 
+                    ? 'text-gray-400 hover:text-white active:scale-110' 
+                    : 'text-white/10 cursor-not-allowed' // Сильно гасим для фото/музыки
                 }`}
               >
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
