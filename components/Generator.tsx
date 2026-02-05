@@ -188,10 +188,21 @@ const handleGenerate = async () => {
                 imageUrl: imageUrl
             });
         } else if (mode === 'music') {
-            // ЗДЕСЬ ДОЛЖНА БЫТЬ УНИВЕРСАЛЬНАЯ ГЕНЕРАЦИЯ МУЗЫКИ
-            // Пока используем заглушку, чтобы не падало
-            taskId = "music_task_" + Date.now(); 
-            console.log("Генерація музики запущена:", { musicTitle, musicStyles, lyrics, hasVocals, vocalType });
+            // РЕАЛЬНАЯ ГЕНЕРАЦИЯ МУЗЫКИ через новый API
+            const musicTaskId = await generateUniversalMusic({
+                prompt: isCustomMusic ? musicStyles : prompt,
+                title: musicTitle,
+                style: musicStyles,
+                lyrics: lyrics,
+                vocalGender: vocalType === 'male' ? 'm' : 'f',
+                instrumental: !hasVocals,
+                isCustom: isCustomMusic
+            });
+            
+            // Добавляем префикс, чтобы getTaskStatus выбрал правильный эндпоинт
+            taskId = `music_${musicTaskId}`; 
+            
+            console.log("Генерація музики запущена через API:", taskId);
         } else {
             taskId = await generateByTemplateId(
               effectiveTemplateId, 
