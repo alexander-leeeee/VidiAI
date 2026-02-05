@@ -337,17 +337,10 @@ export const saveVideoToHistory = async (
 };
 
 export const getTaskStatus = async (taskId: string) => {
-  // 1. ОПРЕДЕЛЯЕМ ЭНДПОИНТ
-  // Если ID задачи музыкальный (например, мы добавили префикс при генерации) 
-  // или если в будущем будем передавать тип.
-  // Пока сделаем проверку: музыкальные taskId в новом API часто числовые или имеют другой формат.
-  // Самый надежный способ — проверять, откуда пришел запрос.
-  
-  // Для простоты, давай проверять по глобальной логике:
-  const isMusicTask = taskId.includes('music'); 
+  const isMusicTask = taskId.startsWith('music_');
   const endpoint = isMusicTask ? ENDPOINTS.MUSIC_STATUS : ENDPOINTS.KLING_STATUS;
 
-  const response = await fetch(`${endpoint}?taskId=${taskId}`, {
+  const response = await fetch(`${endpoint}?taskId=${taskId.replace('music_', '')}`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
   });
@@ -358,26 +351,31 @@ export const getTaskStatus = async (taskId: string) => {
     const data = result.data;
     let finalUrl = null;
 
-    // 1. Сначала ищем в resultJson (Kling видео)
-    if (data.resultJson) {
+    // 1. ЛОГИКА ДЛЯ МУЗЫКИ (Новый формат Kie V5/Suno)
+    if (isMusicTask && data.response?.sunoData?.[0]) {
+      // Берем именно audioUrl — это полная версия трека
+      finalUrl = data.response.sunoData[0].audioUrl;
+    } 
+
+    // 2. ЛОГИКА ДЛЯ ВИДЕО (Kling)
+    if (!finalUrl && data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
         finalUrl = parsed.resultUrls?.[0] || null;
-      } catch (e) {
-        console.error("Помилка парсингу JSON:", e);
-      }
+      } catch (e) {}
     }
 
-    // 2. Ищем в прямых полях (Nano Banana и НОВОЕ: Music API)
+    // 3. ЛОГИКА ДЛЯ ФОТО (Nano Banana)
     if (!finalUrl) {
-      // Для музыки Kie часто возвращает в audioUrl или url
-      finalUrl = data.audioUrl || data.imageUrl || data.videoUrl || data.url || null;
+      finalUrl = data.imageUrl || data.videoUrl || data.url || null;
     }
+
+    // Определяем статус (Music API присылает 'SUCCESS' капсом)
+    const rawState = data.status || data.state;
+    const isSucceeded = ['SUCCESS', 'success', 'completed', 'finished'].includes(rawState);
 
     return {
-      status: (data.state === 'success' || data.state === 'completed' || data.state === 'finished') 
-        ? 'succeeded' 
-        : data.state, 
+      status: isSucceeded ? 'succeeded' : rawState.toLowerCase(),
       video_url: finalUrl 
     };
   }
