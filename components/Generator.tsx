@@ -211,14 +211,29 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
           }
   
           const tgId = tgUser?.id || 0;
-          await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : `Власна (${mode})`, tgId, imageUrl, aspectRatio, mode);
+          // 1. Создаем правильный заголовок для отображения
+          const displayTitle = (mode === 'music' && musicTitle?.trim()) 
+              ? musicTitle 
+              : (initialPrompt ? "Шаблон" : `Власна (${mode})`);
+        
+          // 2. Сохраняем в БД именно этот заголовок
+          await saveVideoToHistory(
+              taskId, 
+              prompt, 
+              displayTitle, // Заменяем статичную строку
+              tgId, 
+              imageUrl, 
+              aspectRatio, 
+              mode
+          );
   
+          // 3. Передаем в локальное состояние для мгновенного отображения в библиотеке
           onVideoGenerated({
               id: taskId,
               prompt,
               status: 'processing',
               contentType: mode,
-              title: initialPrompt ? "Шаблон" : `Власна (${mode})`
+              title: displayTitle // Заменяем и здесь
           } as any, currentCost);
   
           setStatusMessage('Додано в чергу!');
