@@ -9,6 +9,8 @@ interface VideoCardProps {
   canDownload?: boolean;
   currentCredits: number;
   setCredits: React.Dispatch<React.SetStateAction<number>>;
+  isV2Exists?: boolean; 
+  onNewItemAdded?: (video: VideoItem) => void;
 }
 
 const getMediaType = (url: string): 'image' | 'audio' | 'video' => {
