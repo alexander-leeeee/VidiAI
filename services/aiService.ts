@@ -187,9 +187,24 @@ const templateActions: Record<string, (prompt: string, imageUrl: string) => Prom
   // Сюда ты просто дописываешь новые ID по мере появления шаблонов
 };
 
-// 2. Создаем одну универсальную функцию-диспетчер
+/**
+ * Універсальна функція-диспетчер
+ */
 export const generateByTemplateId = async (templateId: string, prompt: string, imageUrl: string, options?: any) => {
-  // Ищем функцию по ID. Если ID нет в списке — берем стандартный generateTemplate2
+  // 1. ПРОВЕРКА НА РУЧНОЙ РЕЖИМ (Sora 10/15 сек)
+  // В Generator.tsx мы формируем ID как `sora_${soraDuration}`
+  if (templateId.startsWith('sora_')) {
+    return await generateUniversalVideo({
+      prompt: prompt,
+      imageUrl: imageUrl,
+      duration: options?.duration || '10',
+      aspectRatio: options?.aspectRatio || '9:16',
+      method: options?.method || 'image'
+    });
+  }
+
+  // 2. ЛОГИКА ШАБЛОНОВ (Showcase)
+  // Ищем функцию по ID (1, 2, 3...). Если ID нет в списке — берем стандартный шаблон
   const action = templateActions[templateId] || generateTemplate2;
   return await action(prompt, imageUrl, options);
 };
