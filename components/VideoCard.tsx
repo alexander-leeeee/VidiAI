@@ -17,13 +17,24 @@ const getMediaType = (url: string): 'image' | 'audio' | 'video' => {
 };
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDownload = false }) => {
+  // 1. ОПРЕДЕЛЯЕМ ТИП КОНТЕНТА (в самом начале)
+  const actualType = video.type || (video as any).contentType || getMediaType(video.url || '');
+  const isVideo = actualType === 'video';
+  const isMusic = actualType === 'music' || actualType === 'audio';
+  const isImage = actualType === 'image';
+
+  // 2. СОСТОЯНИЯ (Hooks)
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
 
+  // 3. СТАТУСЫ
+  const isProcessing = video.status === 'processing';
+  const isFailed = video.status === 'failed' || video.status === 'error';
+
+  // 4. ФУНКЦИИ УПРАВЛЕНИЯ
   const toggleAudio = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (audioRef.current) {
@@ -36,33 +47,25 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
     }
   };
 
-  const isProcessing = video.status === 'processing';
-  const isFailed = video.status === 'failed';
-
-  useEffect(() => {
-    if (isProcessing || isFailed || !video.url) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting && isPlaying) {
-            videoRef.current?.pause();
-            setIsPlaying(false);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (videoRef.current) observer.observe(videoRef.current);
-    return () => observer.disconnect();
-  }, [isPlaying, isProcessing, isFailed]);
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Переключаем звук только если это видео
+    if (isVideo) {
+      setIsMuted(!isMuted);
+    }
+  };
 
   const handleVideoClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (getMediaType(video.url || '') !== 'video' || !videoRef.current) return;
     
-    if (videoRef.current) {
+    // Если это музыка — запускаем toggleAudio
+    if (isMusic) {
+      toggleAudio(e);
+      return;
+    }
+
+    // Если это видео — стандартная логика
+    if (isVideo && videoRef.current) {
       if (videoRef.current.paused) {
         videoRef.current.play()
           .then(() => setIsPlaying(true))
@@ -72,11 +75,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
         setIsPlaying(false);
       }
     }
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMuted(!isMuted);
   };
 
   const handleDownload = (e: React.MouseEvent) => {
@@ -246,21 +244,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 <Download size={18} />
               </button>
 
-              {/* Звук для видео и картинок */}
+              {/* Кнопка Звук в нижней панели */}
               <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // 2. Звук переключаем только если это реально видео
-                  if (isVideo) {
-                    toggleMute(e);
-                  }
-                }} 
-                // 3. Блокируем кнопку только если это НЕ видео
+                onClick={toggleMute} 
                 disabled={!isVideo} 
                 className={`p-2.5 transition-all duration-200 ${
                   isVideo 
                     ? 'text-gray-400 hover:text-white active:scale-110' 
-                    : 'text-white/10 cursor-not-allowed' // Сильно гасим для фото/музыки
+                    : 'text-white/10 cursor-not-allowed opacity-30'
                 }`}
               >
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
