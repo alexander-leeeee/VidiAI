@@ -129,15 +129,15 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       const isImageEdit = mode === 'image' && imageQuality === 'edit';
       const isVideoWithImage = mode === 'video' && videoMethod === 'image';
       const needsImage = isImageEdit || isVideoWithImage;
-      const isCustomMusic = mode === 'music' && customMode;
-  
+      const isCustom = mode === 'music' && isCustomMusic;
+    
       const hasPrompt = prompt.trim().length > 0;
       const hasLyrics = lyrics.trim().length > 0;
       const hasImage = !!selectedImage;
   
       // 2. ВАЛИДАЦИЯ (Исправлено для музыки)
       // Для кастомной музыки валидно, если есть промпт ИЛИ лирика
-      const hasContent = isCustomMusic ? (hasPrompt || hasLyrics) : hasPrompt;
+      const hasContent = isCustom ? (hasPrompt || hasLyrics) : hasPrompt;
   
       if (!hasContent || (needsImage && !hasImage)) {
           alert(needsImage && !hasImage ? t.gen_label_image : "Будь ласка, введіть опис або текст пісні");
