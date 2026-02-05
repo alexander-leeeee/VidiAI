@@ -166,6 +166,8 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
               canDownload={true}
               onDelete={handleDelete}
               onClick={handleGenerateMore}
+              currentCredits={currentCredits}
+              setCredits={setCredits}
             />
           ))}
         </div>
