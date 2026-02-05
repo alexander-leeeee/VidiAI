@@ -121,124 +121,120 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     }
   };
 
-const handleGenerate = async () => {
-    setStatusMessage(""); 
-    if (isWorking.current || isGenerating) return;
-
-    // ОБНОВЛЕННАЯ ПРОВЕРКА: Фото нужно только для Стилизации (edit) или Видео с фото
-    const isImageEdit = mode === 'image' && imageQuality === 'edit';
-    const isVideoWithImage = mode === 'video' && videoMethod === 'image';
-    const needsImage = isImageEdit || isVideoWithImage;
-    
-    const hasPrompt = prompt.trim().length > 0;
-    const hasImage = !!selectedImage;
-
-    if (!hasPrompt || (needsImage && !hasImage)) {
-        alert(needsImage ? t.gen_label_image : "Будь ласка, введіть опис");
-        return;
-    }
-
-    if (currentCredits < currentCost) {
-        setIsLowBalanceOpen(true);
-        return;
-    }
-
-    const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
-    isWorking.current = true; 
-    setIsGenerating(true);
-    setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження...");
-
-    try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-        let imageUrl = ''; // По умолчанию пусто
-    
-        // Загружаем фото только если оно нужно и выбрано
-        if (needsImage && selectedImage?.data) {
-            const formData = new FormData();
-            const imgResponse = await fetch(selectedImage.preview);
-            const blob = await imgResponse.blob();
-            formData.append('photo', blob, `upload_${Date.now()}.png`);
-
-            const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { 
-                method: 'POST', 
-                body: formData 
-            });
-            const uploadData = await uploadRes.json();
-            imageUrl = uploadData.fileUrl;
-        }
-
-        setStatusMessage('Запуск генерації...');
-
-        let taskId;
-
-        // ВЫБОР МЕТОДА ГЕНЕРАЦИИ
-        if (templateId && templateId !== 'default') {
-            taskId = await generateByTemplateId(
-              effectiveTemplateId, 
-              prompt, 
-              videoMethod === 'text' ? '' : imageUrl,
-              { method: videoMethod, duration: soraDuration, aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9' }
-            );
-        } else if (mode === 'image') {
-            taskId = await generateNanoImage({
-                prompt: prompt,
-                quality: imageQuality,
-                aspectRatio: aspectRatio,
-                outputFormat: fileFormat,
-                imageUrl: imageUrl
-            });
-        } else if (mode === 'music') {
-            // РЕАЛЬНАЯ ГЕНЕРАЦИЯ МУЗЫКИ через новый API
-            const musicTaskId = await generateUniversalMusic({
-                prompt: prompt,
-                title: musicTitle,
-                style: musicStyles,
-                lyrics: lyrics,
-                vocalGender: vocalType, // Передаем 'male' | 'female' | 'random'
-                instrumental: !hasVocals, 
-                isCustom: isCustomMusic
-            });
-            
-            // Добавляем префикс, чтобы getTaskStatus выбрал правильный эндпоинт
-            taskId = `music_${musicTaskId}`; 
-            
-            console.log("Генерація музики запущена через API:", taskId);
-        } else {
-            taskId = await generateByTemplateId(
-              effectiveTemplateId, 
-              prompt, 
-              videoMethod === 'text' ? '' : imageUrl,
-              { method: videoMethod, duration: soraDuration, aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9' }
-            );
-        }
-
-        const tgId = tgUser?.id || 0;
-
-        // ВАЖНО: Сохраняем ЧИСТЫЙ mode (video, image, music) в БД, чтобы удаление работало!
-        await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : `Власна (${mode})`, tgId, imageUrl, aspectRatio, mode);
-
-        onVideoGenerated({
-            id: taskId,
-            prompt,
-            status: 'processing',
-            contentType: mode, // Передаем тип для корректного текста удаления
-            title: initialPrompt ? "Шаблон" : `Власна (${mode})`
-        } as any, currentCost);
-
-        setStatusMessage('Додано в чергу!');
-        setIsGenerating(false);
-      
-        setTimeout(() => {
-            window.location.hash = '/library';
-        }, 1500);
-
-    } catch (error: any) {
-        console.error("Ошибка:", error);
-        setStatusMessage(`Помилка: ${error.message}`);
-        setIsGenerating(false);
+  const handleGenerate = async () => {
+      setStatusMessage(""); 
+      if (isWorking.current || isGenerating) return;
+  
+      // 1. ОПРЕДЕЛЯЕМ ТРЕБОВАНИЯ
+      const isImageEdit = mode === 'image' && imageQuality === 'edit';
+      const isVideoWithImage = mode === 'video' && videoMethod === 'image';
+      const needsImage = isImageEdit || isVideoWithImage;
+      const isCustomMusic = mode === 'music' && customMode;
+  
+      const hasPrompt = prompt.trim().length > 0;
+      const hasLyrics = lyrics.trim().length > 0;
+      const hasImage = !!selectedImage;
+  
+      // 2. ВАЛИДАЦИЯ (Исправлено для музыки)
+      // Для кастомной музыки валидно, если есть промпт ИЛИ лирика
+      const hasContent = isCustomMusic ? (hasPrompt || hasLyrics) : hasPrompt;
+  
+      if (!hasContent || (needsImage && !hasImage)) {
+          alert(needsImage && !hasImage ? t.gen_label_image : "Будь ласка, введіть опис або текст пісні");
+          return; // Здесь isGenerating еще false, поля не блокируются
+      }
+  
+      if (currentCredits < currentCost) {
+          setIsLowBalanceOpen(true);
+          return;
+      }
+  
+      const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+      isWorking.current = true; 
+      setIsGenerating(true); // Теперь блокируем поля, только когда всё валидно
+      setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження...");
+  
+      try {
+          const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
+          let imageUrl = ''; 
+  
+          if (needsImage && selectedImage?.data) {
+              const formData = new FormData();
+              const imgResponse = await fetch(selectedImage.preview);
+              const blob = await imgResponse.blob();
+              formData.append('photo', blob, `upload_${Date.now()}.png`);
+  
+              const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { 
+                  method: 'POST', 
+                  body: formData 
+              });
+              const uploadData = await uploadRes.json();
+              imageUrl = uploadData.fileUrl;
+          }
+  
+          setStatusMessage('Запуск генерації...');
+          let taskId;
+  
+          if (templateId && templateId !== 'default') {
+              taskId = await generateByTemplateId(
+                effectiveTemplateId, 
+                prompt, 
+                videoMethod === 'text' ? '' : imageUrl,
+                { method: videoMethod, duration: soraDuration, aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9' }
+              );
+          } else if (mode === 'image') {
+              taskId = await generateNanoImage({
+                  prompt: prompt,
+                  quality: imageQuality,
+                  aspectRatio: aspectRatio,
+                  outputFormat: fileFormat,
+                  imageUrl: imageUrl
+              });
+          } else if (mode === 'music') {
+              const musicTaskId = await generateUniversalMusic({
+                  prompt: prompt,
+                  title: musicTitle,
+                  style: musicStyles,
+                  lyrics: lyrics,
+                  vocalGender: vocalType,
+                  instrumental: !hasVocals, 
+                  isCustom: isCustomMusic
+              });
+              taskId = `music_${musicTaskId}`; 
+          } else {
+              taskId = await generateByTemplateId(
+                effectiveTemplateId, 
+                prompt, 
+                videoMethod === 'text' ? '' : imageUrl,
+                { method: videoMethod, duration: soraDuration, aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9' }
+              );
+          }
+  
+          const tgId = tgUser?.id || 0;
+          await saveVideoToHistory(taskId, prompt, initialPrompt ? "Шаблон" : `Власна (${mode})`, tgId, imageUrl, aspectRatio, mode);
+  
+          onVideoGenerated({
+              id: taskId,
+              prompt,
+              status: 'processing',
+              contentType: mode,
+              title: initialPrompt ? "Шаблон" : `Власна (${mode})`
+          } as any, currentCost);
+  
+          setStatusMessage('Додано в чергу!');
+          
+          setTimeout(() => {
+              window.location.hash = '/library';
+          }, 1500);
+  
+      } catch (error: any) {
+          console.error("Ошибка:", error);
+          alert(`Помилка: ${error.message}`);
       } finally {
-      isWorking.current = false;
-    }
+          // ЭТОТ БЛОК ОБЯЗАТЕЛЬНО РАЗБЛОКИРУЕТ ПОЛЯ
+          setIsGenerating(false);
+          isWorking.current = false;
+      }
   };
 
   // Динамические тексты заголовков
