@@ -247,6 +247,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
               </button>
 
               {/* Звук */}
+              <button onClick={toggleMute} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
+              {/* Звук для видео и картинок */}
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
