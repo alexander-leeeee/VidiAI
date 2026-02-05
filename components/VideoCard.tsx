@@ -152,15 +152,29 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 );
               }
             
-              if (type === 'audio') {
+              if (type === 'music' || type === 'audio') {
                 return (
-                  <div className="flex flex-col items-center justify-center w-full h-full bg-neutral-800 p-4">
-                    <Music2 size={48} className="text-primary mb-4 animate-bounce" />
-                    <audio 
-                      src={video.url} 
-                      controls 
-                      className="w-full h-8 opacity-70 custom-audio-player" 
-                    />
+                  <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-b from-neutral-800 to-neutral-950 p-6 relative overflow-hidden">
+                    {/* Декоративный анимированный фон для музыки */}
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary rounded-full blur-3xl animate-pulse" />
+                    </div>
+            
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div className="w-20 h-20 mb-6 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl">
+                        <Music2 size={40} className="text-primary animate-bounce" />
+                      </div>
+                      
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80 mb-8">
+                        Audio Track
+                      </span>
+            
+                      <audio 
+                        src={video.url} 
+                        controls 
+                        className="w-full h-10 opacity-90 custom-audio-player" 
+                      />
+                    </div>
                   </div>
                 );
               }
