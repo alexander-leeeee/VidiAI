@@ -7,6 +7,8 @@ interface VideoCardProps {
   onClick?: (video: VideoItem) => void;
   onDelete?: (id: any, contentType: string) => void; // Измени на это
   canDownload?: boolean;
+  currentCredits: number;
+  setCredits: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const getMediaType = (url: string): 'image' | 'audio' | 'video' => {
@@ -16,7 +18,7 @@ const getMediaType = (url: string): 'image' | 'audio' | 'video' => {
   return 'video';
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDownload = false }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, currentCredits, setCredits, canDownload = false }) => {
   // 1. ОПРЕДЕЛЯЕМ ТИП КОНТЕНТА (в самом начале)
   const actualType = video.type || (video as any).contentType || getMediaType(video.url || '');
   const isVideo = actualType === 'video';
@@ -124,7 +126,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
       if (!data.success) throw new Error(data.message || "Ошибка списания");
   
       // 3. ОБНОВЛЯЕМ БАЛАНС В ИНТЕРФЕЙСЕ (если есть функция обновления)
-      // updateCredits(data.new_balance);
+      setCredits(prev => prev - cost);
   
       // 4. ИМИТАЦИЯ "МАГИИ" (визуальная обработка)
       setIsAudioPlaying(false);
