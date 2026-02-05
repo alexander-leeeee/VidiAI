@@ -140,7 +140,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
             )}
             
             {(() => {
-              const type = getMediaType(video.url || '');
+              const type = video.contentType || getMediaType(video.url || '');
               
               if (type === 'image') {
                 return (
