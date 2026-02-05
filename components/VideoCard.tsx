@@ -29,6 +29,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   // 3. СТАТУСЫ
   const isProcessing = video.status === 'processing';
@@ -89,6 +90,60 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Имитация генерации второго трека Suno
+  const handleUnlockVariant = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Если уже идет процесс или нет ссылки — выходим
+    if (isUnlocking || !video.alternative_url) return;
+  
+    // 1. ПРОВЕРКА БАЛАНСА (5 монет за второй вариант)
+    const cost = 5;
+    if (currentCredits < cost) {
+      alert("Недостатньо монет для активації другого варіанту");
+      return;
+    }
+  
+    try {
+      setIsUnlocking(true);
+      
+      // 2. СПИСАНИЕ МОНЕТ ЧЕРЕЗ ТВОЙ API
+      const response = await fetch('https://server.vidiai.top/api/deduct_credits.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegram_id: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id,
+          amount: cost,
+          reason: 'unlock_variant'
+        })
+      });
+  
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || "Ошибка списания");
+  
+      // 3. ОБНОВЛЯЕМ БАЛАНС В ИНТЕРФЕЙСЕ (если есть функция обновления)
+      // updateCredits(data.new_balance);
+  
+      // 4. ИМИТАЦИЯ "МАГИИ" (визуальная обработка)
+      setIsAudioPlaying(false);
+      
+      setTimeout(() => {
+        if (audioRef.current) {
+          // Подменяем основной URL на альтернативный
+          audioRef.current.src = video.alternative_url!;
+          audioRef.current.play();
+          setIsAudioPlaying(true);
+        }
+        setIsUnlocking(false);
+      }, 3000);
+  
+    } catch (error: any) {
+      console.error("Unlock error:", error);
+      alert("Сталася помилка: " + error.message);
+      setIsUnlocking(false);
+    }
   };
 
   return (
@@ -233,6 +288,28 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
           </p>
         </div>
       </div>
+
+      {/* КНОПКА ВАРИАНТ №2 (Добавляем сюда) */}
+      {isMusic && video.alternative_url && !isProcessing && (
+        <button 
+          onClick={handleUnlockVariant}
+          disabled={isUnlocking}
+          className={`w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border
+            ${isUnlocking 
+              ? 'bg-neutral-800 border-white/5 text-gray-500 cursor-wait' 
+              : 'bg-gradient-to-r from-secondary/10 to-primary/10 border-secondary/30 text-secondary hover:border-secondary shadow-[0_0_15px_rgba(236,72,153,0.1)] active:scale-[0.97]'
+            }`}
+        >
+          {isUnlocking ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="w-3 h-3 border-2 border-secondary/30 border-t-secondary rounded-full animate-spin" />
+              Активація...
+            </span>
+          ) : (
+            '✨ Отримати варіант №2 (5 🟡)'
+          )}
+        </button>
+      )}
         
       {!isProcessing && !isFailed && (
         <div className="w-full">
