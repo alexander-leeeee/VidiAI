@@ -287,22 +287,21 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
-export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null) => {
+export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null, alternativeUrl?: string | null) => {
   try {
-    // ВАЖНО: taskId должен быть точно таким же, как в колонке task_id таблицы media
-    // (включая префикс music_, если он там есть)
     const response = await fetch('https://server.vidiai.top/api/update_media_status.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         task_id: taskId, 
         status: status, 
-        video_url: videoUrl 
+        video_url: videoUrl,
+        alternative_url: alternativeUrl // Добавили передачу второго трека
       }),
     });
     
     const result = await response.json();
-    console.log("Результат оновлення бази:", result); // Проверь ответ в Eruda
+    console.log("Результат оновлення бази:", result);
   } catch (error) {
     console.error("Помилка БД при оновленні статусу:", error);
   }
@@ -349,23 +348,27 @@ export const getTaskStatus = async (taskId: string) => {
 
   if ((result.code === 200 || result.code === 0) && result.data) {
     const data = result.data;
-    let finalUrl = null;
+    
+    // СНАЧАЛА ОПРЕДЕЛЯЕМ СТАТУС (Чтобы он был доступен везде ниже)
+    const rawState = data.status || data.state || 'processing';
+    const isSucceeded = ['SUCCESS', 'success', 'completed', 'finished', 'succeeded'].includes(rawState.toLowerCase());
 
-    // 1. ЛОГИКА ДЛЯ МУЗЫКИ (Новый формат Kie V5/Suno)
+    // 1. ЛОГИКА ДЛЯ МУЗЫКИ
     if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
-      // Suno всегда возвращает массив, обычно из 2-х треков
       const track1 = data.response.sunoData[0]?.audioUrl;
       const track2 = data.response.sunoData[1]?.audioUrl;
       
       return {
         status: isSucceeded ? 'succeeded' : rawState.toLowerCase(),
         video_url: track1,
-        alternative_url: track2 // Сохраняем второй вариант
+        alternative_url: track2 // Теперь альтернативная ссылка точно уйдет в базу
       };
     }
 
+    let finalUrl = null;
+
     // 2. ЛОГИКА ДЛЯ ВИДЕО (Kling)
-    if (!finalUrl && data.resultJson) {
+    if (data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
         finalUrl = parsed.resultUrls?.[0] || null;
@@ -376,10 +379,6 @@ export const getTaskStatus = async (taskId: string) => {
     if (!finalUrl) {
       finalUrl = data.imageUrl || data.videoUrl || data.url || null;
     }
-
-    // Определяем статус (Music API присылает 'SUCCESS' капсом)
-    const rawState = data.status || data.state;
-    const isSucceeded = ['SUCCESS', 'success', 'completed', 'finished'].includes(rawState);
 
     return {
       status: isSucceeded ? 'succeeded' : rawState.toLowerCase(),
