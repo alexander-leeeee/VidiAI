@@ -287,16 +287,24 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
-
 export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null) => {
   try {
-    await fetch('https://server.vidiai.top/api/update_video_status.php', {
+    // ВАЖНО: taskId должен быть точно таким же, как в колонке task_id таблицы media
+    // (включая префикс music_, если он там есть)
+    const response = await fetch('https://server.vidiai.top/api/update_media_status.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task_id: taskId, status, video_url: videoUrl }),
+      body: JSON.stringify({ 
+        task_id: taskId, 
+        status: status, 
+        video_url: videoUrl 
+      }),
     });
+    
+    const result = await response.json();
+    console.log("Результат оновлення бази:", result); // Проверь ответ в Eruda
   } catch (error) {
-    console.error("Ошибка БД:", error);
+    console.error("Помилка БД при оновленні статусу:", error);
   }
 };
 
