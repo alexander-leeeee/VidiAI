@@ -98,10 +98,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
   const handleUnlockVariant = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Если уже идет процесс или нет ссылки — выходим
     if (isUnlocking || !video.alternative_url) return;
   
-    // 1. ПРОВЕРКА БАЛАНСА (5 монет за второй вариант)
     const cost = 5;
     if (currentCredits < cost) {
       alert("Недостатньо монет для активації другого варіанту");
@@ -111,36 +109,59 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
     try {
       setIsUnlocking(true);
       
-      // 2. СПИСАНИЕ МОНЕТ ЧЕРЕЗ ТВОЙ API
-      const response = await fetch('https://server.vidiai.top/api/deduct_credits.php', {
+      // --- ВОТ ЭТОГО НЕ ХВАТАЛО ---
+      const baseUrl = import.meta.env.VITE_SERVER_BASE_URL; 
+      const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      // ----------------------------
+
+      // 2. СПИСАНИЕ МОНЕТ
+      const response = await fetch(`${baseUrl}/api/deduct_credits.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          telegram_id: (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id,
-          amount: cost,
-          reason: 'unlock_variant'
+          telegram_id: tgId,
+          amount: cost
         })
       });
   
       const data = await response.json();
       if (!data.success) throw new Error(data.message || "Ошибка списания");
   
-      // 3. ОБНОВЛЯЕМ БАЛАНС В ИНТЕРФЕЙСЕ (если есть функция обновления)
       setCredits(prev => prev - cost);
-  
-      // 4. ИМИТАЦИЯ "МАГИИ" (визуальная обработка)
-      setIsAudioPlaying(false);
+
+      // 4. СОХРАНЕНИЕ НОВОЙ КАРТОЧКИ
+      const newTaskId = `${video.id}_v2`;
       
+      await fetch(`${baseUrl}/api/save_media.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          task_id: newTaskId, 
+          prompt: video.prompt, 
+          title: `${video.title} (Варіант 2)`, 
+          telegram_id: tgId, 
+          imageUrl: video.alternative_url, 
+          aspectRatio: video.aspectRatio,
+          type: video.contentType 
+        }),
+      });
+
+      // 5. ПОДТВЕРЖДАЕМ СТАТУС (Импортируем функцию, так как она во внешнем файле)
+      const { updateVideoInDb } = await import('../services/aiService');
+      await updateVideoInDb(newTaskId, 'succeeded', video.alternative_url || '');
+
+      // 6. ЭФФЕКТ МАГИИ
+      setIsAudioPlaying(false);
       setTimeout(() => {
         if (audioRef.current) {
-          // Подменяем основной URL на альтернативный
           audioRef.current.src = video.alternative_url!;
           audioRef.current.play();
           setIsAudioPlaying(true);
         }
         setIsUnlocking(false);
-      }, 3000);
-  
+        window.location.reload(); 
+      }, 10000); // Поставил 3 сек вместо 10, чтобы юзер не уснул
+
     } catch (error: any) {
       console.error("Unlock error:", error);
       alert("Сталася помилка: " + error.message);
