@@ -159,17 +159,27 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {dbVideos.map((video) => (
-            <VideoCard 
-              key={video.id} 
-              video={video} 
-              canDownload={true}
-              onDelete={handleDelete}
-              onClick={handleGenerateMore}
-              currentCredits={currentCredits}
-              setCredits={setCredits}
-            />
-          ))}
+          {dbVideos.map((video) => {
+            // 1. Проверяем, есть ли уже вариант v2 для этого конкретного видео
+            // Мы смотрим, существует ли в массиве dbVideos объект с ID, равным ID текущего видео + "_v2"
+            const hasV2 = dbVideos.some(v => v.id === `${video.id}_v2`);
+        
+            return (
+              <VideoCard 
+                key={video.id} 
+                video={video} 
+                canDownload={true}
+                onDelete={handleDelete}
+                onClick={handleGenerateMore}
+                currentCredits={currentCredits}
+                setCredits={setCredits}
+                // 2. Передаем результат проверки в VideoCard
+                isV2Exists={hasV2} 
+                // 3. Передаем функцию добавления нового видео в стейт без перезагрузки страницы
+                onNewItemAdded={(newItem) => setDbVideos(prev => [newItem, ...prev])}
+              />
+            );
+          })}
         </div>
       )}
     </div>
