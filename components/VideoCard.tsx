@@ -5,7 +5,7 @@ import { Volume2, VolumeX, Play, Music2, Download, RotateCcw, Trash2 } from 'luc
 interface VideoCardProps {
   video: VideoItem;
   onClick?: (video: VideoItem) => void;
-  onDelete?: (id: number) => void;
+  onDelete?: (id: any, contentType: string) => void; // Измени на это
   canDownload?: boolean;
 }
 
@@ -234,7 +234,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                   console.log("Пытаемся удалить видео с объектом:", video); // Увидим структуру в консоли
                   
                   if (actualId && onDelete) {
-                    onDelete(actualId); 
+                    onDelete(actualId, video.contentType || 'video');
                   } else {
                     alert("Не вдалося знайти ID відео");
                   }
