@@ -16,24 +16,22 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
-        if (!tgId) return;
-        
-          // Внутри useEffect -> fetchHistory
+      const fetchHistory = async () => {
+        try {
+          const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+          if (!tgId) return;
+          
           const response = await fetch(`https://server.vidiai.top/api/get_history.php?telegram_id=${tgId}`);
           const data = await response.json();
           
-          console.log("1. СЫРЫЕ ДАННЫЕ ИЗ БД:", data.videos); // Посмотрим, есть ли там поле 'type'
-          
           if (data.status === "success" && data.videos) {
             const formatted: VideoItem[] = data.videos.map((v: any) => {
+              // Определяем тип контента для корректного отображения и удаления
               let detectedType: 'video' | 'image' | 'music' = 'video';
               if (v.title?.includes('(image)')) detectedType = 'image';
               if (v.title?.includes('(music)')) detectedType = 'music';
-          
-              const item = {
+            
+              return {
                 id: v.task_id,
                 url: v.video_url || '',
                 prompt: v.prompt,
@@ -41,42 +39,36 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
                 status: v.status,
                 sourceImage: v.source_image_url || '',
                 aspectRatio: v.aspect_ratio || '9:16',
-                contentType: v.type || detectedType, 
+                contentType: v.type || detectedType,
                 isLocal: false
               };
-              return item;
             });
-          
-            console.log("2. ОТМАППЛЕННЫЕ ОБЪЕКТЫ:", formatted); // Проверим, заполнилось ли поле contentType
-            setDbVideos(formatted);
-          }
-
-          // Проверяем статус через API для тех видео, что еще в обработке
-          for (const video of formatted) {
-            if (video.status === 'processing') {
-              const freshStatus = await getTaskStatus(video.id);
-              if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
-                video.status = 'succeeded';
-                video.url = freshStatus.video_url;
-                // Сразу сохраняем готовую ссылку в твою БД
-                await updateVideoInDb(video.id, 'succeeded', freshStatus.video_url);
+  
+            // Проверяем статус через API для тех, что еще в обработке
+            for (const video of formatted) {
+              if (video.status === 'processing') {
+                const freshStatus = await getTaskStatus(video.id);
+                if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
+                  video.status = 'succeeded';
+                  video.url = freshStatus.video_url;
+                  await updateVideoInDb(video.id, 'succeeded', freshStatus.video_url);
+                }
               }
             }
+  
+            setDbVideos(formatted);
           }
-
-          setDbVideos(formatted);
+        } catch (error) {
+          console.error("Ошибка загрузки истории:", error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Ошибка загрузки истории:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-    const interval = setInterval(fetchHistory, 5000); // Опрос каждые 5 сек
-    return () => clearInterval(interval);
-  }, []);
+      };
+  
+      fetchHistory();
+      const interval = setInterval(fetchHistory, 5000);
+      return () => clearInterval(interval);
+    }, []);
 
     const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' | 'music' = 'video') => {
       const itemInState = dbVideos.find(v => v.id === id);
