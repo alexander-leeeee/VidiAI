@@ -209,7 +209,7 @@ const App: React.FC = () => {
              />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.LIBRARY ? 'opacity-100' : 'hidden absolute inset-0'}`}>
-             <Library lang={lang} onReplayRequest={handleReplayRequest} />
+             <Library lang={lang} onReplayRequest={handleReplayRequest} currentCredits={credits} setCredits={setCredits} />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.SETTINGS ? 'opacity-100' : 'hidden absolute inset-0'}`}>
              <Settings lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />
