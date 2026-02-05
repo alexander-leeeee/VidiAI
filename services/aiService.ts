@@ -107,6 +107,8 @@ export const generateUniversalVideo = async (params: {
   });
 };
 
+// aiService.ts
+
 export const generateUniversalMusic = async (params: {
   prompt: string,
   title?: string,
@@ -123,10 +125,10 @@ export const generateUniversalMusic = async (params: {
       'Authorization': `Bearer ${KIE_API_KEY}`
     },
     body: JSON.stringify({
-      prompt: params.isCustom ? params.lyrics : params.prompt, // Если кастом, шлем текст
+      prompt: params.isCustom ? params.lyrics : params.prompt,
       customMode: params.isCustom,
       instrumental: params.instrumental,
-      model: 'V5', // Как в твоем примере
+      model: 'V5',
       style: params.style || 'Pop',
       title: params.title || 'VidiAI Track',
       vocalGender: params.vocalGender || 'm'
@@ -134,14 +136,9 @@ export const generateUniversalMusic = async (params: {
   });
 
   const result = await response.json();
-  
-  // Kie Music API может возвращать taskId или jobId в зависимости от модели
   const taskId = result.data?.taskId || result.data?.jobId || result.data?.[0]?.taskId;
 
-  if (!taskId) {
-    throw new Error(result.message || 'Failed to create music task');
-  }
-  
+  if (!taskId) throw new Error(result.message || 'Failed to create music task');
   return taskId;
 };
 
