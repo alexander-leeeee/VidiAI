@@ -21,28 +21,35 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
         const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
         if (!tgId) return;
         
-        const response = await fetch(`https://server.vidiai.top/api/get_history.php?telegram_id=${tgId}`);
-        const data = await response.json();
-        
-        if (data.status === "success" && data.videos) {
-          const formatted: VideoItem[] = data.videos.map((v: any) => {
-            // Определяем тип контента для корректного удаления
-            let detectedType: 'video' | 'image' | 'music' = 'video';
-            if (v.title?.includes('(image)')) detectedType = 'image';
-            if (v.title?.includes('(music)')) detectedType = 'music';
+          // Внутри useEffect -> fetchHistory
+          const response = await fetch(`https://server.vidiai.top/api/get_history.php?telegram_id=${tgId}`);
+          const data = await response.json();
           
-            return {
-              id: v.task_id,
-              url: v.video_url || '',
-              prompt: v.prompt,
-              title: v.title,
-              status: v.status,
-              sourceImage: v.source_image_url || '',
-              aspectRatio: v.aspect_ratio || '9:16',
-              contentType: v.type || detectedType, // Берем из базы или определяем по заголовку
-              isLocal: false
-            };
-          });
+          console.log("1. СЫРЫЕ ДАННЫЕ ИЗ БД:", data.videos); // Посмотрим, есть ли там поле 'type'
+          
+          if (data.status === "success" && data.videos) {
+            const formatted: VideoItem[] = data.videos.map((v: any) => {
+              let detectedType: 'video' | 'image' | 'music' = 'video';
+              if (v.title?.includes('(image)')) detectedType = 'image';
+              if (v.title?.includes('(music)')) detectedType = 'music';
+          
+              const item = {
+                id: v.task_id,
+                url: v.video_url || '',
+                prompt: v.prompt,
+                title: v.title,
+                status: v.status,
+                sourceImage: v.source_image_url || '',
+                aspectRatio: v.aspect_ratio || '9:16',
+                contentType: v.type || detectedType, 
+                isLocal: false
+              };
+              return item;
+            });
+          
+            console.log("2. ОТМАППЛЕННЫЕ ОБЪЕКТЫ:", formatted); // Проверим, заполнилось ли поле contentType
+            setDbVideos(formatted);
+          }
 
           // Проверяем статус через API для тех видео, что еще в обработке
           for (const video of formatted) {
@@ -72,6 +79,14 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
   }, []);
 
     const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' | 'music' = 'video') => {
+      const itemInState = dbVideos.find(v => v.id === id);
+
+      console.log("3. ЛОГ ПЕРЕД УДАЛЕНИЕМ:");
+      console.log("- ID:", id);
+      console.log("- contentType пришел в функцию:", contentType);
+      console.log("- contentType внутри объекта в стейте:", itemInState?.contentType);
+      console.log("- Весь объект целиком:", itemInState);
+      
       const confirmTextMap: Record<string, string> = {
         video: "Видалити це відео?",
         image: "Видалити це фото?",
