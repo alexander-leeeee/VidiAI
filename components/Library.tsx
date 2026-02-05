@@ -7,6 +7,8 @@ import { getTaskStatus, updateVideoInDb } from '../services/aiService';
 interface LibraryProps {
   lang: Language;
   onReplayRequest: (video: VideoItem) => void;
+  currentCredits: number;
+  setCredits: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
