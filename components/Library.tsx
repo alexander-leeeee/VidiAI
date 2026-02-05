@@ -25,16 +25,24 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
         const data = await response.json();
         
         if (data.status === "success" && data.videos) {
-          const formatted: VideoItem[] = data.videos.map((v: any) => ({
-            id: v.task_id,
-            url: v.video_url || '',
-            prompt: v.prompt,
-            title: v.title, // Теперь title подтянется из базы
-            status: v.status,
-            sourceImage: v.source_image_url || '',
-            aspectRatio: v.aspect_ratio || '9:16',
-            isLocal: false
-          }));
+          const formatted: VideoItem[] = data.videos.map((v: any) => {
+            // Определяем тип контента для корректного удаления
+            let detectedType: 'video' | 'image' | 'music' = 'video';
+            if (v.title?.includes('(image)')) detectedType = 'image';
+            if (v.title?.includes('(music)')) detectedType = 'music';
+          
+            return {
+              id: v.task_id,
+              url: v.video_url || '',
+              prompt: v.prompt,
+              title: v.title,
+              status: v.status,
+              sourceImage: v.source_image_url || '',
+              aspectRatio: v.aspect_ratio || '9:16',
+              contentType: v.type || detectedType, // Берем из базы или определяем по заголовку
+              isLocal: false
+            };
+          });
 
           // Проверяем статус через API для тех видео, что еще в обработке
           for (const video of formatted) {
@@ -64,9 +72,6 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
   }, []);
 
     const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' | 'music' = 'video') => {
-
-      console.log("ОТЛАДКА УДАЛЕНИЯ:", { id, contentType });
-      
       const confirmTextMap: Record<string, string> = {
         video: "Видалити це відео?",
         image: "Видалити це фото?",
@@ -74,15 +79,13 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
         audio: "Видалити цей трек?",
       };
       
-      // Используем переменную finalConfirmText, которую мы создали строкой ниже
-      const finalConfirmText = confirmTextMap[contentType as string] || "Видалити цей файл?";
+      const finalConfirmText = confirmTextMap[contentType] || "Видалити цей файл?";
     
-      // ОШИБКА БЫЛА ЗДЕСЬ: заменяем confirmText на finalConfirmText
+      // ИСПРАВЛЕНО: Теперь используем finalConfirmText вместо confirmText
       if (!window.confirm(finalConfirmText)) return;
     
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-        
         const response = await fetch(`${apiUrl}/api/delete_media.php`, { 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -94,16 +97,13 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
         });
     
         const data = await response.json();
-    
         if (data.status === 'success') {
-          // Обновляем список, удаляя любой тип контента
           setDbVideos(prev => prev.filter(v => v.id != id));
         } else {
           alert(data.message || "Помилка видалення");
         }
       } catch (error) {
         console.error(`Помилка видалення:`, error);
-        alert("Не вдалося зв'язатися з сервером");
       }
     };
   
