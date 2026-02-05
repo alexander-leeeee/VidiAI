@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SparklesIcon, PhotoIcon, TrashIcon, CoinsIcon, MusicIcon } from './Icons';
 import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
-import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, generateNanoImage } from '../services/aiService';
+import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, generateNanoImage, generateUniversalVideo } from '../services/aiService';
 import LowBalanceModal from './LowBalanceModal';
 
 export type GeneratorMode = 'video' | 'image' | 'music';
