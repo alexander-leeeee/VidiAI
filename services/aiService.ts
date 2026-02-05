@@ -77,6 +77,32 @@ export const generateNanoImage = async (params: {
   });
 };
 
+/**
+ * Універсальна функція для генерації відео (Kling/Sora)
+ */
+export const generateUniversalVideo = async (params: {
+  prompt: string,
+  duration: '10' | '15',
+  aspectRatio: '9:16' | '16:9',
+  imageUrl?: string,
+  method: 'text' | 'image'
+}) => {
+  const modelName = params.method === 'image' 
+    ? 'kling-v1.5/image-to-video' 
+    : 'kling-v1.5/text-to-video';
+
+  return baseGenerateKling({
+    model: modelName,
+    input: {
+      "prompt": params.prompt,
+      "image_urls": params.imageUrl, 
+      "duration": params.duration,
+      "aspect_ratio": params.aspectRatio,
+      "sound": true
+    }
+  });
+};
+
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
 export const TEMPLATE_COSTS: Record<string, number> = {
   '1': 25,            // Видео 10 сек + звук
@@ -182,15 +208,31 @@ export const updateVideoInDb = async (taskId: string, status: string, videoUrl: 
   }
 };
 
-export const saveVideoToHistory = async (taskId: string, prompt: string, title: string, tgId: number, imageUrl: string | null, aspectRatio: string) => {
+export const saveVideoToHistory = async (
+  taskId: string, 
+  prompt: string, 
+  title: string, 
+  tgId: number, 
+  imageUrl: string | null, 
+  aspectRatio: string,
+  contentType: string = 'video' // Додаємо тип контенту (за замовчуванням video)
+) => {
   try {
     await fetch('https://server.vidiai.top/api/save_media.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ task_id: taskId, prompt, title, telegram_id: tgId, imageUrl, aspectRatio }),
+      body: JSON.stringify({ 
+        task_id: taskId, 
+        prompt, 
+        title, 
+        telegram_id: tgId, 
+        imageUrl, 
+        aspectRatio,
+        type: contentType // Передаємо тип в базу
+      }),
     });
   } catch (error) {
-    console.error("Ошибка сохранения:", error);
+    console.error("Помилка збереження історії:", error);
   }
 };
 
