@@ -20,6 +20,21 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const toggleAudio = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (audioRef.current) {
+      if (isAudioPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsAudioPlaying(!isAudioPlaying);
+    }
+  };
 
   const isProcessing = video.status === 'processing';
   const isFailed = video.status === 'failed';
@@ -154,27 +169,31 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
             
               if (type === 'music' || type === 'audio') {
                 return (
-                  <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-b from-neutral-800 to-neutral-950 p-6 relative overflow-hidden">
-                    {/* Декоративный анимированный фон для музыки */}
-                    <div className="absolute inset-0 opacity-20">
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary rounded-full blur-3xl animate-pulse" />
-                    </div>
-            
-                    <div className="relative z-10 flex flex-col items-center">
-                      <div className="w-20 h-20 mb-6 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-2xl">
-                        <Music2 size={40} className="text-primary animate-bounce" />
-                      </div>
+                  <div className="flex flex-col items-center justify-center w-full h-full bg-gradient-to-b from-neutral-800 to-black p-6 relative" onClick={toggleAudio}>
+                    <audio 
+                      ref={audioRef}
+                      src={video.url} 
+                      onEnded={() => setIsAudioPlaying(false)}
+                      className="hidden" 
+                    />
+                    
+                    {/* Визуализация */}
+                    <div className={`relative w-24 h-24 mb-6 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${isAudioPlaying ? 'border-primary shadow-[0_0_20px_rgba(168,85,247,0.4)]' : 'border-white/10'}`}>
+                      {isAudioPlaying ? (
+                        <Pause size={40} className="text-primary fill-current" />
+                      ) : (
+                        <Play size={40} className="text-white fill-current ml-2" />
+                      )}
                       
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/80 mb-8">
-                        Audio Track
-                      </span>
-            
-                      <audio 
-                        src={video.url} 
-                        controls 
-                        className="w-full h-10 opacity-90 custom-audio-player" 
-                      />
+                      {/* Пульсирующие круги при проигрывании */}
+                      {isAudioPlaying && (
+                        <div className="absolute inset-0 rounded-full border border-primary animate-ping opacity-20" />
+                      )}
                     </div>
+              
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                      {isAudioPlaying ? 'Зараз лунає' : 'Натисніть щоб слухати'}
+                    </span>
                   </div>
                 );
               }
