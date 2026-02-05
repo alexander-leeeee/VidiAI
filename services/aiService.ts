@@ -6,7 +6,11 @@ const ENDPOINTS = {
   
   // Для фото
   IMAGE_GENERATE: import.meta.env.VITE_IMAGE_GENERATE_URL || 'https://api.kie.ai/api/v1/jobs/createTask',
-  IMAGE_STATUS: import.meta.env.VITE_IMAGE_STATUS_URL || 'https://api.kie.ai/api/v1/jobs/recordInfo'
+  IMAGE_STATUS: import.meta.env.VITE_IMAGE_STATUS_URL || 'https://api.kie.ai/api/v1/jobs/recordInfo',
+
+  // Музыка
+  MUSIC_GENERATE: import.meta.env.VITE_MUSIC_GENERATE_URL || 'https://api.kie.ai/api/v1/generate',
+  MUSIC_STATUS: import.meta.env.VITE_MUSIC_STATUS_URL || 'https://api.kie.ai/api/v1/generate/record-info'
 };
 
 export const syncUserWithDb = async (tgId: number, username: string) => {
@@ -101,6 +105,44 @@ export const generateUniversalVideo = async (params: {
       "sound": true
     }
   });
+};
+
+export const generateUniversalMusic = async (params: {
+  prompt: string,
+  title?: string,
+  style?: string,
+  lyrics?: string,
+  vocalGender?: 'm' | 'f',
+  instrumental: boolean,
+  isCustom: boolean
+}) => {
+  const response = await fetch(ENDPOINTS.MUSIC_GENERATE, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${KIE_API_KEY}`
+    },
+    body: JSON.stringify({
+      prompt: params.isCustom ? params.lyrics : params.prompt, // Если кастом, шлем текст
+      customMode: params.isCustom,
+      instrumental: params.instrumental,
+      model: 'V5', // Как в твоем примере
+      style: params.style || 'Pop',
+      title: params.title || 'VidiAI Track',
+      vocalGender: params.vocalGender || 'm'
+    })
+  });
+
+  const result = await response.json();
+  
+  // Kie Music API может возвращать taskId или jobId в зависимости от модели
+  const taskId = result.data?.taskId || result.data?.jobId || result.data?.[0]?.taskId;
+
+  if (!taskId) {
+    throw new Error(result.message || 'Failed to create music task');
+  }
+  
+  return taskId;
 };
 
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
@@ -252,8 +294,17 @@ export const saveVideoToHistory = async (
 };
 
 export const getTaskStatus = async (taskId: string) => {
-  // Используем эндпоинт из .env (теперь это recordInfo?taskId=...)
-  const response = await fetch(`${ENDPOINTS.KLING_STATUS}?taskId=${taskId}`, {
+  // 1. ОПРЕДЕЛЯЕМ ЭНДПОИНТ
+  // Если ID задачи музыкальный (например, мы добавили префикс при генерации) 
+  // или если в будущем будем передавать тип.
+  // Пока сделаем проверку: музыкальные taskId в новом API часто числовые или имеют другой формат.
+  // Самый надежный способ — проверять, откуда пришел запрос.
+  
+  // Для простоты, давай проверять по глобальной логике:
+  const isMusicTask = taskId.includes('music'); 
+  const endpoint = isMusicTask ? ENDPOINTS.MUSIC_STATUS : ENDPOINTS.KLING_STATUS;
+
+  const response = await fetch(`${endpoint}?taskId=${taskId}`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
   });
@@ -264,7 +315,7 @@ export const getTaskStatus = async (taskId: string) => {
     const data = result.data;
     let finalUrl = null;
 
-    // 1. Сначала ищем в resultJson (для видео Kling)
+    // 1. Сначала ищем в resultJson (Kling видео)
     if (data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
@@ -274,17 +325,17 @@ export const getTaskStatus = async (taskId: string) => {
       }
     }
 
-    // 2. Если в resultJson пусто, ищем в прямых полях (для Nano Banana)
+    // 2. Ищем в прямых полях (Nano Banana и НОВОЕ: Music API)
     if (!finalUrl) {
-      finalUrl = data.imageUrl || data.videoUrl || data.url || null;
+      // Для музыки Kie часто возвращает в audioUrl или url
+      finalUrl = data.audioUrl || data.imageUrl || data.videoUrl || data.url || null;
     }
 
     return {
-      // Расширяем список успешных статусов (success, completed, finished)
       status: (data.state === 'success' || data.state === 'completed' || data.state === 'finished') 
         ? 'succeeded' 
         : data.state, 
-      video_url: finalUrl // Оставляем это имя поля, чтобы не менять код в Library/History
+      video_url: finalUrl 
     };
   }
   
