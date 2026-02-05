@@ -190,7 +190,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                     </div>
               
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
-                      {isAudioPlaying ? 'Зараз лунає' : 'Натисніть щоб слухати'}
+                      {isAudioPlaying ? 'Зараз лунає' : 'Слухати'}
                     </span>
                   </div>
                 );
@@ -251,7 +251,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
                 className={`p-2.5 transition-all duration-200 ${
                   isVideo 
                     ? 'text-gray-400 hover:text-white active:scale-110' 
-                    : 'text-white/10 cursor-not-allowed opacity-30'
+                    : 'text-white/40 cursor-not-allowed opacity-30'
                 }`}
               >
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
