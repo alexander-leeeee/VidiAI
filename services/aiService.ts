@@ -114,31 +114,69 @@ export const generateUniversalMusic = async (params: {
   title?: string,
   style?: string,
   lyrics?: string,
-  vocalGender?: 'm' | 'f',
+  vocalGender: 'male' | 'female' | 'random', // Принимаем твои значения из стейта
   instrumental: boolean,
   isCustom: boolean
 }) => {
+  // РЕАЛИЗАЦИЯ РАНДОМА: если пришел 'random', выбираем сами
+  let finalGender: 'm' | 'f' = 'm'; 
+  if (params.vocalGender === 'random') {
+    finalGender = Math.random() > 0.5 ? 'm' : 'f';
+  } else {
+    finalGender = params.vocalGender === 'female' ? 'f' : 'm';
+  }
+
+  // Базовый объект запроса (всегда V5 и Callback)
+  let payload: any = {
+    model: 'V5',
+    instrumental: params.instrumental,
+    customMode: params.isCustom,
+    callBackUrl: 'https://server.vidiai.top/api/music_callback.php'
+  };
+
+  if (params.isCustom) {
+    // ВЕТКА CUSTOM MODE (Обязательно: стиль, тайтл, промпт/текст)
+    if (!params.style?.trim()) throw new Error("Стиль музики обов'язковий!");
+    if (!params.title?.trim()) throw new Error("Назва треку обов'язкова!");
+    
+    payload.style = params.style;
+    payload.title = params.title;
+    
+    if (params.instrumental) {
+      // Инструментал в кастомном моде
+      payload.prompt = params.prompt || params.style; 
+    } else {
+      // Вокал в кастомном моде (Обязательно: Lyrics)
+      if (!params.lyrics?.trim()) throw new Error("Текст пісні (Lyrics) обов'язковий!");
+      payload.prompt = params.lyrics;
+      payload.vocalGender = finalGender;
+    }
+  } else {
+    // ВЕТКА STANDARD MODE (Обязательно: промпт)
+    if (!params.prompt?.trim()) throw new Error("Опис пісні обов'язковий!");
+    
+    payload.prompt = params.prompt;
+    if (!params.instrumental) {
+      payload.vocalGender = finalGender;
+    }
+  }
+
   const response = await fetch(ENDPOINTS.MUSIC_GENERATE, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${KIE_API_KEY}`
     },
-    body: JSON.stringify({
-      prompt: params.isCustom ? params.lyrics : params.prompt,
-      customMode: params.isCustom,
-      instrumental: params.instrumental,
-      model: 'V5',
-      style: params.style || 'Pop',
-      title: params.title || 'VidiAI Track',
-      vocalGender: params.vocalGender || 'm'
-    })
+    body: JSON.stringify(payload)
   });
 
   const result = await response.json();
-  const taskId = result.data?.taskId || result.data?.jobId || result.data?.[0]?.taskId;
+  const taskId = result.data?.taskId || result.data?.jobId || (result.data && result.data[0]?.taskId);
 
-  if (!taskId) throw new Error(result.message || 'Failed to create music task');
+  if (!taskId) {
+    throw new Error(result.message || 'Не вдалося створити завдання на музику');
+  }
+  
   return taskId;
 };
 
