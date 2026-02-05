@@ -352,10 +352,17 @@ export const getTaskStatus = async (taskId: string) => {
     let finalUrl = null;
 
     // 1. ЛОГИКА ДЛЯ МУЗЫКИ (Новый формат Kie V5/Suno)
-    if (isMusicTask && data.response?.sunoData?.[0]) {
-      // Берем именно audioUrl — это полная версия трека
-      finalUrl = data.response.sunoData[0].audioUrl;
-    } 
+    if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
+      // Suno всегда возвращает массив, обычно из 2-х треков
+      const track1 = data.response.sunoData[0]?.audioUrl;
+      const track2 = data.response.sunoData[1]?.audioUrl;
+      
+      return {
+        status: isSucceeded ? 'succeeded' : rawState.toLowerCase(),
+        video_url: track1,
+        alternative_url: track2 // Сохраняем второй вариант
+      };
+    }
 
     // 2. ЛОГИКА ДЛЯ ВИДЕО (Kling)
     if (!finalUrl && data.resultJson) {
