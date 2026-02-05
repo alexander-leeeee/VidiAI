@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { VideoItem } from '../types';
-import { Volume2, VolumeX, Play, Music2, Download, RotateCcw, Trash2 } from 'lucide-react'; 
+import { Volume2, VolumeX, Play, Pause, Music2, Download, RotateCcw, Trash2 } from 'lucide-react'; 
 
 interface VideoCardProps {
   video: VideoItem;
