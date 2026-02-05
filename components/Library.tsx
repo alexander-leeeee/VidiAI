@@ -63,27 +63,22 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
     return () => clearInterval(interval);
   }, []);
 
-    // Добавляем параметр contentType: 'video' | 'image' | 'audio'
-    const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' = 'video') => {
+    const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' | 'music' = 'video') => {
 
-      // ДОБАВЛЯЕМ СЮДА:
-      console.log("ОТЛАДКА УДАЛЕНИЯ:");
-      console.log("Тип контента из стейта:", contentType);
-      console.log("ID контента:", id);
-      console.log("ID пользователя из Telegram:", tgUser?.id);
-      console.log("Тип контента:", contentType);
+      console.log("ОТЛАДКА УДАЛЕНИЯ:", { id, contentType });
       
-      // Сопоставляем типы из твоего генератора с текстом
       const confirmTextMap: Record<string, string> = {
         video: "Видалити це відео?",
         image: "Видалити це фото?",
-        music: "Видалити цей трек?", // Исправил audio на music, так как у нас в стейте mode === 'music'
+        music: "Видалити цей трек?",
+        audio: "Видалити цей трек?",
       };
       
-      // Получаем текст или используем универсальный вариант, если тип не распознан
+      // Используем переменную finalConfirmText, которую мы создали строкой ниже
       const finalConfirmText = confirmTextMap[contentType as string] || "Видалити цей файл?";
     
-      if (!window.confirm(confirmText)) return;
+      // ОШИБКА БЫЛА ЗДЕСЬ: заменяем confirmText на finalConfirmText
+      if (!window.confirm(finalConfirmText)) return;
     
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
@@ -101,14 +96,13 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
         const data = await response.json();
     
         if (data.status === 'success') {
-          // Используем нестрогое сравнение != чтобы избежать проблем с типами string/number
-          if (contentType === 'video') setDbVideos(prev => prev.filter(v => v.id != id));
-          // Когда добавишь фото и музыку, просто допиши условия здесь
+          // Обновляем список, удаляя любой тип контента
+          setDbVideos(prev => prev.filter(v => v.id != id));
         } else {
           alert(data.message || "Помилка видалення");
         }
       } catch (error) {
-        console.error(`Помилка видалення ${contentType}:`, error);
+        console.error(`Помилка видалення:`, error);
         alert("Не вдалося зв'язатися з сервером");
       }
     };
