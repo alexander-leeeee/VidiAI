@@ -115,7 +115,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
       // ----------------------------
 
       // 2. СПИСАНИЕ МОНЕТ
-      const response = await fetch(`${baseUrl}/api/deduct_credits.php`, {
+      const response = await fetch(`${baseUrl}/deduct_credits.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,7 +132,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
       // 4. СОХРАНЕНИЕ НОВОЙ КАРТОЧКИ
       const newTaskId = `${video.id}_v2`;
       
-      await fetch(`${baseUrl}/api/save_media.php`, {
+      await fetch(`${baseUrl}/save_media.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
