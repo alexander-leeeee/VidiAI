@@ -247,7 +247,21 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, canDown
               </button>
 
               {/* Звук */}
-              <button onClick={toggleMute} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Блокируем переключение, если это не видео
+                  if (video.type === 'video' || getMediaType(video.url || '') === 'video') {
+                    toggleMute(e);
+                  }
+                }} 
+                disabled={video.type !== 'video'} // Делаем кнопку неактивной для music и image
+                className={`p-2.5 transition-colors ${
+                  video.type === 'video' 
+                    ? 'text-gray-400 hover:text-white' 
+                    : 'text-gray-600 cursor-not-allowed opacity-30' // Визуально гасим кнопку
+                }`}
+              >
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
 
