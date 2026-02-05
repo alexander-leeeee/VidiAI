@@ -51,7 +51,17 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
                 if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
                   video.status = 'succeeded';
                   video.url = freshStatus.video_url;
-                  await updateVideoInDb(video.id, 'succeeded', freshStatus.video_url);
+                  
+                  // 1. Сохраняем вторую ссылку в локальном объекте (для мгновенного появления кнопки)
+                  video.alternative_url = freshStatus.alternative_url; 
+
+                  // 2. Отправляем в базу данных ВСЕ данные (добавляем 4-й аргумент)
+                  await updateVideoInDb(
+                    video.id, 
+                    'succeeded', 
+                    freshStatus.video_url, 
+                    freshStatus.alternative_url 
+                  );
                 }
               }
             }
