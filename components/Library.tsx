@@ -11,7 +11,7 @@ interface LibraryProps {
   setCredits: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest }) => {
+const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits, setCredits }) => {
   const t = getTranslation(lang);
   const [dbVideos, setDbVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
