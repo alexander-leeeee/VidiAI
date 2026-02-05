@@ -190,12 +190,12 @@ const handleGenerate = async () => {
         } else if (mode === 'music') {
             // РЕАЛЬНАЯ ГЕНЕРАЦИЯ МУЗЫКИ через новый API
             const musicTaskId = await generateUniversalMusic({
-                prompt: isCustomMusic ? musicStyles : prompt,
+                prompt: prompt,
                 title: musicTitle,
                 style: musicStyles,
                 lyrics: lyrics,
-                vocalGender: vocalType === 'male' ? 'm' : 'f',
-                instrumental: !hasVocals,
+                vocalGender: vocalType, // Передаем 'male' | 'female' | 'random'
+                instrumental: !hasVocals, 
                 isCustom: isCustomMusic
             });
             
