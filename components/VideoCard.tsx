@@ -168,14 +168,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
     }
   };
 
-  console.log("RENDER CARD:", {
-    id: video.id,
-    status: video.status,
-    url: video.url,
-    isProcessing,
-    actualType
-  });
-
   return (
     <div className="flex flex-col space-y-2 group">
       <div 
