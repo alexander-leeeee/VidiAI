@@ -152,6 +152,16 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
       return itemType === filter;
     });
 
+    // ЛОГИРОВАНИЕ ДЛЯ ПРОВЕРКИ ФИЛЬТРОВ
+    console.log("=== DEBUG LIBRARY ===");
+    console.log("1. Поточний фільтр:", filter);
+    console.log("2. Усього відео в dbVideos:", dbVideos.length);
+    console.log("3. Список всіх типів контенту в базі:", dbVideos.map(v => v.contentType));
+    console.log("4. Результат фільтрації (кількість):", filteredVideos.length);
+    if (dbVideos.length > 0) {
+      console.log("5. Приклад першого об'єкта:", dbVideos[0]);
+    }
+
     return (
     <div className="pb-24 pt-4 px-3 h-full overflow-y-auto no-scrollbar">
       <h2 className="text-xl font-bold dark:text-white mb-4 px-1">{t.nav_library}</h2>
