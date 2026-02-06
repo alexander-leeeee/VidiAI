@@ -180,7 +180,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
             <div className="text-lg">⏳</div>
             {/* Если скрыто — показываем краткий хинт, если раскрыто — заголовок */}
             <p className="text-[13px] text-blue-200/90 font-bold uppercase tracking-wider">
-              {isInfoExpanded ? (t.lib_storage_title || "Інформація") : "Файли зберігаються 14 днів (Натисніть, щоб дізнатися більше)"}
+              {isInfoExpanded ? (t.lib_storage_title || "Інформація") : "Файли зберігаються 14 днів"}
             </p>
           </div>
           
