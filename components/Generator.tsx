@@ -33,13 +33,11 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [isGenerating, setIsGenerating] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<string>('9:16');
   const [statusMessage, setStatusMessage] = useState('');
-  const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLowBalanceOpen, setIsLowBalanceOpen] = useState(false);
   const isWorking = useRef(false);
   const [soraDuration, setSoraDuration] = useState<'10' | '15'>('10');
   const [soraLayout, setSoraLayout] = useState<'portrait' | 'landscape'>('portrait');
-  const [videoMethod, setVideoMethod] = useState<'text' | 'image'>('image');
   const [imageQuality, setImageQuality] = useState<'standard' | 'pro' | 'edit'>('standard');
   const [fileFormat, setFileFormat] = useState<'png' | 'jpeg'>('png');
   const [isCustomMusic, setIsCustomMusic] = useState(false);
@@ -52,7 +50,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]); 
   const [videoMethod, setVideoMethod] = useState<'text' | 'reference' | 'start-end'>('reference');
   const [selectedModelId, setSelectedModelId] = useState<string>('sora-2');
-  const [imageUploadMode, setImageUploadMode] = useState<'single' | 'twoFrames'>('single');
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -100,9 +97,9 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
   useEffect(() => {
     if (initialImage) {
-      setSelectedImage({ preview: initialImage, data: '', mimeType: '' });
+      setUploadedImages([{ preview: initialImage, data: '', mimeType: '' }]);
     } else {
-      setSelectedImage(null);
+      setUploadedImages([]);
     }
   }, [initialImage]);
 
@@ -110,40 +107,17 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     if (initialAspectRatio) setAspectRatio(initialAspectRatio);
   }, [initialAspectRatio]);
 
-  const handleUploadImage = (event: React.ChangeEvent<HTMLInputElement>, target: 'first' | 'last') => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        const matches = base64String.match(/^data:(.+);base64,(.+)$/);
-        if (matches) {
-          const imageData = { preview: base64String, mimeType: matches[1], data: matches[2] };
-          
-          if (target === 'first') {
-            // Это заменяет твой setSelectedImage
-            setSelectedImage(imageData); 
-          } else {
-            // Новое состояние для финала
-            setLastImage(base64String); 
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleGenerate = async () => {
       setStatusMessage(""); 
       if (isWorking.current || isGenerating) return;
 
       const isImageEdit = mode === 'image' && imageQuality === 'edit';
-      const isVideoWithImage = mode === 'video' && videoMethod === 'image';
+      const isVideoWithImage = mode === 'video' && videoMethod !== 'text';
       const needsImage = isImageEdit || isVideoWithImage;
       const isCustom = mode === 'music' && isCustomMusic;
     
       const hasContent = isCustom ? (prompt.trim().length > 0 || lyrics.trim().length > 0) : prompt.trim().length > 0;
-      const hasImage = !!selectedImage;
+      const hasImage = uploadedImages.length > 0;
 
       if (!hasContent || (needsImage && !hasImage)) {
           alert(needsImage && !hasImage ? t.gen_label_image : "Будь ласка, введіть опис або текст пісні");
@@ -160,60 +134,61 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження...");
 
       try {
-          const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-          
-          // 1. ПОДГОТОВКА ССЫЛОК
-          let mainUrl = ''; 
-          let secondUrl = '';
-
-          // Загрузка ПЕРВОГО фото
-          if (needsImage && selectedImage?.data) {
-              const formData = new FormData();
-              const imgResponse = await fetch(selectedImage.preview);
-              const blob = await imgResponse.blob();
-              formData.append('photo', blob, `start_${Date.now()}.png`);
-              const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
-              const uploadData = await uploadRes.json();
-              mainUrl = uploadData.fileUrl;
-          }
-
-          // Загрузка ВТОРОГО фото (только для Veo Start+End)
-          if (selectedModelId === 'veo' && imageUploadMode === 'twoFrames' && lastImage) {
-              const formData = new FormData();
-              const imgResponse = await fetch(lastImage);
-              const blob = await imgResponse.blob();
-              formData.append('photo', blob, `end_${Date.now()}.png`);
-              const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
-              const uploadData = await uploadRes.json();
-              secondUrl = uploadData.fileUrl;
-          }
-
-          // Финальная строка для API
-          const finalImageUrlForApi = secondUrl ? `${mainUrl},${secondUrl}` : mainUrl;
-
-          setStatusMessage('Запуск генерації...');
-          let taskId;
-
-          if (templateId && templateId !== 'default') {
-              taskId = await generateByTemplateId(
-                  effectiveTemplateId, 
-                  prompt, 
-                  videoMethod === 'text' ? '' : mainUrl, // Для шаблонов берем только первое фото
-                  { 
-                      method: videoMethod, 
-                      duration: soraDuration, 
-                      aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9',
-                      modelId: selectedModelId 
-                  }
-              );
-          } else if (mode === 'image') {
-              taskId = await generateNanoImage({
-                  prompt: prompt,
-                  quality: imageQuality,
-                  aspectRatio: aspectRatio,
-                  outputFormat: fileFormat,
-                  imageUrl: mainUrl // Для фото берем только первое
-              });
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
+        const uploadedUrls = [];
+    
+        // 1. Проверки перед стартом
+        const isImageEdit = mode === 'image' && imageQuality === 'edit';
+        const isVideoWithImage = mode === 'video' && videoMethod !== 'text';
+        const needsImage = isImageEdit || isVideoWithImage;
+        
+        if (needsImage && uploadedImages.length === 0) {
+            alert(t.gen_label_image);
+            return;
+        }
+    
+        isWorking.current = true; 
+        setIsGenerating(true);
+        setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження фото...");
+    
+        // 2. ЦИКЛ ЗАГРУЗКИ ВСЕХ ФОТО НА СЕРВЕР
+        if (needsImage) {
+            for (let i = 0; i < uploadedImages.length; i++) {
+                const img = uploadedImages[i];
+                const formData = new FormData();
+                // Загружаем превью напрямую
+                const imgResponse = await fetch(img.preview);
+                const blob = await imgResponse.blob();
+                formData.append('photo', blob, `frame_${i}_${Date.now()}.png`);
+                
+                const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
+                const uploadData = await uploadRes.json();
+                uploadedUrls.push(uploadData.fileUrl);
+            }
+        }
+    
+        // Собираем ссылки в строку через запятую для API
+        const finalImageUrlForApi = uploadedUrls.join(',');
+        const mainUrl = uploadedUrls[0] || ''; // Для старых функций, где нужно только одно фото
+    
+        setStatusMessage('Запуск генерації...');
+        let taskId;
+    
+        if (templateId && templateId !== 'default') {
+            taskId = await generateByTemplateId(
+                effectiveTemplateId, 
+                prompt, 
+                mainUrl, 
+                { method: videoMethod as any, duration: soraDuration, aspectRatio: aspectRatio, modelId: selectedModelId }
+            );
+        } else if (mode === 'image') {
+            taskId = await generateNanoImage({
+                prompt: prompt,
+                quality: imageQuality,
+                aspectRatio: aspectRatio,
+                outputFormat: fileFormat,
+                imageUrl: mainUrl
+            });
           } else if (mode === 'music') {
               const musicTaskId = await generateUniversalMusic({
                   prompt: prompt,
@@ -229,10 +204,10 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
               // Власна генерація відео (Sora / Veo)
               taskId = await generateUniversalVideo({
                   prompt: prompt, 
-                  imageUrl: videoMethod === 'text' ? '' : finalImageUrlForApi, // ЗДЕСЬ ПЕРЕДАЕМ ОДНУ ИЛИ ДВЕ ССЫЛКИ
+                  imageUrl: finalImageUrlForApi, 
                   duration: soraDuration, 
-                  aspectRatio: soraLayout as any, // Для Veo здесь может быть 'auto'
-                  method: videoMethod,
+                  aspectRatio: soraLayout as any,
+                  method: videoMethod, // 'reference' | 'start-end' | 'text'
                   modelId: selectedModelId,
                   includeSound: withSound
               });
