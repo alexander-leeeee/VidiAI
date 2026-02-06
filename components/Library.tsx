@@ -84,14 +84,9 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
     }, []);
 
     const handleDelete = async (id: any, contentType: 'video' | 'image' | 'audio' | 'music' = 'video') => {
+      const tg = (window as any).Telegram?.WebApp;
       const itemInState = dbVideos.find(v => v.id === id);
-
-      console.log("3. ЛОГ ПЕРЕД УДАЛЕНИЕМ:");
-      console.log("- ID:", id);
-      console.log("- contentType пришел в функцию:", contentType);
-      console.log("- contentType внутри объекта в стейте:", itemInState?.contentType);
-      console.log("- Весь объект целиком:", itemInState);
-      
+    
       const confirmTextMap: Record<string, string> = {
         video: "Видалити це відео?",
         image: "Видалити це фото?",
@@ -101,37 +96,41 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
       
       const finalConfirmText = confirmTextMap[contentType] || "Видалити цей файл?";
     
-      // ИСПРАВЛЕНО: Теперь используем finalConfirmText вместо confirmText
-      if (!window.confirm(finalConfirmText)) return;
+      // ИСПОЛЬЗУЕМ НАТИВНОЕ ОКНО TELEGRAM
+      tg.showConfirm(finalConfirmText, async (isConfirmed: boolean) => {
+        if (!isConfirmed) return; // Если пользователь нажал "Отмена"
     
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-        const response = await fetch(`${apiUrl}/api/delete_media.php`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            content_id: id, 
-            content_type: contentType,
-            telegram_id: tgUser?.id 
-          })
-        });
+        try {
+          // Используем актуальный ID пользователя напрямую из Telegram
+          const tgId = tg.initDataUnsafe?.user?.id;
+          const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
     
-        // Если сервер упал или вернул 500, response.ok будет false
-        if (!response.ok) throw new Error("Сервер не відповідає");
+          const response = await fetch(`${apiUrl}/api/delete_media.php`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              content_id: id, 
+              content_type: contentType,
+              telegram_id: tgId
+            })
+          });
     
-        const data = await response.json();
-        if (data.status === 'success') {
-          setDbVideos(prev => prev.filter(v => v.id != id));
-        } else {
-          alert(data.message || "Помилка видалення");
+          if (!response.ok) throw new Error("Сервер не відповідає");
+    
+          const data = await response.json();
+          if (data.status === 'success') {
+            setDbVideos(prev => prev.filter(v => v.id != id));
+          } else {
+            // Нативный алерт Telegram вместо обычного alert
+            tg.showAlert(data.message || "Помилка видалення");
+          }
+        } catch (error) {
+          console.error(`Помилка видалення:`, error);
+          tg.showAlert("Не вдалося видалити файл. Перевірте з'єднання.");
+        } finally {
+          console.log("Процес видалення завершено"); 
         }
-      } catch (error) {
-        console.error(`Помилка видалення:`, error);
-        alert("Не вдалося видалити файл. Перевірте з'єднання."); // Обязательно выводим ошибку юзеру
-      } finally {
-        // Здесь можно сбросить какой-то флаг загрузки, если ты его добавишь
-        console.log("Процес видалення завершено"); 
-      }
+      });
     };
   
     const handleGenerateMore = (video: VideoItem) => {
