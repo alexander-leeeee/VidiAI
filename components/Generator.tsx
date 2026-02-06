@@ -479,17 +479,28 @@ return (
         
             {/* БЛОК СООТНОШЕНИЯ СТОРОН */}
             <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
-              <div className="grid gap-2 grid-cols-1"> 
+              <label className="text-sm font-medium dark:text-gray-300 ml-1">
+                Співвідношення сторін
+              </label>
+              <div className="grid grid-cols-2 gap-2 w-full"> 
                 <button 
                   onClick={() => setSoraLayout(selectedModelId === 'veo' ? '9:16' : 'portrait')} 
-                  className={`py-3.5 rounded-xl border text-xs font-bold transition-all ${ (soraLayout === 'portrait' || soraLayout === '9:16') ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                  className={`py-3.5 rounded-2xl border text-[11px] font-bold transition-all ${ 
+                    (soraLayout === 'portrait' || soraLayout === '9:16') 
+                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
+                    : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-400'
+                  }`}
                 >
                   Вертикальне (9:16)
                 </button>
+            
                 <button 
                   onClick={() => setSoraLayout(selectedModelId === 'veo' ? '16:9' : 'landscape')} 
-                  className={`py-3.5 rounded-xl border text-xs font-bold transition-all ${ (soraLayout === 'landscape' || soraLayout === '16:9') ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                  className={`py-3.5 rounded-2xl border text-[11px] font-bold transition-all ${ 
+                    (soraLayout === 'landscape' || soraLayout === '16:9') 
+                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
+                    : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-400'
+                  }`}
                 >
                   Горизонтальне (16:9)
                 </button>
