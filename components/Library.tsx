@@ -179,46 +179,47 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
         </div>
       ) : (
         <>
-        {/* Панель фильтров */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar">
-          {filterOptions.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => setFilter(option.id as any)}
-              className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 whitespace-nowrap border ${
-                filter === option.id
-                  ? 'bg-primary border-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
-                  : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      
-        <div className="grid grid-cols-2 gap-3">
-          {dbVideos.map((video) => {
-            // 1. Проверяем, есть ли уже вариант v2 для этого конкретного видео
-            // Мы смотрим, существует ли в массиве dbVideos объект с ID, равным ID текущего видео + "_v2"
-            const hasV2 = dbVideos.some(v => v.id === `${video.id}_v2`);
+          {/* Панель фильтров */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar">
+            {filterOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => setFilter(option.id as any)}
+                className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 whitespace-nowrap border ${
+                  filter === option.id
+                    ? 'bg-primary border-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         
-            return (
-              <VideoCard 
-                key={video.id} 
-                video={video} 
-                canDownload={true}
-                onDelete={handleDelete}
-                onClick={handleGenerateMore}
-                currentCredits={currentCredits}
-                setCredits={setCredits}
-                // 2. Передаем результат проверки в VideoCard
-                isV2Exists={hasV2} 
-                // 3. Передаем функцию добавления нового видео в стейт без перезагрузки страницы
-                onNewItemAdded={(newItem) => setDbVideos(prev => [newItem, ...prev])}
-              />
-            );
-          })}
-        </div>
+          <div className="grid grid-cols-2 gap-3">
+            {dbVideos.map((video) => {
+              // 1. Проверяем, есть ли уже вариант v2 для этого конкретного видео
+              // Мы смотрим, существует ли в массиве dbVideos объект с ID, равным ID текущего видео + "_v2"
+              const hasV2 = dbVideos.some(v => v.id === `${video.id}_v2`);
+          
+              return (
+                <VideoCard 
+                  key={video.id} 
+                  video={video} 
+                  canDownload={true}
+                  onDelete={handleDelete}
+                  onClick={handleGenerateMore}
+                  currentCredits={currentCredits}
+                  setCredits={setCredits}
+                  // 2. Передаем результат проверки в VideoCard
+                  isV2Exists={hasV2} 
+                  // 3. Передаем функцию добавления нового видео в стейт без перезагрузки страницы
+                  onNewItemAdded={(newItem) => setDbVideos(prev => [newItem, ...prev])}
+                />
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
