@@ -103,7 +103,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
   
     const cost = 5;
     if (currentCredits < cost) {
-      // Используем нативный алерт, чтобы не ломать фокус
       (window as any).Telegram?.WebApp?.showAlert("Недостатньо монет");
       return;
     }
@@ -112,37 +111,32 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
       setIsUnlocking(true);
       const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
       const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
-  
-      // --- ВОТ ЗДЕСЬ ИСПРАВЛЕНИЕ ---
       const newTaskId = `${video.id}_v2`;
-      
+  
+      // 1. МГНОВЕННО добавляем фейковую карточку для анимации
       if (onNewItemAdded) {
         onNewItemAdded({
           ...video,
           id: newTaskId,
           title: `${video.title} (Варіант 2)`,
-          status: 'processing', // Ставим статус обработки
-          url: '',              // ОБЯЗАТЕЛЬНО ПУСТО: чтобы не включился плеер
-          alternative_url: '',  // Очищаем, чтобы на новой карточке не было кнопки покупки
-          contentType: 'music'  // Явно указываем тип
+          status: 'processing', 
+          url: '',              // Пустота активирует лоадер
+          alternative_url: '',
+          contentType: 'music'
         });
       }
-      // ----------------------------
   
-      // 1. Списание монет
-      const response = await fetch(`${baseUrl}/deduct_credits.php`, {
+      // 2. СПИСАНИЕ МОНЕТ
+      const deductRes = await fetch(`${baseUrl}/deduct_credits.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id: tgId, amount: cost })
       });
-  
-      const data = await response.json();
-      if (!data.success) throw new Error(data.message || "Ошибка списания");
+      if (!deductRes.ok) throw new Error("Ошибка сети при списании");
   
       setCredits(prev => prev - cost);
   
-      // 2. Сохранение в БД
-      // В PHP уже настроено, что если есть imageUrl, то статус будет 'succeeded'
+      // 3. СОХРАНЕНИЕ В БАЗУ (сейчас там статус 'processing')
       await fetch(`${baseUrl}/save_media.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,12 +150,20 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
         }),
       });
   
-      setIsUnlocking(false);
-      // Reload убираем совсем!
+      // 4. ПАУЗА ДЛЯ КРАСОТЫ (чтобы юзер насладился анимацией)
+      setTimeout(async () => {
+        const { updateVideoInDb } = await import('../services/aiService');
+        
+        // 5. ПЕРЕВОДИМ В SUCCESS (теперь Library увидит готовую песню)
+        await updateVideoInDb(newTaskId, 'succeeded', video.alternative_url || '');
+        
+        setIsUnlocking(false);
+        console.log("Варіант 2 активовано!");
+      }, 4000); // 4 секунды магии
   
     } catch (error: any) {
       console.error("Unlock error:", error);
-      (window as any).Telegram?.WebApp?.showAlert("Сталася помилка: " + error.message);
+      (window as any).Telegram?.WebApp?.showAlert("Помилка: " + error.message);
       setIsUnlocking(false);
     }
   };
