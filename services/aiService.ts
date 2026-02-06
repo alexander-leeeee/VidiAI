@@ -362,44 +362,47 @@ export const getTaskStatus = async (taskId: string) => {
   if ((result.code === 200 || result.code === 0) && result.data) {
     const data = result.data;
     
-    // СНАЧАЛА ОПРЕДЕЛЯЕМ СТАТУС (Чтобы он был доступен везде ниже)
-    const rawState = data.status || data.state || 'processing';
-    const isSucceeded = ['SUCCESS', 'success', 'completed', 'finished', 'succeeded'].includes(rawState.toLowerCase());
+    const rawState = (data.status || data.state || 'processing').toLowerCase();
+    const isSucceeded = ['success', 'completed', 'finished', 'succeeded'].includes(rawState);
+    // Добавляем проверку на провал
+    const isFailed = ['fail', 'failed', 'error'].includes(rawState);
 
-    // 1. ЛОГИКА ДЛЯ МУЗЫКИ
-    if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
-      const track1 = data.response.sunoData[0]?.audioUrl;
-      const track2 = data.response.sunoData[1]?.audioUrl;
-      
+    // Если задача провалена, возвращаем статус failed и текст ошибки
+    if (isFailed) {
       return {
-        status: isSucceeded ? 'succeeded' : rawState.toLowerCase(),
-        video_url: track1,
-        alternative_url: track2 // Теперь альтернативная ссылка точно уйдет в базу
+        status: 'failed',
+        error_msg: data.failMsg || result.msg || "Internal Server Error"
       };
     }
 
-    let finalUrl = null;
+    // Логика для успешной музыки
+    if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
+      return {
+        status: isSucceeded ? 'succeeded' : rawState,
+        video_url: data.response.sunoData[0]?.audioUrl,
+        alternative_url: data.response.sunoData[1]?.audioUrl
+      };
+    }
 
-    // 2. ЛОГИКА ДЛЯ ВИДЕО (Kling)
+    // Логика для успешного видео/фото
+    let finalUrl = null;
     if (data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
         finalUrl = parsed.resultUrls?.[0] || null;
       } catch (e) {}
     }
-
-    // 3. ЛОГИКА ДЛЯ ФОТО (Nano Banana)
     if (!finalUrl) {
       finalUrl = data.imageUrl || data.videoUrl || data.url || null;
     }
 
     return {
-      status: isSucceeded ? 'succeeded' : rawState.toLowerCase(),
+      status: isSucceeded ? 'succeeded' : rawState,
       video_url: finalUrl 
     };
   }
   
-  return { status: 'error' };
+  return { status: 'error', error_msg: result.message || "Unknown API Error" };
 };
 
 export const getUserHistory = async () => {
