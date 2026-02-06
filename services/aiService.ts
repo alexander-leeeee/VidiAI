@@ -288,7 +288,8 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
       imageUrl: imageUrl,
       duration: options?.duration || '10',
       aspectRatio: options?.aspectRatio || '9:16',
-      method: options?.method || 'image'
+      method: options?.method || 'image',
+      modelId: options?.modelId || 'sora-2'
     });
   }
 
