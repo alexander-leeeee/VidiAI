@@ -111,89 +111,69 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const handleGenerate = async () => {
       setStatusMessage(""); 
       if (isWorking.current || isGenerating) return;
-  
+
       const isImageEdit = mode === 'image' && imageQuality === 'edit';
       const isVideoWithImage = mode === 'video' && videoMethod === 'image';
       const needsImage = isImageEdit || isVideoWithImage;
       const isCustom = mode === 'music' && isCustomMusic;
     
-      const hasPrompt = prompt.trim().length > 0;
-      const hasLyrics = lyrics.trim().length > 0;
+      const hasContent = isCustom ? (prompt.trim().length > 0 || lyrics.trim().length > 0) : prompt.trim().length > 0;
       const hasImage = !!selectedImage;
-  
-      const hasContent = isCustom ? (hasPrompt || hasLyrics) : hasPrompt;
-  
+
       if (!hasContent || (needsImage && !hasImage)) {
           alert(needsImage && !hasImage ? t.gen_label_image : "Будь ласка, введіть опис або текст пісні");
           return;
       }
-  
+
       if (currentCredits < currentCost) {
           setIsLowBalanceOpen(true);
           return;
       }
-  
-      const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+
       isWorking.current = true; 
       setIsGenerating(true);
       setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження...");
-  
+
       try {
           const apiUrl = import.meta.env.VITE_API_URL || 'https://server.vidiai.top';
-          let imageUrl = ''; 
-  
-          if (needsImage && selectedImage?.data) {
-              const formData = new FormData();
-              const imgResponse = await fetch(selectedImage.preview);
-              const blob = await imgResponse.blob();
-              formData.append('photo', blob, `upload_${Date.now()}.png`);
-  
-              const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { 
-                  method: 'POST', 
-                  body: formData 
-              });
-              const uploadData = await uploadRes.json();
-              imageUrl = uploadData.fileUrl;
-          }
-  
-          setStatusMessage('Запуск генерації...');
-        
-          let imageUrl = ''; 
-          let finalLastImageUrl = '';
           
-          // Загружаем первое фото
-          if (selectedImage?.data) {
+          // 1. ПОДГОТОВКА ССЫЛОК
+          let mainUrl = ''; 
+          let secondUrl = '';
+
+          // Загрузка ПЕРВОГО фото
+          if (needsImage && selectedImage?.data) {
               const formData = new FormData();
               const imgResponse = await fetch(selectedImage.preview);
               const blob = await imgResponse.blob();
               formData.append('photo', blob, `start_${Date.now()}.png`);
               const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
               const uploadData = await uploadRes.json();
-              imageUrl = uploadData.fileUrl;
+              mainUrl = uploadData.fileUrl;
           }
-          
-          // Загружаем второе фото (для Veo)
-          if (lastImage) {
+
+          // Загрузка ВТОРОГО фото (только для Veo Start+End)
+          if (selectedModelId === 'veo' && imageUploadMode === 'twoFrames' && lastImage) {
               const formData = new FormData();
               const imgResponse = await fetch(lastImage);
               const blob = await imgResponse.blob();
               formData.append('photo', blob, `end_${Date.now()}.png`);
               const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
               const uploadData = await uploadRes.json();
-              finalLastImageUrl = uploadData.fileUrl;
+              secondUrl = uploadData.fileUrl;
           }
-          
-          // Склеиваем ссылки для Veo
-          const combinedImageUrl = finalLastImageUrl ? `${imageUrl},${finalLastImageUrl}` : imageUrl;
-        
+
+          // Финальная строка для API
+          const finalImageUrlForApi = secondUrl ? `${mainUrl},${secondUrl}` : mainUrl;
+
+          setStatusMessage('Запуск генерації...');
           let taskId;
 
-          // ИСПРАВЛЕННАЯ ЛОГИКА ВЫБОРА
           if (templateId && templateId !== 'default') {
               taskId = await generateByTemplateId(
                   effectiveTemplateId, 
                   prompt, 
-                  videoMethod === 'text' ? '' : imageUrl,
+                  videoMethod === 'text' ? '' : mainUrl, // Для шаблонов берем только первое фото
                   { 
                       method: videoMethod, 
                       duration: soraDuration, 
@@ -207,7 +187,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                   quality: imageQuality,
                   aspectRatio: aspectRatio,
                   outputFormat: fileFormat,
-                  imageUrl: imageUrl
+                  imageUrl: mainUrl // Для фото берем только первое
               });
           } else if (mode === 'music') {
               const musicTaskId = await generateUniversalMusic({
@@ -221,26 +201,25 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
               });
               taskId = `music_${musicTaskId}`; 
           } else {
-              // Свободная видео-генерация
+              // Власна генерація відео (Sora / Veo)
               taskId = await generateUniversalVideo({
                   prompt: prompt, 
-                  imageUrl: videoMethod === 'text' ? '' : imageUrl,
+                  imageUrl: videoMethod === 'text' ? '' : finalImageUrlForApi, // ЗДЕСЬ ПЕРЕДАЕМ ОДНУ ИЛИ ДВЕ ССЫЛКИ
                   duration: soraDuration, 
-                  aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9',
+                  aspectRatio: soraLayout as any, // Для Veo здесь может быть 'auto'
                   method: videoMethod,
                   modelId: selectedModelId,
-                  includeSound: withSound,
-                  imageUrl: combinedImageUrl
+                  includeSound: withSound
               });
           }
-  
+
+          // СОХРАНЕНИЕ В БАЗУ
+          const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
           const tgId = tgUser?.id || 0;
-          const displayTitle = (mode === 'music' && musicTitle?.trim()) 
-              ? musicTitle 
-              : (initialPrompt ? "Шаблон" : `Власна (${mode})`);
+          const displayTitle = (mode === 'music' && musicTitle?.trim()) ? musicTitle : (initialPrompt ? "Шаблон" : `Власна (${mode})`);
         
-          await saveVideoToHistory(taskId, prompt, displayTitle, tgId, imageUrl, aspectRatio, mode);
-  
+          await saveVideoToHistory(taskId, prompt, displayTitle, tgId, mainUrl, aspectRatio, mode);
+
           onVideoGenerated({
               id: taskId,
               prompt,
@@ -248,10 +227,10 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
               contentType: mode,
               title: displayTitle
           } as any, currentCost);
-  
+
           setStatusMessage('Додано в чергу!');
           setTimeout(() => { window.location.hash = '/library'; }, 1500);
-  
+
       } catch (error: any) {
           console.error("Ошибка:", error);
           alert(`Помилка: ${error.message}`);
