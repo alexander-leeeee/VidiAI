@@ -148,7 +148,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
 
     const filteredVideos = dbVideos.filter(item => {
       if (filter === 'all') return true;
-      const itemType = item.contentType || (item as any).type;
+      const itemType = (item.contentType || (item as any).type || '').toLowerCase();
       return itemType === filter;
     });
 
