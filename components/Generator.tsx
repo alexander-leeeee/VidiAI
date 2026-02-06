@@ -277,11 +277,13 @@ return (
               onClick={() => {
                 if (m.active) {
                   setSelectedModelId(m.id);
-                  // АВТО-ПОДСТРОЙКА: если выбрали Veo, сразу ставим формат Auto
+                  setUploadedImages([]); // Очищаем старые фото при смене модели
+                  
                   if (m.id === 'veo') {
+                    setVideoMethod('reference'); // Ставим референс для Veo
                     setSoraLayout('9:16');
                   } else {
-                    // Если вернулись на Sora, а стояло Auto — возвращаем вертикальный формат
+                    setVideoMethod('image'); // Возвращаем Sora режим "З фото"
                     if (soraLayout === 'auto') setSoraLayout('portrait');
                   }
                 }
@@ -319,26 +321,21 @@ return (
         {mode === 'video' && templateId === 'default' && (
           <div className="space-y-2">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
-            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-              <button 
-                onClick={() => { setVideoMethod('reference'); setUploadedImages([]); }} 
-                className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'reference' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
-              >
-                Стиль (1-3)
-              </button>
-              <button 
-                onClick={() => { setVideoMethod('start-end'); setUploadedImages([]); }} 
-                className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'start-end' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
-              >
-                Перехід (2)
-              </button>
-              <button 
-                onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} 
-                className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
-              >
-                Текст
-              </button>
-            </div>
+            
+            {selectedModelId === 'veo' ? (
+              /* ВЫБОР ДЛЯ VEO (3 режима) */
+              <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                <button onClick={() => { setVideoMethod('reference'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'reference' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Стиль (1-3)</button>
+                <button onClick={() => { setVideoMethod('start-end'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'start-end' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Перехід (2)</button>
+                <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Текст</button>
+              </div>
+            ) : (
+              /* ВЫБОР ДЛЯ SORA (2 режима: Промт и По картинке) */
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                <button onClick={() => { setVideoMethod('image'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'image' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>З фото</button>
+                <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Тільки текст</button>
+              </div>
+            )}
           </div>
         )}
 
@@ -374,7 +371,7 @@ return (
               ))}
         
               {/* Кнопка "Додати" - появляется пока есть лимит */}
-              {uploadedImages.length < (videoMethod === 'start-end' ? 2 : 3) && (
+              {uploadedImages.length < (selectedModelId === 'sora-2' ? 1 : (videoMethod === 'start-end' ? 2 : 3)) && (
                 <button 
                   onClick={() => fileInputRef.current?.click()}
                   className="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
