@@ -350,18 +350,21 @@ export const updateVideoInDb = async (
   status: string, 
   videoUrl: string | null, 
   alternativeUrl?: string | null,
-  errorMsg?: string // Добавляем 5-й параметр
+  errorMsg?: string
 ) => {
   try {
+    // 1. Очищаем ID от префиксов 'music_' или 'veo_'
+    const cleanId = taskId.replace('music_', '').replace('veo_', '');
+
     const response = await fetch('https://server.vidiai.top/api/update_media_status.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        task_id: taskId, 
+        task_id: cleanId, // 2. Отправляем чистый ID, который PHP найдет в базе
         status: status, 
         video_url: videoUrl,
         alternative_url: alternativeUrl,
-        error_description: errorMsg // Отправляем текст ошибки в базу
+        error_description: errorMsg 
       }),
     });
     
@@ -379,20 +382,23 @@ export const saveVideoToHistory = async (
   tgId: number, 
   imageUrl: string | null, 
   aspectRatio: string,
-  contentType: string = 'video' // Додаємо тип контенту (за замовчуванням video)
+  contentType: string = 'video'
 ) => {
   try {
+    // 1. Очищаем ID от префиксов, чтобы в базе он был чистым
+    const cleanId = taskId.replace('music_', '').replace('veo_', '');
+
     await fetch('https://server.vidiai.top/api/save_media.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        task_id: taskId, 
+        task_id: cleanId, // 2. Отправляем чистый ID
         prompt, 
         title, 
         telegram_id: tgId, 
         imageUrl, 
         aspectRatio,
-        type: contentType // Передаємо тип в базу
+        type: contentType
       }),
     });
   } catch (error) {
