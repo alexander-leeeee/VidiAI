@@ -17,7 +17,16 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
   const [loading, setLoading] = useState(true);
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
   const [filter, setFilter] = useState<'all' | 'video' | 'image' | 'music'>('all');
-  const [isInfoExpanded, setIsInfoExpanded] = useState(true);
+  const [isInfoExpanded, setIsInfoExpanded] = useState<boolean>(() => {
+    const saved = localStorage.getItem('vidiai_library_info_expanded');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  const toggleInfo = () => {
+    const newState = !isInfoExpanded;
+    setIsInfoExpanded(newState);
+    localStorage.setItem('vidiai_library_info_expanded', JSON.stringify(newState));
+  };
   
   const filterOptions = [
     { id: 'all', label: 'Всі' },
@@ -159,21 +168,22 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
     <div className="pb-24 pt-4 px-3 h-full overflow-y-auto no-scrollbar">
       <h2 className="text-xl font-bold dark:text-white mb-4 px-1">{t.nav_library}</h2>
       
-      {/* Инфо-блок (сворачиваемый) */}
+      {/* Инфо-блок (сворачиваемый с памятью) */}
       <div 
-        onClick={() => setIsInfoExpanded(!isInfoExpanded)}
+        onClick={toggleInfo}
         className={`mb-6 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
-          isInfoExpanded ? 'max-h-40' : 'max-h-12'
+          isInfoExpanded ? 'max-h-40 shadow-lg shadow-blue-500/5' : 'max-h-12'
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="text-lg">⏳</div>
+            {/* Если скрыто — показываем краткий хинт, если раскрыто — заголовок */}
             <p className="text-[13px] text-blue-200/90 font-bold uppercase tracking-wider">
-              {isInfoExpanded ? t.lib_storage_title || "Інформація" : t.lib_storage_hint || "Файли зберігаються 14 днів..."}
+              {isInfoExpanded ? (t.lib_storage_title || "Інформація") : "Файли зберігаються 14 днів (Натисніть, щоб дізнатися більше)"}
             </p>
           </div>
-          {/* Иконка стрелочки для индикации */}
+          
           <div className={`text-blue-400 transition-transform duration-300 ${isInfoExpanded ? 'rotate-180' : 'rotate-0'}`}>
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
               <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -182,7 +192,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
         </div>
       
         {isInfoExpanded && (
-          <p className="mt-2 ml-9 text-sm text-blue-200/70 leading-relaxed animate-in fade-in duration-500">
+          <p className="mt-2 ml-9 text-sm text-blue-200/70 leading-relaxed animate-in fade-in slide-in-from-top-1 duration-300">
             {t.lib_storage_info}
           </p>
         )}
