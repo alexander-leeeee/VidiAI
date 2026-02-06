@@ -279,7 +279,7 @@ return (
                   setSelectedModelId(m.id);
                   // АВТО-ПОДСТРОЙКА: если выбрали Veo, сразу ставим формат Auto
                   if (m.id === 'veo') {
-                    setSoraLayout('auto');
+                    setSoraLayout('9:16');
                   } else {
                     // Если вернулись на Sora, а стояло Auto — возвращаем вертикальный формат
                     if (soraLayout === 'auto') setSoraLayout('portrait');
@@ -494,15 +494,6 @@ return (
                   Горизонтальне
                 </button>
         
-                {/* Кнопка AUTO: Только для Veo */}
-                {selectedModelId === 'veo' && (
-                  <button 
-                    onClick={() => setSoraLayout('auto')} 
-                    className={`py-3 rounded-xl border text-[10px] font-bold transition-all ${soraLayout === 'auto' ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
-                  >
-                    Авто
-                  </button>
-                )}
               </div>
             </div>
           </div>
