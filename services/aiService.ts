@@ -450,20 +450,24 @@ export const getTaskStatus = async (taskId: string) => {
       };
     }
 
-    // Логика для успешного видео/фото
-    let finalUrl = data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
+    // Логика для успешного видео/фото (Sora, Kling, Veo, Nano)
+    // 1. Ищем в структуре Veo (data.response.resultUrls)
+    let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
 
-    // 2. Если прямых ссылок нет, проверяем resultJson (для Kling)
+    // 2. Если Kie прислал массив (как в твоем логе), берем первый элемент
+    let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
+
+    // 3. Если всё еще пусто, проверяем resultJson (для старых моделей Kling)
     if (!finalUrl && data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
-        finalUrl = parsed.resultUrls?.[0] || null;
+        const jsonUrl = parsed.resultUrls?.[0] || parsed.url || null;
+        finalUrl = Array.isArray(jsonUrl) ? jsonUrl[0] : jsonUrl;
       } catch (e) {
         console.error("Помилка парсингу resultJson:", e);
       }
     }
 
-    console.log("FINAL URL FOUND:", finalUrl);
     return {
       status: isSucceeded ? 'succeeded' : rawState,
       video_url: finalUrl 
