@@ -23,6 +23,7 @@ export interface VideoItem {
 export interface GenerationConfig {
   prompt: string;
   aspectRatio: '16:9' | '9:16';
+  modelId?: string;
 }
 
 // Global augmentation no longer strictly needed for logic, but kept for type safety if needed elsewhere
