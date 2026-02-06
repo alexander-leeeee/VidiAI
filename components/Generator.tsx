@@ -247,13 +247,24 @@ return (
         <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
           {[
             { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
-            { id: 'veo', name: 'Veo', active: false, icon: '🔮' },
+            { id: 'veo', name: 'Veo', active: true, icon: '🔮' }, // АКТИВИРОВАЛИ VEO
             { id: 'kling', name: 'Kling 1.5', active: false, icon: '🎬' }
           ].map((m) => (
             <button
               key={m.id}
               type="button"
-              onClick={() => m.active && setSelectedModelId(m.id)}
+              onClick={() => {
+                if (m.active) {
+                  setSelectedModelId(m.id);
+                  // АВТО-ПОДСТРОЙКА: если выбрали Veo, сразу ставим формат Auto
+                  if (m.id === 'veo') {
+                    setSoraLayout('auto');
+                  } else {
+                    // Если вернулись на Sora, а стояло Auto — возвращаем вертикальный формат
+                    if (soraLayout === 'auto') setSoraLayout('portrait');
+                  }
+                }
+              }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all whitespace-nowrap ${
                 selectedModelId === m.id 
                 ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10' 
@@ -367,22 +378,61 @@ return (
           )
         )}
 
-        {/* НАСТРОЙКИ SORA 2 (Время и формат) */}
+        {/* НАСТРОЙКИ МОДЕЛЕЙ (Sora 2 / Veo) */}
         {mode === 'video' && templateId === 'default' && (
           <div className="space-y-6">
+            {/* БЛОК ДЛИТЕЛЬНОСТИ */}
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
-              <div className="grid grid-cols-2 gap-2">
-                {['10', '15'].map((sec) => (
-                  <button key={sec} onClick={() => setSoraDuration(sec as '10' | '15')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraDuration === sec ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>{sec} сек</button>
-                ))}
-              </div>
+              
+              {selectedModelId === 'veo' ? (
+                /* Для Veo: Фиксированное время */
+                <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl flex justify-between items-center opacity-80">
+                  <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Фіксовано</span>
+                  <span className="text-sm font-black text-white">~ 8 сек</span>
+                </div>
+              ) : (
+                /* Для Sora 2: Выбор 10/15 сек */
+                <div className="grid grid-cols-2 gap-2">
+                  {['10', '15'].map((sec) => (
+                    <button 
+                      key={sec} 
+                      onClick={() => setSoraDuration(sec as '10' | '15')} 
+                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraDuration === sec ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                    >
+                      {sec} сек
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+        
+            {/* БЛОК СООТНОШЕНИЯ СТОРОН */}
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-300 ml-1">Співвідношення сторін</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setSoraLayout('portrait')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraLayout === 'portrait' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>Вертикальне</button>
-                <button onClick={() => setSoraLayout('landscape')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>Горизонтальне</button>
+              <div className={`grid gap-2 ${selectedModelId === 'veo' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                <button 
+                  onClick={() => setSoraLayout(selectedModelId === 'veo' ? '9:16' : 'portrait')} 
+                  className={`py-3 rounded-xl border text-[10px] font-bold transition-all ${ (soraLayout === 'portrait' || soraLayout === '9:16') ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                >
+                  Вертикальне
+                </button>
+                <button 
+                  onClick={() => setSoraLayout(selectedModelId === 'veo' ? '16:9' : 'landscape')} 
+                  className={`py-3 rounded-xl border text-[10px] font-bold transition-all ${ (soraLayout === 'landscape' || soraLayout === '16:9') ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                >
+                  Горизонтальне
+                </button>
+        
+                {/* Кнопка AUTO: Только для Veo */}
+                {selectedModelId === 'veo' && (
+                  <button 
+                    onClick={() => setSoraLayout('auto')} 
+                    className={`py-3 rounded-xl border text-[10px] font-bold transition-all ${soraLayout === 'auto' ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                  >
+                    Авто
+                  </button>
+                )}
               </div>
             </div>
           </div>
