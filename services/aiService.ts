@@ -105,20 +105,24 @@ export const generateUniversalVideo = async (params: {
   let payload: any = {};
 
   if (isVeo) {
-    // 1. ЛОГИКА ДЛЯ VEO
+    // 1. Убираем неопределенность: если пришло auto или пусто — ставим 9:16
+    let safeRatio = params.aspectRatio;
+    if (!safeRatio || safeRatio.toLowerCase() === 'auto') {
+      safeRatio = '9:16';
+    }
+
     payload = {
       model: 'veo3_fast',
-      prompt: params.prompt,
-      aspect_ratio: params.aspectRatio,
-      seeds: Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000,
-      generationType: (params.method === 'image' && params.imageUrl) ? 'REFERENCE_2_VIDEO' : 'TEXT_2_VIDEO',
+      prompt: params.prompt || "Animate this image",
+      aspect_ratio: safeRatio, // Теперь сюда попадет только "9:16" или "16:9"
+      seeds: Math.floor(Math.random() * 100000),
+      // Используем IMAGE_TO_VIDEO для фото или TEXT_2_VIDEO для текста
+      generationType: (params.method === 'image' && params.imageUrl) ? 'IMAGE_TO_VIDEO' : 'TEXT_2_VIDEO',
       watermark: 'VidiAI'
     };
 
     if (params.method === 'image' && params.imageUrl) {
-      // Попробуем передать и как массив, и как строку для надежности, 
-      // либо используем наиболее вероятный формат для Kie:
-      payload.imageUrl = params.imageUrl; // Большинство эндпоинтов Kie для Veo ждут строку
+      payload.imageUrl = params.imageUrl; 
     }
   } else if (params.modelId === 'sora-2') {
     // 2. ЛОГИКА ДЛЯ SORA 2
