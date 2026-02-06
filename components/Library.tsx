@@ -116,6 +116,9 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
           })
         });
     
+        // Если сервер упал или вернул 500, response.ok будет false
+        if (!response.ok) throw new Error("Сервер не відповідає");
+    
         const data = await response.json();
         if (data.status === 'success') {
           setDbVideos(prev => prev.filter(v => v.id != id));
@@ -124,6 +127,10 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
         }
       } catch (error) {
         console.error(`Помилка видалення:`, error);
+        alert("Не вдалося видалити файл. Перевірте з'єднання."); // Обязательно выводим ошибку юзеру
+      } finally {
+        // Здесь можно сбросить какой-то флаг загрузки, если ты его добавишь
+        console.log("Процес видалення завершено"); 
       }
     };
   
