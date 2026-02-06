@@ -4,6 +4,7 @@ import { VideoItem, Language } from '../types';
 import { getTranslation } from '../utils/translations';
 import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, generateNanoImage, generateUniversalVideo, generateUniversalMusic } from '../services/aiService';
 import LowBalanceModal from './LowBalanceModal';
+import { Volume2, VolumeX } from 'lucide-react';
 
 export type GeneratorMode = 'video' | 'image' | 'music';
 
