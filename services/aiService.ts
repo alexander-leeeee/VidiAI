@@ -408,14 +408,14 @@ export const saveVideoToHistory = async (
 
 export const getTaskStatus = async (taskId: string) => {
   const isMusicTask = taskId.startsWith('music_');
-  const isVeoTask = taskId.startsWith('veo_'); // 1. Определяем, что это Veo
+  const isVeoTask = taskId.startsWith('veo_');
 
-  // 2. Выбираем правильный эндпоинт
+  // 1. Выбираем правильный эндпоинт
   let endpoint = ENDPOINTS.KLING_STATUS;
   if (isMusicTask) endpoint = ENDPOINTS.MUSIC_STATUS;
   if (isVeoTask) endpoint = ENDPOINTS.VEO_STATUS;
 
-  // 3. Очищаем ID от префиксов перед запросом
+  // 2. Очищаем ID от префиксов
   const cleanTaskId = taskId.replace('music_', '').replace('veo_', '');
 
   const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
@@ -430,10 +430,8 @@ export const getTaskStatus = async (taskId: string) => {
     
     const rawState = (data.status || data.state || 'processing').toLowerCase();
     const isSucceeded = ['success', 'completed', 'finished', 'succeeded'].includes(rawState);
-    // Добавляем проверку на провал
     const isFailed = ['fail', 'failed', 'error'].includes(rawState);
 
-    // Если задача провалена, возвращаем статус failed и текст ошибки
     if (isFailed) {
       return {
         status: 'failed',
@@ -441,7 +439,7 @@ export const getTaskStatus = async (taskId: string) => {
       };
     }
 
-    // Логика для успешной музыки
+    // Логика для музыки
     if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
       return {
         status: isSucceeded ? 'succeeded' : rawState,
@@ -450,14 +448,14 @@ export const getTaskStatus = async (taskId: string) => {
       };
     }
 
-    // Логика для успешного видео/фото (Sora, Kling, Veo, Nano)
-    // 1. Ищем в структуре Veo (data.response.resultUrls)
+    // ЛОГИКА ДЛЯ ВИДЕО (Veo, Sora, Kling)
+    // В логе четко видно: Veo прячет ссылку в data.response.resultUrls
     let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
 
-    // 2. Если Kie прислал массив (как в твоем логе), берем первый элемент
+    // Если это массив (как в твоем логе), берем первый элемент
     let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
 
-    // 3. Если всё еще пусто, проверяем resultJson (для старых моделей Kling)
+    // Резервная проверка через resultJson (для Kling)
     if (!finalUrl && data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
@@ -472,8 +470,9 @@ export const getTaskStatus = async (taskId: string) => {
       status: isSucceeded ? 'succeeded' : rawState,
       video_url: finalUrl 
     };
-  }
-  
+  } 
+
+  // 3. Возвращаем ошибку, если API ответило не 200/0
   return { status: 'error', error_msg: result.message || "Unknown API Error" };
 };
 
