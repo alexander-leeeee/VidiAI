@@ -451,9 +451,9 @@ export const getTaskStatus = async (taskId: string) => {
     }
 
     // Логика для успешного видео/фото
-    let finalUrl = data.url || data.videoUrl || data.imageUrl || null;
+    let finalUrl = data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
 
-    // 2. Если прямых ссылок нет, лезем в JSON (актуально для Kling/Sora)
+    // 2. Если прямых ссылок нет, проверяем resultJson (для Kling)
     if (!finalUrl && data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
