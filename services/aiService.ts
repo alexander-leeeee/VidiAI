@@ -82,32 +82,40 @@ export const generateNanoImage = async (params: {
 };
 
 /**
- * Універсальна функція для генерації відео (Kling/Sora)
+ * Універсальна функція для генерації відео
  */
 export const generateUniversalVideo = async (params: {
   prompt: string,
   duration: '10' | '15',
   aspectRatio: '9:16' | '16:9',
   imageUrl?: string,
-  method: 'text' | 'image'
+  method: 'text' | 'image',
+  modelId: string
 }) => {
-  const modelName = params.method === 'image' 
-    ? 'kling-v1.5/image-to-video' 
-    : 'kling-v1.5/text-to-video';
 
+  // 1. Блокировка неактивных моделей (Фундамент)
+  if (params.modelId !== 'sora-2') {
+    throw new Error("Ця модель тимчасово недоступна. Використовуйте Sora 2.");
+  }
+  
+  // 2. Формируем запрос строго под Sora 2
+  // Обрати внимание: для Sora 2 мы используем специфичные поля (n_frames, aspect_ratio как текст)
   return baseGenerateKling({
-    model: modelName,
+    model: 'sora-2-text-to-video', // Всегда Sora 2, пока активна только она
+    callBackUrl: 'https://server.vidiai.top/api/video_callback.php',
+    progressCallBackUrl: 'https://server.vidiai.top/api/video_progress.php',
     input: {
       "prompt": params.prompt,
-      "image_urls": params.imageUrl, 
-      "duration": params.duration,
-      "aspect_ratio": params.aspectRatio,
-      "sound": true
+      // Sora 2 часто ожидает 'landscape' или 'portrait' вместо '9:16'
+      "aspect_ratio": params.aspectRatio === '9:16' ? 'portrait' : 'landscape',
+      "n_frames": params.duration, // Количество кадров/длительность
+      "remove_watermark": true,
+      "upload_method": "s3",
+      // Если метод 'image', добавляем картинку, если 'text' — игнорируем
+      ...(params.method === 'image' && { "image_url": params.imageUrl })
     }
   });
 };
-
-// aiService.ts
 
 export const generateUniversalMusic = async (params: {
   prompt: string,
