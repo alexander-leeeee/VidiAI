@@ -47,7 +47,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [hasVocals, setHasVocals] = useState(true);
   const [vocalType, setVocalType] = useState<'male' | 'female' | 'random'>('random');
   const [lyrics, setLyrics] = useState('');
-  const [includeSound, setIncludeSound] = useState(false);
+  const [withSound, setWithSound] = useState(true);
   const [selectedModelId, setSelectedModelId] = useState<string>('sora-2');
 
   const effectiveTemplateId = (() => {
@@ -368,38 +368,6 @@ return (
         {/* НАСТРОЙКИ SORA 2 (Время и формат) */}
         {mode === 'video' && templateId === 'default' && (
           <div className="space-y-6">
-            <div className="space-y-2 mt-4">
-              <label className="text-sm font-medium dark:text-gray-300 ml-1 flex items-center justify-between">
-                <span>Аудіосупровід</span>
-                {/* Динамическая метка */}
-                <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded text-gray-400 border border-white/5">
-                  {selectedModelId === 'sora-2' ? 'За замовчуванням: Без звуку' : 'Налаштовується'}
-                </span>
-              </label>
-              
-              {selectedModelId === 'sora-2' ? (
-                /* Если Sora 2 — просто инфо-плашка */
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-[11px] text-gray-500 italic">
-                  Ця модель наразі не підтримує вибір звуку.
-                </div>
-              ) : (
-                /* Если Kling или другая модель с выбором */
-                <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${includeSound ? 'bg-primary/20 text-primary' : 'bg-gray-200 dark:bg-white/5 text-gray-400'}`}>
-                      {includeSound ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                    </div>
-                    <span className="text-sm font-bold dark:text-white">Згенерувати звук</span>
-                  </div>
-                  <button 
-                    onClick={() => setIncludeSound(!includeSound)} 
-                    className={`w-12 h-6 rounded-full transition-all relative ${includeSound ? 'bg-primary' : 'bg-gray-300 dark:bg-white/20'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${includeSound ? 'left-7' : 'left-1'}`} />
-                  </button>
-                </div>
-              )}
-            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
               <div className="grid grid-cols-2 gap-2">
@@ -415,6 +383,48 @@ return (
                 <button onClick={() => setSoraLayout('landscape')} className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraLayout === 'landscape' ? 'bg-primary border-primary text-white' : 'bg-white dark:bg-surface text-gray-400'}`}>Горизонтальне</button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Настройка звука в видео */}
+        {mode === 'video' && templateId === 'default' && (
+          <div className="space-y-2 mt-4 animate-in fade-in duration-500">
+            <label className="text-xs font-bold dark:text-gray-400 ml-1 uppercase tracking-wider">
+              Аудіосупровід
+            </label>
+            
+            {selectedModelId === 'kling' ? (
+              /* ДЛЯ KLING: Интерактивный переключатель */
+              <div 
+                onClick={() => setWithSound(!withSound)}
+                className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
+                  withSound 
+                  ? 'bg-primary/10 border-primary/30 text-white' 
+                  : 'bg-white/5 border-white/10 text-white/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-full ${withSound ? 'bg-primary text-white' : 'bg-white/10 text-gray-500'}`}>
+                    {withSound ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  </div>
+                  <span className="text-sm font-bold">{withSound ? 'Зі звуком' : 'Без звуку'}</span>
+                </div>
+                <div className={`w-10 h-5 rounded-full relative transition-colors ${withSound ? 'bg-primary' : 'bg-gray-600'}`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${withSound ? 'left-6' : 'left-1'}`} />
+                </div>
+              </div>
+            ) : (
+              /* ДЛЯ SORA И VEO: Просто информационная метка */
+              <div className="flex items-center gap-3 p-3.5 bg-white/5 border border-white/10 rounded-2xl opacity-80">
+                <div className="p-2 rounded-full bg-green-500/20 text-green-500">
+                  <Volume2 size={16} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-white">Звук включено</span>
+                  <span className="text-[10px] text-gray-500">Ця модель завжди генерує відео зі звуком</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
