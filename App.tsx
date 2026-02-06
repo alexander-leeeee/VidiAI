@@ -152,14 +152,15 @@ const App: React.FC = () => {
     setReplayImage(video.sourceImage || null);
     setReplayAspectRatio(video.aspectRatio || '9:16');
 
-    // 2. ОПРЕДЕЛЯЕМ КУДА ПЕРЕКИНУТЬ ЮЗЕРА
-    // Если это музыка — отправляем на вкладку музыки
+    // 2. УМНОЕ ПЕРЕКЛЮЧЕНИЕ
     if (video.contentType === 'music') {
-        setActiveTab(Tab.MUSIC); // Убедись, что Tab.MUSIC существует в твоем enum Tab
+        setGeneratorMode('music'); // Переключаем сам генератор в режим музыки
     } else {
-        // Во всех остальных случаях (видео или фото) — на обычный CREATE
-        setActiveTab(Tab.CREATE);
+        setGeneratorMode('video'); // Возвращаем в видео, если это не музыка
     }
+
+    // В твоем случае музыка находится внутри Tab.CREATE, но с разным generatorMode
+    setActiveTab(Tab.CREATE); 
   };
 
   return (
