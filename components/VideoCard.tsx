@@ -20,7 +20,7 @@ const getMediaType = (url: string): 'image' | 'audio' | 'video' => {
   return 'video';
 };
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, currentCredits, setCredits, canDownload = false }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, currentCredits, setCredits, canDownload = false, isV2Exists = false, onNewItemAdded }) => {
   // 1. ОПРЕДЕЛЯЕМ ТИП КОНТЕНТА (в самом начале)
   const actualType = video.type || (video as any).contentType || getMediaType(video.url || '');
   const isVideo = actualType === 'video';
@@ -100,7 +100,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
   const handleUnlockVariant = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (isUnlocking || !video.alternative_url) return;
+    // Если уже идет процесс, нет ссылки или ВТОРОЙ ВАРИАНТ УЖЕ КУПЛЕН — выходим
+    if (isUnlocking || !video.alternative_url || isV2Exists) return;
   
     const cost = 5;
     if (currentCredits < cost) {
@@ -110,20 +111,28 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
   
     try {
       setIsUnlocking(true);
-      
-      // --- ВОТ ЭТОГО НЕ ХВАТАЛО ---
       const baseUrl = import.meta.env.VITE_SERVER_BASE_URL; 
       const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
-      // ----------------------------
+
+      // 1. Сразу добавляем "фейковую" карточку в библиотеку для анимации магии
+      const newTaskId = `${video.id}_v2`;
+      if (onNewItemAdded) {
+        onNewItemAdded({
+          ...video,
+          id: newTaskId,
+          title: `${video.title} (Варіант 2)`,
+          status: 'processing', // Включает "Створюємо магію"
+          url: '',              // Пустой URL, чтобы не включился плеер
+          alternative_url: '',  // У v2 не должно быть кнопки покупки
+          contentType: 'music'
+        });
+      }
 
       // 2. СПИСАНИЕ МОНЕТ
       const response = await fetch(`${baseUrl}/deduct_credits.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegram_id: tgId,
-          amount: cost
-        })
+        body: JSON.stringify({ telegram_id: tgId, amount: cost })
       });
   
       const data = await response.json();
@@ -131,9 +140,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
   
       setCredits(prev => prev - cost);
 
-      // 4. СОХРАНЕНИЕ НОВОЙ КАРТОЧКИ
-      const newTaskId = `${video.id}_v2`;
-      
+      // 3. СОХРАНЕНИЕ В БД (уже со статусом succeeded)
       await fetch(`${baseUrl}/save_media.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,25 +151,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
           telegram_id: tgId, 
           imageUrl: video.alternative_url, 
           aspectRatio: video.aspectRatio,
-          type: video.contentType 
+          type: 'music' 
         }),
       });
 
-      // 5. ПОДТВЕРЖДАЕМ СТАТУС (Импортируем функцию, так как она во внешнем файле)
-      const { updateVideoInDb } = await import('../services/aiService');
-      await updateVideoInDb(newTaskId, 'succeeded', video.alternative_url || '');
-
-      // 6. ЭФФЕКТ МАГИИ
-      setIsAudioPlaying(false);
-      setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.src = video.alternative_url!;
-          audioRef.current.play();
-          setIsAudioPlaying(true);
-        }
-        setIsUnlocking(false);
-        window.location.reload(); 
-      }, 10000); // Поставил 3 сек вместо 10, чтобы юзер не уснул
+      // 4. КОНЕЦ ПРОЦЕССА (без reload!)
+      setIsUnlocking(false);
 
     } catch (error: any) {
       console.error("Unlock error:", error);
@@ -315,7 +309,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
       </div>
 
       {/* КНОПКА ВАРИАНТ №2 (Добавляем сюда) */}
-      {isMusic && video.alternative_url && !isProcessing && (
+      {isMusic && video.alternative_url && !isProcessing && !isV2Exists && (
         <button 
           onClick={handleUnlockVariant}
           disabled={isUnlocking}
@@ -328,7 +322,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
           {isUnlocking ? (
             <span className="flex items-center justify-center gap-2">
               <div className="w-3 h-3 border-2 border-secondary/30 border-t-secondary rounded-full animate-spin" />
-              Активація...
+              Створюємо...
             </span>
           ) : (
             '✨ Отримати варіант №2 (5 🟡)'
