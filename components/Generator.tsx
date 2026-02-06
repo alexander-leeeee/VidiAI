@@ -56,6 +56,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
 
   const effectiveTemplateId = (() => {
     if (templateId && templateId !== 'default') return templateId;
+    if (selectedModelId === 'veo') return 'veo';
     if (selectedModelId === 'sora-2') return `sora_${soraDuration}`;
     if (mode === 'image') return `image_${imageQuality}`;
     return `manual_${mode}`;
