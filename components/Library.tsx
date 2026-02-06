@@ -153,6 +153,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
   
     const handleGenerateMore = (video: VideoItem) => {
       // Просто передаем всё видео целиком в App.tsx
+      console.log("Replay requested for type:", video.contentType);
       onReplayRequest?.(video);
     };
 
