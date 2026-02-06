@@ -157,6 +157,35 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
           }
   
           setStatusMessage('Запуск генерації...');
+        
+          let imageUrl = ''; 
+          let finalLastImageUrl = '';
+          
+          // Загружаем первое фото
+          if (selectedImage?.data) {
+              const formData = new FormData();
+              const imgResponse = await fetch(selectedImage.preview);
+              const blob = await imgResponse.blob();
+              formData.append('photo', blob, `start_${Date.now()}.png`);
+              const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
+              const uploadData = await uploadRes.json();
+              imageUrl = uploadData.fileUrl;
+          }
+          
+          // Загружаем второе фото (для Veo)
+          if (lastImage) {
+              const formData = new FormData();
+              const imgResponse = await fetch(lastImage);
+              const blob = await imgResponse.blob();
+              formData.append('photo', blob, `end_${Date.now()}.png`);
+              const uploadRes = await fetch(`${apiUrl}/api/save_file.php`, { method: 'POST', body: formData });
+              const uploadData = await uploadRes.json();
+              finalLastImageUrl = uploadData.fileUrl;
+          }
+          
+          // Склеиваем ссылки для Veo
+          const combinedImageUrl = finalLastImageUrl ? `${imageUrl},${finalLastImageUrl}` : imageUrl;
+        
           let taskId;
 
           // ИСПРАВЛЕННАЯ ЛОГИКА ВЫБОРА
