@@ -187,7 +187,8 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                   duration: soraDuration, 
                   aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9',
                   method: videoMethod,
-                  modelId: selectedModelId 
+                  modelId: selectedModelId,
+                  includeSound: withSound
               });
           }
   
