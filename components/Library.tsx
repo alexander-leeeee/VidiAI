@@ -17,6 +17,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
   const [loading, setLoading] = useState(true);
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
   const [filter, setFilter] = useState<'all' | 'video' | 'image' | 'music'>('all');
+  const [isInfoExpanded, setIsInfoExpanded] = useState(true);
   
   const filterOptions = [
     { id: 'all', label: 'Всі' },
@@ -168,12 +169,33 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
     <div className="pb-24 pt-4 px-3 h-full overflow-y-auto no-scrollbar">
       <h2 className="text-xl font-bold dark:text-white mb-4 px-1">{t.nav_library}</h2>
       
-      {/* Вставляем блок здесь, чтобы он был виден всегда */}
-      <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center gap-3">
-        <div className="text-xl">⏳</div>
-        <p className="text-sm text-blue-200/80 leading-relaxed font-medium">
-          {t.lib_storage_info}
-        </p>
+      {/* Инфо-блок (сворачиваемый) */}
+      <div 
+        onClick={() => setIsInfoExpanded(!isInfoExpanded)}
+        className={`mb-6 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${
+          isInfoExpanded ? 'max-h-40' : 'max-h-12'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="text-lg">⏳</div>
+            <p className="text-[13px] text-blue-200/90 font-bold uppercase tracking-wider">
+              {isInfoExpanded ? t.lib_storage_title || "Інформація" : t.lib_storage_hint || "Файли зберігаються 14 днів..."}
+            </p>
+          </div>
+          {/* Иконка стрелочки для индикации */}
+          <div className={`text-blue-400 transition-transform duration-300 ${isInfoExpanded ? 'rotate-180' : 'rotate-0'}`}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+              <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+      
+        {isInfoExpanded && (
+          <p className="mt-2 ml-9 text-sm text-blue-200/70 leading-relaxed animate-in fade-in duration-500">
+            {t.lib_storage_info}
+          </p>
+        )}
       </div>
       
       {loading ? (
