@@ -463,6 +463,7 @@ export const getTaskStatus = async (taskId: string) => {
       }
     }
 
+    console.log("FINAL URL FOUND:", finalUrl);
     return {
       status: isSucceeded ? 'succeeded' : rawState,
       video_url: finalUrl 
