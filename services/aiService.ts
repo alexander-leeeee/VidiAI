@@ -345,33 +345,24 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
-export const updateVideoInDb = async (
-  taskId: string, 
-  status: string, 
-  videoUrl: string | null, 
-  alternativeUrl?: string | null,
-  errorMsg?: string
-) => {
-  try {
-    // 1. Очищаем ID от префиксов 'music_' или 'veo_'
-    const cleanId = taskId.replace('music_', '').replace('veo_', '');
+export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null) => {
+  const cleanId = taskId.replace('music_', '').replace('veo_', '');
+  
+  // ЛОГ №3: Перед отправкой в PHP
+  console.log(`[DB UPDATE START] Sending to PHP -> ID: ${cleanId}, Status: ${status}, URL: ${videoUrl}`);
 
+  try {
     const response = await fetch('https://server.vidiai.top/api/update_media_status.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        task_id: cleanId, // 2. Отправляем чистый ID, который PHP найдет в базе
-        status: status, 
-        video_url: videoUrl,
-        alternative_url: alternativeUrl,
-        error_description: errorMsg 
-      }),
+      body: JSON.stringify({ task_id: cleanId, status, video_url: videoUrl }),
     });
-    
     const result = await response.json();
-    console.log("Результат оновлення бази:", result);
+
+    // ЛОГ №4: Ответ от твоего сервера
+    console.log(`[DB UPDATE RESULT] Server says:`, result);
   } catch (error) {
-    console.error("Помилка БД при оновленні статусу:", error);
+    console.error("[DB UPDATE FATAL ERROR]:", error);
   }
 };
 
@@ -409,71 +400,41 @@ export const saveVideoToHistory = async (
 export const getTaskStatus = async (taskId: string) => {
   const isMusicTask = taskId.startsWith('music_');
   const isVeoTask = taskId.startsWith('veo_');
-
-  // 1. Выбираем правильный эндпоинт
-  let endpoint = ENDPOINTS.KLING_STATUS;
-  if (isMusicTask) endpoint = ENDPOINTS.MUSIC_STATUS;
-  if (isVeoTask) endpoint = ENDPOINTS.VEO_STATUS;
-
-  // 2. Очищаем ID от префиксов
+  let endpoint = isMusicTask ? ENDPOINTS.MUSIC_STATUS : (isVeoTask ? ENDPOINTS.VEO_STATUS : ENDPOINTS.KLING_STATUS);
   const cleanTaskId = taskId.replace('music_', '').replace('veo_', '');
 
-  const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
-    method: 'GET',
-    headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
-  });
+  try {
+    const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
+    });
+    const result = await response.json();
 
-  const result = await response.json();
+    // ЛОГ №1: Ответ от API
+    console.log(`[API CHECK] ID: ${taskId} | Response:`, result);
 
-  if ((result.code === 200 || result.code === 0) && result.data) {
-    const data = result.data;
-    
-    const rawState = (data.status || data.state || 'processing').toLowerCase();
-    const isSucceeded = ['success', 'completed', 'finished', 'succeeded'].includes(rawState);
-    const isFailed = ['fail', 'failed', 'error'].includes(rawState);
+    if ((result.code === 200 || result.code === 0) && result.data) {
+      const data = result.data;
+      const rawState = (data.status || data.state || 'processing').toLowerCase();
+      const isSucceeded = ['success', 'completed', 'finished', 'succeeded'].includes(rawState);
 
-    if (isFailed) {
-      return {
-        status: 'failed',
-        error_msg: data.failMsg || result.msg || "Internal Server Error"
-      };
-    }
+      // ЛОГИКА ИЗВЛЕЧЕНИЯ
+      let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || null;
+      let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
 
-    // Логика для музыки
-    if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
+      // ЛОГ №2: Что мы достали
+      if (isSucceeded) console.log(`[PARSER] Found URL: ${finalUrl}`);
+
       return {
         status: isSucceeded ? 'succeeded' : rawState,
-        video_url: data.response.sunoData[0]?.audioUrl,
-        alternative_url: data.response.sunoData[1]?.audioUrl
+        video_url: finalUrl,
+        alternative_url: (isMusicTask && data.response?.sunoData) ? data.response.sunoData[1]?.audioUrl : null
       };
     }
-
-    // ЛОГИКА ДЛЯ ВИДЕО (Veo, Sora, Kling)
-    // В логе четко видно: Veo прячет ссылку в data.response.resultUrls
-    let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
-
-    // Если это массив (как в твоем логе), берем первый элемент
-    let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
-
-    // Резервная проверка через resultJson (для Kling)
-    if (!finalUrl && data.resultJson) {
-      try {
-        const parsed = JSON.parse(data.resultJson);
-        const jsonUrl = parsed.resultUrls?.[0] || parsed.url || null;
-        finalUrl = Array.isArray(jsonUrl) ? jsonUrl[0] : jsonUrl;
-      } catch (e) {
-        console.error("Помилка парсингу resultJson:", e);
-      }
-    }
-
-    return {
-      status: isSucceeded ? 'succeeded' : rawState,
-      video_url: finalUrl 
-    };
-  } 
-
-  // 3. Возвращаем ошибку, если API ответило не 200/0
-  return { status: 'error', error_msg: result.message || "Unknown API Error" };
+  } catch (e) {
+    console.error(`[API ERROR] ${taskId}:`, e);
+  }
+  return { status: 'error' };
 };
 
 export const getUserHistory = async () => {
