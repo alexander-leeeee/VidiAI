@@ -147,10 +147,19 @@ const App: React.FC = () => {
   };
 
   const handleReplayRequest = (video: any) => {
+    // 1. Заполняем промпт и параметры
     setTemplatePrompt(video.prompt);
     setReplayImage(video.sourceImage || null);
-    setReplayAspectRatio(video.aspectRatio || '9:16'); // Теперь подхватит и 1:1
-    setActiveTab(Tab.CREATE);
+    setReplayAspectRatio(video.aspectRatio || '9:16');
+
+    // 2. ОПРЕДЕЛЯЕМ КУДА ПЕРЕКИНУТЬ ЮЗЕРА
+    // Если это музыка — отправляем на вкладку музыки
+    if (video.contentType === 'music') {
+        setActiveTab(Tab.MUSIC); // Убедись, что Tab.MUSIC существует в твоем enum Tab
+    } else {
+        // Во всех остальных случаях (видео или фото) — на обычный CREATE
+        setActiveTab(Tab.CREATE);
+    }
   };
 
   return (
