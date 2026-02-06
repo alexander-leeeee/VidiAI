@@ -92,42 +92,45 @@ export const generateNanoImage = async (params: {
 export const generateUniversalVideo = async (params: {
   prompt: string,
   duration: '10' | '15',
-  aspectRatio: '9:16' | '16:9' | 'auto',
+  aspectRatio: string,
   imageUrl?: string,
-  method: 'text' | 'image',
+  // Меняем метод на более специфичные для Veo
+  method: 'reference' | 'start-end' | 'text', 
   modelId: string,
   includeSound?: boolean
 }) => {
   const isVeo = params.modelId === 'veo';
-  // Выбираем эндпоинт на основе модели
   const endpoint = isVeo ? ENDPOINTS.VEO_GENERATE : ENDPOINTS.KLING_GENERATE;
   
   let payload: any = {};
 
   if (isVeo) {
-    // 1. Убираем неопределенность: если пришло auto или пусто — ставим 9:16
-    let safeRatio = params.aspectRatio;
-    if (!safeRatio || safeRatio.toLowerCase() === 'auto') {
-      safeRatio = '9:16';
+    // 1. Обработка ссылок (из строки в массив)
+    const urls = params.imageUrl ? params.imageUrl.split(',').filter(u => u.trim()) : [];
+    
+    // 2. Определение типа генерации для Veo
+    let genType = 'TEXT_2_VIDEO';
+    if (params.method === 'reference' && urls.length > 0) {
+      genType = 'REFERENCE_2_VIDEO'; // Поддерживает до 3-х фото
+    } else if (params.method === 'start-end' && urls.length === 2) {
+      genType = 'FIRST_AND_LAST_FRAMES_2_VIDEO'; // Только 2 фото
     }
+
+    // 3. Фикс соотношения сторон
+    const safeRatio = (params.aspectRatio === 'auto' || !params.aspectRatio) ? '9:16' : params.aspectRatio;
 
     payload = {
       model: 'veo3_fast',
-      prompt: params.prompt || "Animate this image",
-      aspect_ratio: safeRatio, // Теперь сюда попадет только "9:16" или "16:9"
+      prompt: params.prompt || "Cinematic animation",
+      aspect_ratio: safeRatio,
       seeds: Math.floor(Math.random() * 100000),
-      // Используем IMAGE_TO_VIDEO для фото или TEXT_2_VIDEO для текста
-      generationType: (params.method === 'image' && params.imageUrl) ? 'IMAGE_TO_VIDEO' : 'TEXT_2_VIDEO',
+      generationType: genType,
+      imageUrls: urls, // Шлем массив ссылок (Kie AI ожидает массив для Veo)
       watermark: 'VidiAI'
     };
-
-    if (params.method === 'image' && params.imageUrl) {
-      payload.imageUrl = params.imageUrl; 
-    }
   } else if (params.modelId === 'sora-2') {
-    // 2. ЛОГИКА ДЛЯ SORA 2
-    const isImageMode = params.method === 'image' && params.imageUrl;
-    // Sora не понимает 'auto', поэтому подстраховываемся
+    // Логика для Sora остается почти без изменений, но подстраиваем под новый method
+    const isImageMode = params.method !== 'text' && params.imageUrl;
     const soraRatio = params.aspectRatio === '9:16' ? 'portrait' : 'landscape';
 
     payload = {
@@ -137,15 +140,10 @@ export const generateUniversalVideo = async (params: {
         "aspect_ratio": soraRatio,
         "n_frames": params.duration, 
         "remove_watermark": true,
-        "sound": true // Sora всегда со звуком
+        "sound": true,
+        ...(isImageMode && { "image_urls": params.imageUrl?.split(',') })
       }
     };
-
-    if (isImageMode) {
-      payload.input.image_urls = [params.imageUrl];
-    }
-  } else {
-    throw new Error("Ця модель тимчасово недоступна.");
   }
 
   // 3. ОТПРАВКА ЗАПРОСА
@@ -159,8 +157,6 @@ export const generateUniversalVideo = async (params: {
   });
 
   const result = await response.json();
-  
-  // У Veo taskId может лежать прямо в data
   const taskId = result.data?.taskId || result.data?.jobId || result.data;
 
   if (!taskId || (typeof taskId !== 'string' && typeof taskId !== 'number')) {
@@ -168,7 +164,6 @@ export const generateUniversalVideo = async (params: {
     throw new Error(result.message || 'Failed to create task');
   }
   
-  // Добавляем префикс, чтобы getTaskStatus знал, какой статус проверять
   return isVeo ? `veo_${taskId}` : taskId;
 };
 
