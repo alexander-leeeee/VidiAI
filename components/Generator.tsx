@@ -49,11 +49,35 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [vocalType, setVocalType] = useState<'male' | 'female' | 'random'>('random');
   const [lyrics, setLyrics] = useState('');
   const [withSound, setWithSound] = useState(true);
-  const [firstImage, setFirstImage] = useState<string | null>(null); // Переименовываем replayImage для ясности
-  const [lastImage, setLastImage] = useState<string | null>(null);  // Новое состояние для второго изображения
-  const [imageUploadMode, setImageUploadMode] = useState<'single' | 'twoFrames'>('single');
+  const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]); 
+  const [videoMethod, setVideoMethod] = useState<'text' | 'reference' | 'start-end'>('reference');
   const [selectedModelId, setSelectedModelId] = useState<string>('sora-2');
+  const [imageUploadMode, setImageUploadMode] = useState<'single' | 'twoFrames'>('single');
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const matches = base64String.match(/^data:(.+);base64,(.+)$/);
+        if (matches) {
+          const newImage = { preview: base64String, mimeType: matches[1], data: matches[2] };
+          // Добавляем в массив, если не превышен лимит (2 для start-end, 3 для reference)
+          const limit = videoMethod === 'start-end' ? 2 : 3;
+          if (uploadedImages.length < limit) {
+            setUploadedImages([...uploadedImages, newImage]);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const removeImage = (index: number) => {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
+  };
+  
   const effectiveTemplateId = (() => {
     if (templateId && templateId !== 'default') return templateId;
     if (selectedModelId === 'veo') return 'veo';
@@ -319,78 +343,72 @@ return (
         {mode === 'video' && templateId === 'default' && (
           <div className="space-y-2">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
-            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-              <button onClick={() => setVideoMethod('image')} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'image' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>З фото</button>
-              <button onClick={() => setVideoMethod('text')} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Тільки текст</button>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+              <button 
+                onClick={() => { setVideoMethod('reference'); setUploadedImages([]); }} 
+                className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'reference' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
+              >
+                Стиль (1-3)
+              </button>
+              <button 
+                onClick={() => { setVideoMethod('start-end'); setUploadedImages([]); }} 
+                className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'start-end' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
+              >
+                Перехід (2)
+              </button>
+              <button 
+                onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} 
+                className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}
+              >
+                Текст
+              </button>
             </div>
           </div>
         )}
 
         {/* Загрузка фото */}
-        {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
+        {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod !== 'text')) && (
           <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-center ml-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {mode === 'image' ? "Фото для стилізації" : "Вихідні кадри"}
+                {mode === 'image' ? "Фото для стилізації" : videoMethod === 'start-end' ? "Кадри переходу" : "Референси стилю"}
               </label>
-              
-              {/* ПЕРЕКЛЮЧАТЕЛЬ ДЛЯ VEO */}
-              {selectedModelId === 'veo' && (
+              <span className="text-[10px] font-bold text-primary uppercase">
+                {uploadedImages.length} / {videoMethod === 'start-end' ? 2 : 3}
+              </span>
+            </div>
+        
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+              {/* Отрисовка уже добавленных фото */}
+              {uploadedImages.map((img, index) => (
+                <div key={index} className="relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm">
+                  <img src={img.preview} className="w-full h-full object-cover" />
+                  <button 
+                    onClick={() => removeImage(index)} 
+                    className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"
+                  >
+                    <TrashIcon className="w-3 h-3"/>
+                  </button>
+                  {videoMethod === 'start-end' && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-[8px] text-center py-1 uppercase font-black text-white">
+                      {index === 0 ? 'Старт' : 'Фінал'}
+                    </div>
+                  )}
+                </div>
+              ))}
+        
+              {/* Кнопка "Додати" - появляется пока есть лимит */}
+              {uploadedImages.length < (videoMethod === 'start-end' ? 2 : 3) && (
                 <button 
-                  onClick={() => {
-                    setImageUploadMode(imageUploadMode === 'single' ? 'twoFrames' : 'single');
-                    setLastImage(null);
-                  }}
-                  className="text-[10px] font-bold uppercase py-1 px-3 rounded-lg bg-primary/10 text-primary border border-primary/20"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
                 >
-                  {imageUploadMode === 'single' ? '+ Додати фінальний кадр' : 'Одне фото'}
+                  <PhotoIcon className="w-6 h-6 mb-1 opacity-30" />
+                  <span className="text-[9px] font-bold uppercase">Додати</span>
                 </button>
               )}
             </div>
-        
-            <div className="flex items-center gap-3">
-              {/* ПЕРВОЕ ОКНО (Start) */}
-              <div className="flex-1 relative">
-                {!selectedImage ? (
-                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl h-32 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                    <PhotoIcon className="w-6 h-6 mb-1 opacity-50" />
-                    <span className="text-[10px] font-bold uppercase">{imageUploadMode === 'twoFrames' ? "Старт" : "Завантажити"}</span>
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(e, 'first')} />
-                  </div>
-                ) : (
-                  <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 h-32">
-                    <img src={selectedImage.preview} className="w-full h-full object-cover" />
-                    <button onClick={() => setSelectedImage(null)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon className="w-3 h-3"/></button>
-                  </div>
-                )}
-              </div>
-        
-              {/* ПЛЮСИК И ВТОРОЕ ОКНО (End) */}
-              {imageUploadMode === 'twoFrames' && (
-                <>
-                  <div className="text-primary font-black text-xl">+</div>
-                  <div className="flex-1 relative">
-                    {!lastImage ? (
-                      <div onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.accept = 'image/*';
-                        input.onchange = (e) => handleUploadImage(e as any, 'last');
-                        input.click();
-                      }} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl h-32 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                        <PhotoIcon className="w-6 h-6 mb-1 opacity-50" />
-                        <span className="text-[10px] font-bold uppercase">Фінал</span>
-                      </div>
-                    ) : (
-                      <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 h-32">
-                        <img src={lastImage} className="w-full h-full object-cover" />
-                        <button onClick={() => setLastImage(null)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon className="w-3 h-3"/></button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
         )}
 
