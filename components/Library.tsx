@@ -69,19 +69,34 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
             for (const video of formatted) {
               if (video.status === 'processing') {
                 const freshStatus = await getTaskStatus(video.id);
+                
+                // СЛУЧАЙ 1: УСПЕХ
                 if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
                   video.status = 'succeeded';
                   video.url = freshStatus.video_url;
-                  
-                  // 1. Сохраняем вторую ссылку в локальном объекте (для мгновенного появления кнопки)
                   video.alternative_url = freshStatus.alternative_url; 
 
-                  // 2. Отправляем в базу данных ВСЕ данные (добавляем 4-й аргумент)
                   await updateVideoInDb(
                     video.id, 
                     'succeeded', 
                     freshStatus.video_url, 
                     freshStatus.alternative_url 
+                  );
+                } 
+                
+                // СЛУЧАЙ 2: ОШИБКА (Добавляем эту логику)
+                else if (freshStatus.status === 'failed' || freshStatus.state === 'fail') {
+                  video.status = 'failed';
+                  // Сохраняем текст ошибки, чтобы показать его пользователю
+                  const errorMsg = freshStatus.failMsg || freshStatus.msg || "Internal Server Error";
+                  
+                  // Обновляем в БД статус на 'failed' (передаем ошибку вместо URL)
+                  await updateVideoInDb(
+                    video.id, 
+                    'failed', 
+                    '', 
+                    '', 
+                    errorMsg // Убедись, что твоя функция updateVideoInDb принимает 5-й аргумент для ошибки
                   );
                 }
               }
