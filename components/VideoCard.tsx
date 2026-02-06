@@ -332,62 +332,68 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
         </button>
       )}
         
-      {!isProcessing && !isFailed && (
+      {/* ПАНЕЛЬ УПРАВЛЕНИЯ: Теперь показываем её и при ошибке (isFailed) */}
+      {!isProcessing && (
         <div className="w-full">
           {canDownload ? (
-            /* 2. ПАНЕЛЬ В ОБЩЕЙ РАМКЕ */
+            /* Панель кнопок в Галерее */
             <div className="flex items-center justify-around bg-white/5 border border-white/10 rounded-2xl p-1 shadow-sm mt-1">
-              {/* Скачать */}
-              <button onClick={handleDownload} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+              
+              {/* 1. Скачать: Выключаем (disabled), если ошибка */}
+              <button 
+                onClick={handleDownload} 
+                disabled={isFailed}
+                className={`p-2.5 transition-colors ${isFailed ? 'text-white/10 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+              >
                 <Download size={18} />
               </button>
 
-              {/* Кнопка Звук в нижней панели */}
+              {/* 2. Звук: Выключаем, если ошибка или если это не видео */}
               <button 
                 onClick={toggleMute} 
-                disabled={!isVideo} 
+                disabled={!isVideo || isFailed} 
                 className={`p-2.5 transition-all duration-200 ${
-                  isVideo 
+                  isVideo && !isFailed 
                     ? 'text-gray-400 hover:text-white active:scale-110' 
-                    : 'text-white/40 cursor-not-allowed opacity-30'
+                    : 'text-white/10 cursor-not-allowed'
                 }`}
               >
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
 
-              {/* 3. ПОВТОР (ИКОНКА СТРЕЛКИ) */}
-              <button onClick={(e) => { e.stopPropagation(); onClick && onClick(video); }} className="p-2.5 text-primary hover:opacity-80 transition-opacity">
+              {/* 3. Повтор: Выключаем, если ошибка */}
+              <button 
+                onClick={(e) => { e.stopPropagation(); !isFailed && onClick && onClick(video); }} 
+                disabled={isFailed}
+                className={`p-2.5 transition-opacity ${isFailed ? 'text-white/10 cursor-not-allowed' : 'text-primary hover:opacity-80'}`}
+              >
                 <RotateCcw size={18} />
               </button>
 
-              {/* Удалить */}
+              {/* 4. Удалить: ОСТАВЛЯЕМ ВСЕГДА АКТИВНОЙ */}
               <button 
                 onClick={(e) => { 
                   e.stopPropagation(); 
-                  
-                  // Пробуем все варианты, которые могут прийти из базы или API
                   const actualId = video.id || video.video_id || (video as any)._id; 
-                  
-                  console.log("Пытаемся удалить видео с объектом:", video); // Увидим структуру в консоли
-                  
                   if (actualId && onDelete) {
                     onDelete(actualId, video.contentType || 'video');
-                  } else {
-                    alert("Не вдалося знайти ID відео");
                   }
-                }}
-                className="p-2.5 text-red-500/60 hover:text-red-500 transition-colors"
+                }} 
+                className="p-2.5 text-red-500/60 hover:text-red-500 active:scale-90 transition-all"
               >
                 <Trash2 size={18} />
               </button>
             </div>
           ) : (
-            <button 
-              onClick={(e) => { e.stopPropagation(); onClick && onClick(video); }}
-              className="w-full py-2.5 bg-primary text-white text-[11px] font-bold rounded-lg shadow-lg active:scale-95 transition-all"
-            >
-              Сгенерировать
-            </button>
+            /* Кнопка "Сгенерировать" (для главной): скрываем, если ошибка */
+            !isFailed && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onClick && onClick(video); }}
+                className="w-full py-2.5 bg-primary text-white text-[11px] font-bold rounded-lg shadow-lg active:scale-95 transition-all"
+              >
+                Сгенерировать
+              </button>
+            )
           )}
         </div>
       )}
