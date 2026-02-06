@@ -178,6 +178,7 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
           <p className="text-sm">{t.lib_empty || "У вас ще немає створених відео"}</p>
         </div>
       ) : (
+        <>
         {/* Панель фильтров */}
         <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar">
           {filterOptions.map((option) => (
