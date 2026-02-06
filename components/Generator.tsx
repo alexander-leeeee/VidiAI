@@ -48,7 +48,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [lyrics, setLyrics] = useState('');
   const [withSound, setWithSound] = useState(true);
   const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]); 
-  const [videoMethod, setVideoMethod] = useState<'text' | 'reference' | 'start-end'>('reference');
+  const [videoMethod, setVideoMethod] = useState<'text' | 'image' | 'reference' | 'start-end'>('image');
   const [selectedModelId, setSelectedModelId] = useState<string>('sora-2');
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,13 +277,12 @@ return (
               onClick={() => {
                 if (m.active) {
                   setSelectedModelId(m.id);
-                  setUploadedImages([]); // Очищаем старые фото при смене модели
-                  
+                  setUploadedImages([]); // Очищаем фото при смене модели
                   if (m.id === 'veo') {
-                    setVideoMethod('reference'); // Ставим референс для Veo
+                    setVideoMethod('reference'); // Для Veo свой метод
                     setSoraLayout('9:16');
                   } else {
-                    setVideoMethod('image'); // Возвращаем Sora режим "З фото"
+                    setVideoMethod('image'); // Для Sora возвращаем стандарт
                     if (soraLayout === 'auto') setSoraLayout('portrait');
                   }
                 }
@@ -317,52 +316,47 @@ return (
           </div>
         )}
 
-        {/* Метод генерации для свободного видео */}
+        {/* Метод генерації */}
         {mode === 'video' && templateId === 'default' && (
           <div className="space-y-2">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
             
             {selectedModelId === 'veo' ? (
-              /* ВЫБОР ДЛЯ VEO (3 режима) */
               <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                 <button onClick={() => { setVideoMethod('reference'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'reference' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Стиль (1-3)</button>
                 <button onClick={() => { setVideoMethod('start-end'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'start-end' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Перехід (2)</button>
-                <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Текст</button>
+                <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Промт</button>
               </div>
             ) : (
-              /* ВЫБОР ДЛЯ SORA (2 режима: Промт и По картинке) */
               <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                 <button onClick={() => { setVideoMethod('image'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'image' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>З фото</button>
-                <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Тільки текст</button>
+                <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Промт</button>
               </div>
             )}
           </div>
         )}
 
-        {/* Загрузка фото */}
+        {/* Завантаження фото */}
         {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod !== 'text')) && (
           <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-center ml-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {mode === 'image' ? "Фото для стилізації" : videoMethod === 'start-end' ? "Кадри переходу" : "Референси стилю"}
+                {selectedModelId === 'sora-2' ? "Фото для анімації" : videoMethod === 'start-end' ? "Кадри переходу" : "Референси стилю"}
               </label>
-              <span className="text-[10px] font-bold text-primary uppercase">
-                {uploadedImages.length} / {videoMethod === 'start-end' ? 2 : 3}
-              </span>
+              {/* Лимит 0/3 показываем только для Veo */}
+              {selectedModelId === 'veo' && (
+                <span className="text-[10px] font-bold text-primary uppercase">
+                  {uploadedImages.length} / {videoMethod === 'start-end' ? 2 : 3}
+                </span>
+              )}
             </div>
         
             <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-              {/* Отрисовка уже добавленных фото */}
               {uploadedImages.map((img, index) => (
                 <div key={index} className="relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm">
                   <img src={img.preview} className="w-full h-full object-cover" />
-                  <button 
-                    onClick={() => removeImage(index)} 
-                    className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"
-                  >
-                    <TrashIcon className="w-3 h-3"/>
-                  </button>
-                  {videoMethod === 'start-end' && (
+                  <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full"><TrashIcon className="w-3 h-3"/></button>
+                  {selectedModelId === 'veo' && videoMethod === 'start-end' && (
                     <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-[8px] text-center py-1 uppercase font-black text-white">
                       {index === 0 ? 'Старт' : 'Фінал'}
                     </div>
@@ -370,12 +364,9 @@ return (
                 </div>
               ))}
         
-              {/* Кнопка "Додати" - появляется пока есть лимит */}
+              {/* Лимит для Sora — строго 1 фото */}
               {uploadedImages.length < (selectedModelId === 'sora-2' ? 1 : (videoMethod === 'start-end' ? 2 : 3)) && (
-                <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
-                >
+                <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
                   <PhotoIcon className="w-6 h-6 mb-1 opacity-30" />
                   <span className="text-[9px] font-bold uppercase">Додати</span>
                 </button>
