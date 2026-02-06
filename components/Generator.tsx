@@ -204,10 +204,11 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
               // Власна генерація відео (Sora / Veo)
               taskId = await generateUniversalVideo({
                   prompt: prompt, 
-                  imageUrl: finalImageUrlForApi, 
+                  // Если это Sora — берем только первую ссылку, если Veo — все через запятую
+                  imageUrl: selectedModelId === 'sora-2' ? (uploadedUrls[0] || '') : finalImageUrlForApi, 
                   duration: soraDuration, 
                   aspectRatio: soraLayout as any,
-                  method: videoMethod, // 'reference' | 'start-end' | 'text'
+                  method: videoMethod, // Теперь здесь 'image' для Sora или 'reference'/'start-end' для Veo
                   modelId: selectedModelId,
                   includeSound: withSound
               });
