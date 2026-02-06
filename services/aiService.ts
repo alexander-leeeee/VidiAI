@@ -418,79 +418,73 @@ export const getTaskStatus = async (taskId: string) => {
   // 2. Очищаем ID от префиксов
   const cleanTaskId = taskId.replace('music_', '').replace('veo_', '');
 
-  const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
-    method: 'GET',
-    headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
-  });
+  try {
+    const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
+    });
 
-  const result = await response.json();
+    const result = await response.json();
 
-  if ((result.code === 200 || result.code === 0) && result.data) {
-    const data = result.data;
-    
-    // Получаем текстовый статус
-    const rawState = (data.status || data.state || 'processing').toLowerCase();
-    
-    // 1. УЛУЧШЕННАЯ ПРОВЕРКА НА УСПЕХ (добавляем successFlag)
-    const isSucceeded = 
-      ['success', 'completed', 'finished', 'succeeded'].includes(rawState) || 
-      data.successFlag === 1 || 
-      data.successFlag === "1"; 
+    if ((result.code === 200 || result.code === 0) && result.data) {
+      const data = result.data;
+      
+      // Получаем текстовый статус и проверяем флаги Kie AI
+      const rawState = (data.status || data.state || 'processing').toLowerCase();
+      
+      // Улучшенная проверка на успех (включая successFlag для Veo)
+      const isSucceeded = 
+        ['success', 'completed', 'finished', 'succeeded'].includes(rawState) || 
+        data.successFlag === 1 || 
+        data.successFlag === "1"; 
 
-    const isFailed = ['fail', 'failed', 'error'].includes(rawState) || data.successFlag === -1;
+      const isFailed = ['fail', 'failed', 'error'].includes(rawState) || data.successFlag === -1;
 
-    if (isFailed) {
-      return { status: 'failed', error_msg: data.failMsg || result.msg || "Error" };
-    }
+      if (isFailed) {
+        return { status: 'failed', error_msg: data.failMsg || result.msg || "Error" };
+      }
 
-    // 2. ИЗВЛЕЧЕНИЕ URL (обязательно проверяем вложенность response)
-    let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || null;
-    let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
+      // ЛОГИКА ДЛЯ МУЗЫКИ
+      if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
+        return {
+          status: isSucceeded ? 'succeeded' : rawState,
+          video_url: data.response.sunoData[0]?.audioUrl,
+          alternative_url: data.response.sunoData[1]?.audioUrl
+        };
+      }
 
-    // ЛОГ ДЛЯ ТЕБЯ: Проверяем, что достали
-    console.log(`[DEBUG] isSucceeded: ${isSucceeded}, URL: ${finalUrl}`);
+      // ЛОГИКА ДЛЯ ВИДЕО И ФОТО (Veo, Sora, Kling, Nano)
+      // Проверяем все возможные поля, включая вложенный response.resultUrls из твоего лога
+      let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
 
-    return {
-      status: isSucceeded ? 'succeeded' : rawState,
-      video_url: finalUrl 
-    };
-}
+      // Если это массив, берем первый элемент
+      let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
 
-    // Логика для музыки
-    if (isMusicTask && data.response?.sunoData && data.response.sunoData.length > 0) {
+      // Резервная проверка через resultJson (для старых моделей Kling)
+      if (!finalUrl && data.resultJson) {
+        try {
+          const parsed = JSON.parse(data.resultJson);
+          const jsonUrl = parsed.resultUrls?.[0] || parsed.url || null;
+          finalUrl = Array.isArray(jsonUrl) ? jsonUrl[0] : jsonUrl;
+        } catch (e) {
+          console.error("Помилка парсингу resultJson:", e);
+        }
+      }
+
+      // ЛОГ ДЛЯ ОТЛАДКИ
+      console.log(`[DEBUG] Task: ${taskId} | Success: ${isSucceeded} | URL: ${finalUrl}`);
+
       return {
         status: isSucceeded ? 'succeeded' : rawState,
-        video_url: data.response.sunoData[0]?.audioUrl,
-        alternative_url: data.response.sunoData[1]?.audioUrl
+        video_url: finalUrl 
       };
     }
-
-    // ЛОГИКА ДЛЯ ВИДЕО (Veo, Sora, Kling)
-    // В логе четко видно: Veo прячет ссылку в data.response.resultUrls
-    let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
-
-    // Если это массив (как в твоем логе), берем первый элемент
-    let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
-
-    // Резервная проверка через resultJson (для Kling)
-    if (!finalUrl && data.resultJson) {
-      try {
-        const parsed = JSON.parse(data.resultJson);
-        const jsonUrl = parsed.resultUrls?.[0] || parsed.url || null;
-        finalUrl = Array.isArray(jsonUrl) ? jsonUrl[0] : jsonUrl;
-      } catch (e) {
-        console.error("Помилка парсингу resultJson:", e);
-      }
-    }
-
-    return {
-      status: isSucceeded ? 'succeeded' : rawState,
-      video_url: finalUrl 
-    };
-  } 
-
-  // 3. Возвращаем ошибку, если API ответило не 200/0
-  return { status: 'error', error_msg: result.message || "Unknown API Error" };
+    
+    return { status: 'error', error_msg: result.message || "Unknown API Error" };
+  } catch (error) {
+    console.error("Ошибка при запросе статуса:", error);
+    return { status: 'error', error_msg: "Network error" };
+  }
 };
 
 export const getUserHistory = async () => {
