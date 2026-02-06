@@ -16,6 +16,14 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
   const [dbVideos, setDbVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+  const [filter, setFilter] = useState<'all' | 'video' | 'image' | 'music'>('all');
+  
+  const filterOptions = [
+    { id: 'all', label: 'Всі' },
+    { id: 'video', label: 'Відео' },
+    { id: 'image', label: 'Фото' },
+    { id: 'music', label: 'Музика' },
+  ];
 
   useEffect(() => {
       const fetchHistory = async () => {
@@ -138,6 +146,12 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
       onReplayRequest?.(video);
     };
 
+    const filteredVideos = dbVideos.filter(item => {
+      if (filter === 'all') return true;
+      const itemType = item.contentType || (item as any).type;
+      return itemType === filter;
+    });
+
     return (
     <div className="pb-24 pt-4 px-3 h-full overflow-y-auto no-scrollbar">
       <h2 className="text-xl font-bold dark:text-white mb-4 px-1">{t.nav_library}</h2>
@@ -164,6 +178,23 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
           <p className="text-sm">{t.lib_empty || "У вас ще немає створених відео"}</p>
         </div>
       ) : (
+        {/* Панель фильтров */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 no-scrollbar">
+          {filterOptions.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => setFilter(option.id as any)}
+              className={`px-5 py-2 rounded-full text-xs font-bold transition-all duration-200 whitespace-nowrap border ${
+                filter === option.id
+                  ? 'bg-primary border-primary text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                  : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      
         <div className="grid grid-cols-2 gap-3">
           {dbVideos.map((video) => {
             // 1. Проверяем, есть ли уже вариант v2 для этого конкретного видео
