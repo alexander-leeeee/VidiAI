@@ -49,6 +49,9 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [vocalType, setVocalType] = useState<'male' | 'female' | 'random'>('random');
   const [lyrics, setLyrics] = useState('');
   const [withSound, setWithSound] = useState(true);
+  const [firstImage, setFirstImage] = useState<string | null>(null); // Переименовываем replayImage для ясности
+  const [lastImage, setLastImage] = useState<string | null>(null);  // Новое состояние для второго изображения
+  const [imageUploadMode, setImageUploadMode] = useState<'single' | 'twoFrames'>('single');
   const [selectedModelId, setSelectedModelId] = useState<string>('sora-2');
 
   const effectiveTemplateId = (() => {
@@ -82,7 +85,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     if (initialAspectRatio) setAspectRatio(initialAspectRatio);
   }, [initialAspectRatio]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadImage = (event: React.ChangeEvent<HTMLInputElement>, target: 'first' | 'last') => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -90,7 +93,15 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         const base64String = reader.result as string;
         const matches = base64String.match(/^data:(.+);base64,(.+)$/);
         if (matches) {
-            setSelectedImage({ preview: base64String, mimeType: matches[1], data: matches[2] });
+          const imageData = { preview: base64String, mimeType: matches[1], data: matches[2] };
+          
+          if (target === 'first') {
+            // Это заменяет твой setSelectedImage
+            setSelectedImage(imageData); 
+          } else {
+            // Новое состояние для финала
+            setLastImage(base64String); 
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -307,20 +318,69 @@ return (
 
         {/* Загрузка фото */}
         {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
-          <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{mode === 'image' ? "Фото для стилізації" : "Вихідне фото"}</label>
-             {!selectedImage ? (
-                 <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                     <div className="p-3 bg-gray-100 dark:bg-white/10 rounded-full mb-2"><PhotoIcon /></div>
-                     <span className="text-sm font-medium">{t.gen_upload_text}</span>
-                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                 </div>
-             ) : (
-                 <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10">
-                     <img src={selectedImage.preview} alt="Reference" className="w-full h-48 object-cover opacity-80" />
-                     <button onClick={() => { setSelectedImage(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute top-2 right-2 p-2 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors"><TrashIcon /></button>
-                 </div>
-             )}
+          <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex justify-between items-center ml-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {mode === 'image' ? "Фото для стилізації" : "Вихідні кадри"}
+              </label>
+              
+              {/* ПЕРЕКЛЮЧАТЕЛЬ ДЛЯ VEO */}
+              {selectedModelId === 'veo' && (
+                <button 
+                  onClick={() => {
+                    setImageUploadMode(imageUploadMode === 'single' ? 'twoFrames' : 'single');
+                    setLastImage(null);
+                  }}
+                  className="text-[10px] font-bold uppercase py-1 px-3 rounded-lg bg-primary/10 text-primary border border-primary/20"
+                >
+                  {imageUploadMode === 'single' ? '+ Додати фінальний кадр' : 'Одне фото'}
+                </button>
+              )}
+            </div>
+        
+            <div className="flex items-center gap-3">
+              {/* ПЕРВОЕ ОКНО (Start) */}
+              <div className="flex-1 relative">
+                {!selectedImage ? (
+                  <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl h-32 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                    <PhotoIcon className="w-6 h-6 mb-1 opacity-50" />
+                    <span className="text-[10px] font-bold uppercase">{imageUploadMode === 'twoFrames' ? "Старт" : "Завантажити"}</span>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(e, 'first')} />
+                  </div>
+                ) : (
+                  <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 h-32">
+                    <img src={selectedImage.preview} className="w-full h-full object-cover" />
+                    <button onClick={() => setSelectedImage(null)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon className="w-3 h-3"/></button>
+                  </div>
+                )}
+              </div>
+        
+              {/* ПЛЮСИК И ВТОРОЕ ОКНО (End) */}
+              {imageUploadMode === 'twoFrames' && (
+                <>
+                  <div className="text-primary font-black text-xl">+</div>
+                  <div className="flex-1 relative">
+                    {!lastImage ? (
+                      <div onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => handleUploadImage(e as any, 'last');
+                        input.click();
+                      }} className="border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl h-32 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                        <PhotoIcon className="w-6 h-6 mb-1 opacity-50" />
+                        <span className="text-[10px] font-bold uppercase">Фінал</span>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 h-32">
+                        <img src={lastImage} className="w-full h-full object-cover" />
+                        <button onClick={() => setLastImage(null)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon className="w-3 h-3"/></button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 
