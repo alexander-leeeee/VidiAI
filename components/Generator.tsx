@@ -240,32 +240,35 @@ return (
       </div>
 
       {/* ПЕРЕКЛЮЧАТЕЛЬ МОДЕЛЕЙ (ФУНДАМЕНТ) */}
-      <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
-        {[
-          { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
-          { id: 'veo', name: 'Veo', active: false, icon: '🔮' },
-          { id: 'kling', name: 'Kling 1.5', active: false, icon: '🎬' }
-        ].map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => m.active && setSelectedModelId(m.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all whitespace-nowrap ${
-              selectedModelId === m.id 
-              ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10' 
-              : 'bg-white/5 border-white/10 text-white/30 opacity-60'
-            } ${!m.active ? 'cursor-not-allowed' : 'active:scale-95'}`}
-          >
-            <span className="text-sm">{m.icon}</span>
-            <div className="flex flex-col items-start">
-              <span className="text-[10px] font-black uppercase tracking-wider">{m.name}</span>
-              {!m.active && <span className="text-[7px] text-primary font-bold uppercase">Soon</span>}
-            </div>
-          </button>
-        ))}
-      </div>
+      {mode === 'video' && templateId === 'default' && (
+        <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
+          {[
+            { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
+            { id: 'veo', name: 'Veo', active: false, icon: '🔮' },
+            { id: 'kling', name: 'Kling 1.5', active: false, icon: '🎬' }
+          ].map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => m.active && setSelectedModelId(m.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all whitespace-nowrap ${
+                selectedModelId === m.id 
+                ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10' 
+                : 'bg-white/5 border-white/10 text-white/30 opacity-60'
+              } ${!m.active ? 'cursor-not-allowed' : 'active:scale-95'}`}
+            >
+              <span className="text-sm">{m.icon}</span>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] font-black uppercase tracking-wider">{m.name}</span>
+                {!m.active && <span className="text-[7px] text-primary font-bold uppercase">Soon</span>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="space-y-6">
+        {/* Качество фото */}
         {mode === 'image' && (
           <div className="space-y-2 animate-in fade-in duration-300">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
@@ -277,7 +280,8 @@ return (
           </div>
         )}
 
-        {mode === 'video' && !templateId && (
+        {/* Метод генерации для свободного видео */}
+        {mode === 'video' && templateId === 'default' && (
           <div className="space-y-2">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
             <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
@@ -287,6 +291,7 @@ return (
           </div>
         )}
 
+        {/* Загрузка фото */}
         {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
           <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{mode === 'image' ? "Фото для стилізації" : "Вихідне фото"}</label>
@@ -349,7 +354,8 @@ return (
           </div>
         )}
 
-        {mode === 'video' && !templateId && (
+        {/* НАСТРОЙКИ SORA 2 (Время и формат) */}
+        {mode === 'video' && templateId === 'default' && (
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
