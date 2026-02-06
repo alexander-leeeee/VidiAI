@@ -147,19 +147,22 @@ const App: React.FC = () => {
   };
 
   const handleReplayRequest = (video: any) => {
-    // 1. Заполняем промпт и параметры
+    // 1. Заполняем текстовое поле промптом из видео/музыки
     setTemplatePrompt(video.prompt);
+    
+    // 2. Настраиваем визуал (для музыки картинка обычно не нужна, но параметры сбросим)
     setReplayImage(video.sourceImage || null);
     setReplayAspectRatio(video.aspectRatio || '9:16');
 
-    // 2. УМНОЕ ПЕРЕКЛЮЧЕНИЕ
+    // 3. САМОЕ ВАЖНОЕ: Установка режима генератора
+    // Если в объекте из базы пришел тип 'music', включаем музыкальный режим
     if (video.contentType === 'music') {
-        setGeneratorMode('music'); // Переключаем сам генератор в режим музыки
+        setGeneratorMode('music'); // Теперь Generator поймет, что делать музыку
     } else {
-        setGeneratorMode('video'); // Возвращаем в видео, если это не музыка
+        setGeneratorMode('video'); // Возвращаем в видео для остальных случаев
     }
 
-    // В твоем случае музыка находится внутри Tab.CREATE, но с разным generatorMode
+    // 4. Переходим на вкладку создания (теперь без черного экрана)
     setActiveTab(Tab.CREATE); 
   };
 
