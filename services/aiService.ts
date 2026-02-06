@@ -93,28 +93,32 @@ export const generateUniversalVideo = async (params: {
   modelId: string
 }) => {
 
-  // 1. Блокировка неактивных моделей (Фундамент)
   if (params.modelId !== 'sora-2') {
     throw new Error("Ця модель тимчасово недоступна. Використовуйте Sora 2.");
   }
   
-  // 2. Формируем запрос строго под Sora 2
-  // Обрати внимание: для Sora 2 мы используем специфичные поля (n_frames, aspect_ratio как текст)
-  return baseGenerateKling({
-    model: 'sora-2-text-to-video', // Всегда Sora 2, пока активна только она
-    callBackUrl: 'https://server.vidiai.top/api/video_callback.php',
-    progressCallBackUrl: 'https://server.vidiai.top/api/video_progress.php',
+  // 1. ОПРЕДЕЛЯЕМ МОДЕЛЬ И ВХОДНЫЕ ДАННЫЕ
+  const isImageMode = params.method === 'image' && params.imageUrl;
+  const modelName = isImageMode ? 'sora-2-image-to-video' : 'sora-2-text-to-video';
+
+  // 2. ФОРМИРУЕМ ТЕЛО ЗАПРОСА
+  const payload: any = {
+    model: modelName,
     input: {
       "prompt": params.prompt,
-      // Sora 2 часто ожидает 'landscape' или 'portrait' вместо '9:16'
       "aspect_ratio": params.aspectRatio === '9:16' ? 'portrait' : 'landscape',
-      "n_frames": params.duration, // Количество кадров/длительность
-      "remove_watermark": true,
-      "upload_method": "s3",
-      // Если метод 'image', добавляем картинку, если 'text' — игнорируем
-      ...(params.method === 'image' && { "image_url": params.imageUrl })
+      "n_frames": params.duration, 
+      "remove_watermark": true
     }
-  });
+  };
+
+  // 3. ДОБАВЛЯЕМ КАРТИНКУ В МАССИВ (если это Image-to-Video)
+  if (isImageMode) {
+    payload.input.image_urls = [params.imageUrl];
+  }
+
+  // 4. ОТПРАВЛЯЕМ ЗАПРОС
+  return baseGenerateKling(payload);
 };
 
 export const generateUniversalMusic = async (params: {
