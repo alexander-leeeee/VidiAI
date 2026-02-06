@@ -445,22 +445,22 @@ export const getTaskStatus = async (taskId: string) => {
     }
 
     // Логика для успешного видео/фото
-    let finalUrl = null;
-    if (data.resultJson) {
+    let finalUrl = data.url || data.videoUrl || data.imageUrl || null;
+
+    // 2. Если прямых ссылок нет, лезем в JSON (актуально для Kling/Sora)
+    if (!finalUrl && data.resultJson) {
       try {
         const parsed = JSON.parse(data.resultJson);
         finalUrl = parsed.resultUrls?.[0] || null;
-      } catch (e) {}
-    }
-    if (!finalUrl) {
-      finalUrl = data.imageUrl || data.videoUrl || data.url || null;
+      } catch (e) {
+        console.error("Помилка парсингу resultJson:", e);
+      }
     }
 
     return {
       status: isSucceeded ? 'succeeded' : rawState,
       video_url: finalUrl 
     };
-  }
   
   return { status: 'error', error_msg: result.message || "Unknown API Error" };
 };
