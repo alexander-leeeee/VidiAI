@@ -99,36 +99,37 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
   // Имитация генерации второго трека Suno
   const handleUnlockVariant = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // Если уже идет процесс, нет ссылки или ВТОРОЙ ВАРИАНТ УЖЕ КУПЛЕН — выходим
     if (isUnlocking || !video.alternative_url || isV2Exists) return;
   
     const cost = 5;
     if (currentCredits < cost) {
-      alert("Недостатньо монет для активації другого варіанту");
+      // Используем нативный алерт, чтобы не ломать фокус
+      (window as any).Telegram?.WebApp?.showAlert("Недостатньо монет");
       return;
     }
   
     try {
       setIsUnlocking(true);
-      const baseUrl = import.meta.env.VITE_SERVER_BASE_URL; 
+      const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
       const tgId = (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
-
-      // 1. Сразу добавляем "фейковую" карточку в библиотеку для анимации магии
+  
+      // --- ВОТ ЗДЕСЬ ИСПРАВЛЕНИЕ ---
       const newTaskId = `${video.id}_v2`;
+      
       if (onNewItemAdded) {
         onNewItemAdded({
           ...video,
           id: newTaskId,
           title: `${video.title} (Варіант 2)`,
-          status: 'processing', // Включает "Створюємо магію"
-          url: '',              // Пустой URL, чтобы не включился плеер
-          alternative_url: '',  // У v2 не должно быть кнопки покупки
-          contentType: 'music'
+          status: 'processing', // Ставим статус обработки
+          url: '',              // ОБЯЗАТЕЛЬНО ПУСТО: чтобы не включился плеер
+          alternative_url: '',  // Очищаем, чтобы на новой карточке не было кнопки покупки
+          contentType: 'music'  // Явно указываем тип
         });
       }
-
-      // 2. СПИСАНИЕ МОНЕТ
+      // ----------------------------
+  
+      // 1. Списание монет
       const response = await fetch(`${baseUrl}/deduct_credits.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,8 +140,9 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
       if (!data.success) throw new Error(data.message || "Ошибка списания");
   
       setCredits(prev => prev - cost);
-
-      // 3. СОХРАНЕНИЕ В БД (уже со статусом succeeded)
+  
+      // 2. Сохранение в БД
+      // В PHP уже настроено, что если есть imageUrl, то статус будет 'succeeded'
       await fetch(`${baseUrl}/save_media.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -150,17 +152,16 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onDelete, current
           title: `${video.title} (Варіант 2)`, 
           telegram_id: tgId, 
           imageUrl: video.alternative_url, 
-          aspectRatio: video.aspectRatio,
-          type: 'music' 
+          type: 'music'
         }),
       });
-
-      // 4. КОНЕЦ ПРОЦЕССА (без reload!)
+  
       setIsUnlocking(false);
-
+      // Reload убираем совсем!
+  
     } catch (error: any) {
       console.error("Unlock error:", error);
-      alert("Сталася помилка: " + error.message);
+      (window as any).Telegram?.WebApp?.showAlert("Сталася помилка: " + error.message);
       setIsUnlocking(false);
     }
   };
