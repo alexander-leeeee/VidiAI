@@ -139,7 +139,11 @@ const App: React.FC = () => {
 
   const handleTabChange = (tab: Tab) => {
     if (tab === Tab.CREATE) {
-      // Вместо перехода сразу открываем меню
+      // ПЕРЕД открытием меню сбрасываем старые данные шаблонов
+      setTemplatePrompt('');          
+      setReplayImage(null);           
+      setSelectedTemplateId('default'); 
+      
       setIsActionMenuOpen(true);
     } else {
       setActiveTab(tab);
@@ -252,6 +256,7 @@ const App: React.FC = () => {
         onSelect={(mode) => {
           setGeneratorMode(mode);   // Устанавливаем выбранный режим
           setTemplatePrompt('');     // Очищаем промпт (свободная генерация)
+          setReplayImage(null);
           setSelectedTemplateId('default');
           setActiveTab(Tab.CREATE);  // Переходим в генератор
         }} 
