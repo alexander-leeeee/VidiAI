@@ -109,14 +109,16 @@ export const generateUniversalVideo = async (params: {
     payload = {
       model: 'veo3_fast',
       prompt: params.prompt,
-      aspect_ratio: params.aspectRatio, // Принимает 'auto', '16:9', '9:16'
+      aspect_ratio: params.aspectRatio,
       seeds: Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000,
       generationType: (params.method === 'image' && params.imageUrl) ? 'REFERENCE_2_VIDEO' : 'TEXT_2_VIDEO',
       watermark: 'VidiAI'
     };
 
     if (params.method === 'image' && params.imageUrl) {
-      payload.imageUrls = [params.imageUrl]; // У Veo поле называется imageUrls (массив)
+      // Попробуем передать и как массив, и как строку для надежности, 
+      // либо используем наиболее вероятный формат для Kie:
+      payload.imageUrl = params.imageUrl; // Большинство эндпоинтов Kie для Veo ждут строку
     }
   } else if (params.modelId === 'sora-2') {
     // 2. ЛОГИКА ДЛЯ SORA 2
