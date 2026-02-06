@@ -68,35 +68,44 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
             // Проверяем статус через API для тех, что еще в обработке
             for (const video of formatted) {
               if (video.status === 'processing') {
-                const freshStatus = await getTaskStatus(video.id);
+                
+                // 1. Формируем правильный ID для API (с префиксом)
+                // Если тип контента 'video', добавляем префикс 'veo_', чтобы getTaskStatus выбрал нужный сервер
+                let idForApi = video.id;
+                if (video.contentType === 'video' && !video.id.startsWith('veo_')) {
+                  idForApi = `veo_${video.id}`;
+                } else if (video.contentType === 'music' && !video.id.startsWith('music_')) {
+                  idForApi = `music_${video.id}`;
+                }
+            
+                // 2. Вызываем проверку статуса с префиксом
+                const freshStatus = await getTaskStatus(idForApi);
                 
                 // СЛУЧАЙ 1: УСПЕХ
                 if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
                   video.status = 'succeeded';
                   video.url = freshStatus.video_url;
                   video.alternative_url = freshStatus.alternative_url; 
-
+            
+                  // 3. Обновляем в БД (функция сама очистит префикс перед записью)
                   await updateVideoInDb(
-                    video.id, 
+                    idForApi, 
                     'succeeded', 
                     freshStatus.video_url, 
                     freshStatus.alternative_url 
                   );
                 } 
-                
-                // СЛУЧАЙ 2: ОШИБКА (Добавляем эту логику)
-                else if (freshStatus.status === 'failed' || freshStatus.state === 'fail') {
+                // СЛУЧАЙ 2: ОШИБКА
+                else if (freshStatus.status === 'failed') {
                   video.status = 'failed';
-                  // Сохраняем текст ошибки, чтобы показать его пользователю
-                  const errorMsg = freshStatus.failMsg || freshStatus.msg || "Internal Server Error";
+                  const errorMsg = freshStatus.error_msg || "Internal Server Error";
                   
-                  // Обновляем в БД статус на 'failed' (передаем ошибку вместо URL)
                   await updateVideoInDb(
-                    video.id, 
+                    idForApi, 
                     'failed', 
                     '', 
                     '', 
-                    errorMsg // Убедись, что твоя функция updateVideoInDb принимает 5-й аргумент для ошибки
+                    errorMsg 
                   );
                 }
               }
