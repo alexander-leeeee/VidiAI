@@ -348,10 +348,20 @@ return (
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_prompt}</label>
-            <textarea value={prompt} onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }} placeholder={t.gen_placeholder} className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 text-sm transition-all shadow-sm" disabled={isGenerating} />
-          </div>
+          templateId === 'default' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">
+                {t.gen_label_prompt}
+              </label>
+              <textarea 
+                value={prompt} 
+                onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }} 
+                placeholder={t.gen_placeholder} 
+                className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 text-sm transition-all shadow-sm" 
+                disabled={isGenerating} 
+              />
+            </div>
+          )
         )}
 
         {/* НАСТРОЙКИ SORA 2 (Время и формат) */}
