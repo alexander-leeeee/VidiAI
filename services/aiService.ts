@@ -90,7 +90,8 @@ export const generateUniversalVideo = async (params: {
   aspectRatio: '9:16' | '16:9',
   imageUrl?: string,
   method: 'text' | 'image',
-  modelId: string
+  modelId: string,
+  includeSound?: boolean
 }) => {
 
   if (params.modelId !== 'sora-2') {
@@ -108,7 +109,8 @@ export const generateUniversalVideo = async (params: {
       "prompt": params.prompt,
       "aspect_ratio": params.aspectRatio === '9:16' ? 'portrait' : 'landscape',
       "n_frames": params.duration, 
-      "remove_watermark": true
+      "remove_watermark": true,
+      "sound": params.modelId === 'sora-2' || params.modelId === 'veo' ? true : params.includeSound
     }
   };
 
