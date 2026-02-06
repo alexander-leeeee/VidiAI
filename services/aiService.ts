@@ -166,6 +166,74 @@ export const generateUniversalVideo = async (params: {
   return isVeo ? `veo_${taskId}` : taskId;
 };
 
+/**
+ * Універсальна функція для генерації музики (Suno V5)
+ */
+export const generateUniversalMusic = async (params: {
+  prompt: string,
+  title?: string,
+  style?: string,
+  lyrics?: string,
+  vocalGender: 'male' | 'female' | 'random',
+  instrumental: boolean,
+  isCustom: boolean
+}) => {
+  let finalGender: 'm' | 'f' = 'm'; 
+  if (params.vocalGender === 'random') {
+    finalGender = Math.random() > 0.5 ? 'm' : 'f';
+  } else {
+    finalGender = params.vocalGender === 'female' ? 'f' : 'm';
+  }
+
+  let payload: any = {
+    model: 'V5',
+    instrumental: params.instrumental,
+    customMode: params.isCustom,
+    callBackUrl: 'https://server.vidiai.top/api/music_callback.php'
+  };
+
+  if (params.isCustom) {
+    if (!params.style?.trim()) throw new Error("Стиль музики обов'язковий!");
+    if (!params.title?.trim()) throw new Error("Назва треку обов'язкова!");
+    
+    payload.style = params.style;
+    payload.title = params.title;
+    
+    if (params.instrumental) {
+      payload.prompt = params.prompt || params.style; 
+    } else {
+      if (!params.lyrics?.trim()) throw new Error("Текст пісні (Lyrics) обов'язковий!");
+      payload.prompt = params.lyrics;
+      payload.vocalGender = finalGender;
+    }
+  } else {
+    if (!params.prompt?.trim()) throw new Error("Опис пісні обов'язковий!");
+    payload.prompt = params.prompt;
+    if (!params.instrumental) {
+      payload.vocalGender = finalGender;
+    }
+  }
+
+  const response = await fetch(ENDPOINTS.MUSIC_GENERATE, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${KIE_API_KEY}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json();
+  const taskId = result.data?.taskId || result.data?.jobId || (result.data && result.data[0]?.taskId);
+
+  if (!taskId) {
+    throw new Error(result.message || 'Не вдалося створити завдання на музику');
+  }
+  
+  // Возвращаем ID с префиксом, чтобы getTaskStatus знал, что это музыка
+  return `music_${taskId}`;
+};
+
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
 export const TEMPLATE_COSTS: Record<string, number> = {
   '1': 25,            // Видео 10 сек + звук
@@ -331,9 +399,17 @@ export const saveVideoToHistory = async (
 
 export const getTaskStatus = async (taskId: string) => {
   const isMusicTask = taskId.startsWith('music_');
-  const endpoint = isMusicTask ? ENDPOINTS.MUSIC_STATUS : ENDPOINTS.KLING_STATUS;
+  const isVeoTask = taskId.startsWith('veo_'); // 1. Определяем, что это Veo
 
-  const response = await fetch(`${endpoint}?taskId=${taskId.replace('music_', '')}`, {
+  // 2. Выбираем правильный эндпоинт
+  let endpoint = ENDPOINTS.KLING_STATUS;
+  if (isMusicTask) endpoint = ENDPOINTS.MUSIC_STATUS;
+  if (isVeoTask) endpoint = ENDPOINTS.VEO_STATUS;
+
+  // 3. Очищаем ID от префиксов перед запросом
+  const cleanTaskId = taskId.replace('music_', '').replace('veo_', '');
+
+  const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
     method: 'GET',
     headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
   });
