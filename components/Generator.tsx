@@ -8,7 +8,7 @@ import LowBalanceModal from './LowBalanceModal';
 export type GeneratorMode = 'video' | 'image' | 'music';
 
 interface GeneratorProps {
-  onVideoGenerated: (video: VideoItem) => void;
+  onVideoGenerated: (video: VideoItem, cost: number) => void;
   lang: Language;
   mode?: GeneratorMode;
   initialPrompt?: string;
@@ -47,30 +47,16 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   const [hasVocals, setHasVocals] = useState(true);
   const [vocalType, setVocalType] = useState<'male' | 'female' | 'random'>('random');
   const [lyrics, setLyrics] = useState('');
+  const [selectedModelId, setSelectedModelId] = useState<string>('sora-2');
 
-  // Определяем ID для стоимости
   const effectiveTemplateId = (() => {
-    // 1. Если это конкретный шаблон из Showcase
     if (templateId && templateId !== 'default') return templateId;
-    
-    // 2. Видео (Sora 10/15)
-    if (mode === 'video' || mode === 'manual_video') {
-      return `sora_${soraDuration}`;
-    }
-    
-    // 3. НОВОЕ: Фото (Nano Banana Standard/Pro/Edit)
-    if (mode === 'image') {
-      return `image_${imageQuality}`;
-    }
-    
-    // 4. Музыка и остальное
+    if (selectedModelId === 'sora-2') return `sora_${soraDuration}`;
+    if (mode === 'image') return `image_${imageQuality}`;
     return `manual_${mode}`;
   })();
 
   const currentCost = getCostByTemplateId(effectiveTemplateId);
-
-  // Оставляем лог, чтобы убедиться, что manual_video побежден
-  console.log("FINAL CHECK -> Mode:", mode, "ID:", effectiveTemplateId, "Cost:", currentCost);
 
   useEffect(() => {
     setIsGenerating(false);
@@ -79,27 +65,19 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   }, [initialPrompt, initialImage, templateId, mode]);
     
   useEffect(() => {
-    if (initialPrompt) {
-      setPrompt(initialPrompt);
-    }
+    if (initialPrompt) setPrompt(initialPrompt);
   }, [initialPrompt]);
 
   useEffect(() => {
     if (initialImage) {
-      setSelectedImage({
-        preview: initialImage,
-        data: '',
-        mimeType: ''
-      });
+      setSelectedImage({ preview: initialImage, data: '', mimeType: '' });
     } else {
       setSelectedImage(null);
     }
   }, [initialImage]);
 
   useEffect(() => {
-    if (initialAspectRatio) {
-      setAspectRatio(initialAspectRatio);
-    }
+    if (initialAspectRatio) setAspectRatio(initialAspectRatio);
   }, [initialAspectRatio]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,11 +88,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
         const base64String = reader.result as string;
         const matches = base64String.match(/^data:(.+);base64,(.+)$/);
         if (matches) {
-            setSelectedImage({
-                preview: base64String,
-                mimeType: matches[1],
-                data: matches[2]
-            });
+            setSelectedImage({ preview: base64String, mimeType: matches[1], data: matches[2] });
         }
       };
       reader.readAsDataURL(file);
@@ -125,7 +99,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       setStatusMessage(""); 
       if (isWorking.current || isGenerating) return;
   
-      // 1. ОПРЕДЕЛЯЕМ ТРЕБОВАНИЯ
       const isImageEdit = mode === 'image' && imageQuality === 'edit';
       const isVideoWithImage = mode === 'video' && videoMethod === 'image';
       const needsImage = isImageEdit || isVideoWithImage;
@@ -135,13 +108,11 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
       const hasLyrics = lyrics.trim().length > 0;
       const hasImage = !!selectedImage;
   
-      // 2. ВАЛИДАЦИЯ (Исправлено для музыки)
-      // Для кастомной музыки валидно, если есть промпт ИЛИ лирика
       const hasContent = isCustom ? (hasPrompt || hasLyrics) : hasPrompt;
   
       if (!hasContent || (needsImage && !hasImage)) {
           alert(needsImage && !hasImage ? t.gen_label_image : "Будь ласка, введіть опис або текст пісні");
-          return; // Здесь isGenerating еще false, поля не блокируются
+          return;
       }
   
       if (currentCredits < currentCost) {
@@ -151,7 +122,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   
       const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
       isWorking.current = true; 
-      setIsGenerating(true); // Теперь блокируем поля, только когда всё валидно
+      setIsGenerating(true);
       setStatusMessage(mode === 'music' ? "Налаштовуємо звук..." : "Завантаження...");
   
       try {
@@ -174,13 +145,19 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   
           setStatusMessage('Запуск генерації...');
           let taskId;
-  
+
+          // ИСПРАВЛЕННАЯ ЛОГИКА ВЫБОРА
           if (templateId && templateId !== 'default') {
               taskId = await generateByTemplateId(
-                effectiveTemplateId, 
-                prompt, 
-                videoMethod === 'text' ? '' : imageUrl,
-                { method: videoMethod, duration: soraDuration, aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9' }
+                  effectiveTemplateId, 
+                  prompt, 
+                  videoMethod === 'text' ? '' : imageUrl,
+                  { 
+                      method: videoMethod, 
+                      duration: soraDuration, 
+                      aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9',
+                      modelId: selectedModelId 
+                  }
               );
           } else if (mode === 'image') {
               taskId = await generateNanoImage({
@@ -202,57 +179,44 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
               });
               taskId = `music_${musicTaskId}`; 
           } else {
-              taskId = await generateByTemplateId(
-                effectiveTemplateId, 
-                prompt, 
-                videoMethod === 'text' ? '' : imageUrl,
-                { method: videoMethod, duration: soraDuration, aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9' }
-              );
+              // Свободная видео-генерация
+              taskId = await generateUniversalVideo({
+                  prompt: prompt, 
+                  imageUrl: videoMethod === 'text' ? '' : imageUrl,
+                  duration: soraDuration, 
+                  aspectRatio: soraLayout === 'portrait' ? '9:16' : '16:9',
+                  method: videoMethod,
+                  modelId: selectedModelId 
+              });
           }
   
           const tgId = tgUser?.id || 0;
-          // 1. Создаем правильный заголовок для отображения
           const displayTitle = (mode === 'music' && musicTitle?.trim()) 
               ? musicTitle 
               : (initialPrompt ? "Шаблон" : `Власна (${mode})`);
         
-          // 2. Сохраняем в БД именно этот заголовок
-          await saveVideoToHistory(
-              taskId, 
-              prompt, 
-              displayTitle, // Заменяем статичную строку
-              tgId, 
-              imageUrl, 
-              aspectRatio, 
-              mode
-          );
+          await saveVideoToHistory(taskId, prompt, displayTitle, tgId, imageUrl, aspectRatio, mode);
   
-          // 3. Передаем в локальное состояние для мгновенного отображения в библиотеке
           onVideoGenerated({
               id: taskId,
               prompt,
               status: 'processing',
               contentType: mode,
-              title: displayTitle // Заменяем и здесь
+              title: displayTitle
           } as any, currentCost);
   
           setStatusMessage('Додано в чергу!');
-          
-          setTimeout(() => {
-              window.location.hash = '/library';
-          }, 1500);
+          setTimeout(() => { window.location.hash = '/library'; }, 1500);
   
       } catch (error: any) {
           console.error("Ошибка:", error);
           alert(`Помилка: ${error.message}`);
       } finally {
-          // ЭТОТ БЛОК ОБЯЗАТЕЛЬНО РАЗБЛОКИРУЕТ ПОЛЯ
           setIsGenerating(false);
           isWorking.current = false;
       }
   };
 
-  // Динамические тексты заголовков
   const getHeader = () => {
     if (initialPrompt) return { title: "За шаблоном", sub: "Стиль налаштовано" };
     switch(mode) {
@@ -266,7 +230,6 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   
 return (
     <div className="flex flex-col h-full px-4 pt-6 pb-24 max-w-md mx-auto w-full overflow-y-auto no-scrollbar">
-      {/* Header */}
       <div className="mb-6 text-center">
         <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-black/20 bg-gradient-to-tr 
           ${mode === 'music' ? 'from-orange-500 to-yellow-400' : mode === 'image' ? 'from-blue-500 to-cyan-400' : 'from-primary to-secondary'}`}>
@@ -276,8 +239,33 @@ return (
         <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
       </div>
 
+      {/* ПЕРЕКЛЮЧАТЕЛЬ МОДЕЛЕЙ (ФУНДАМЕНТ) */}
+      <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
+        {[
+          { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
+          { id: 'veo', name: 'Veo', active: false, icon: '🔮' },
+          { id: 'kling', name: 'Kling 1.5', active: false, icon: '🎬' }
+        ].map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => m.active && setSelectedModelId(m.id)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all whitespace-nowrap ${
+              selectedModelId === m.id 
+              ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10' 
+              : 'bg-white/5 border-white/10 text-white/30 opacity-60'
+            } ${!m.active ? 'cursor-not-allowed' : 'active:scale-95'}`}
+          >
+            <span className="text-sm">{m.icon}</span>
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] font-black uppercase tracking-wider">{m.name}</span>
+              {!m.active && <span className="text-[7px] text-primary font-bold uppercase">Soon</span>}
+            </div>
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
-        {/* 1. ТОП: Выбор качества для Nano Banana */}
         {mode === 'image' && (
           <div className="space-y-2 animate-in fade-in duration-300">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Якість та режим</label>
@@ -289,8 +277,7 @@ return (
           </div>
         )}
 
-        {/* 2. Метод генерации для видео */}
-        {mode === 'video' && !initialPrompt && (
+        {mode === 'video' && !templateId && (
           <div className="space-y-2">
             <label className="text-sm font-medium dark:text-gray-300 ml-1">Метод генерації</label>
             <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
@@ -300,7 +287,6 @@ return (
           </div>
         )}
 
-        {/* 3. ЗАГРУЗКА ФОТО (Edit или Видео-с-фото) */}
         {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod === 'image')) && (
           <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{mode === 'image' ? "Фото для стилізації" : "Вихідне фото"}</label>
@@ -319,10 +305,8 @@ return (
           </div>
         )}
 
-        {/* 4. НОВЫЙ БЛОК МУЗЫКИ */}
         {mode === 'music' ? (
           <div className="space-y-4 animate-in fade-in duration-500">
-            {/* Переключатель режима */}
             <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
               <span className="text-sm font-bold dark:text-white">Користувацький режим</span>
               <button onClick={() => setIsCustomMusic(!isCustomMusic)} className={`w-12 h-6 rounded-full transition-all relative ${isCustomMusic ? 'bg-orange-500' : 'bg-gray-300 dark:bg-white/20'}`}>
@@ -339,19 +323,11 @@ return (
               <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Опис пісні (Промт)..." className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-sm h-28 resize-none outline-none" />
             )}
 
-            {/* Настройки вокала */}
             <div className="space-y-4 bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border border-gray-200 dark:border-white/10">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium dark:text-gray-300">З вокалом</label>
-                <button 
-                  onClick={() => setHasVocals(!hasVocals)}
-                  className={`w-11 h-6 rounded-full transition-all relative duration-300 ${
-                    hasVocals ? 'bg-orange-500' : 'bg-gray-300 dark:bg-white/20'
-                  }`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${
-                    hasVocals ? 'left-6' : 'left-1'
-                  }`} />
+                <button onClick={() => setHasVocals(!hasVocals)} className={`w-11 h-6 rounded-full transition-all relative duration-300 ${hasVocals ? 'bg-orange-500' : 'bg-gray-300 dark:bg-white/20'}`}>
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${hasVocals ? 'left-6' : 'left-1'}`} />
                 </button>
               </div>
               {hasVocals && (
@@ -367,15 +343,13 @@ return (
             </div>
           </div>
         ) : (
-          /* 4. ОБЫЧНОЕ ПОЛЕ ТЕКСТА (Для видео и фото) */
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">{t.gen_label_prompt}</label>
             <textarea value={prompt} onChange={(e) => { setPrompt(e.target.value); if (statusMessage) setStatusMessage(""); }} placeholder={t.gen_placeholder} className="w-full bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-28 text-sm transition-all shadow-sm" disabled={isGenerating} />
           </div>
         )}
 
-        {/* 5. НАСТРОЙКИ ВИДЕО */}
-        {mode === 'video' && !initialPrompt && (
+        {mode === 'video' && !templateId && (
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-300 ml-1">Тривалість відео</label>
@@ -395,7 +369,6 @@ return (
           </div>
         )}
 
-        {/* 6. НАСТРОЙКИ ФОТО */}
         {mode === 'image' && (
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="space-y-2">
@@ -420,7 +393,6 @@ return (
           </div>
         )}
 
-        {/* 7. КНОПКА ГЕНЕРАЦИИ */}
         <button onClick={handleGenerate} disabled={isGenerating} className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-95 ${isGenerating ? 'bg-neutral-800 text-gray-500' : 'bg-gradient-to-r from-primary to-secondary text-white shadow-primary/40'}`}>
             {isGenerating ? <span>{t.gen_btn_generating}</span> : (
               <span className="flex items-center gap-2">{t.gen_btn_generate} 
@@ -434,13 +406,7 @@ return (
         {statusMessage && <div className="p-4 rounded-xl text-center text-sm bg-white dark:bg-surface text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-white/5">{statusMessage}</div>}
       </div>
       
-      <LowBalanceModal 
-        isOpen={isLowBalanceOpen} 
-        onClose={() => setIsLowBalanceOpen(false)} 
-        balance={currentCredits} 
-        lang={lang} 
-        onGetMore={onGetMore} 
-      />
+      <LowBalanceModal isOpen={isLowBalanceOpen} onClose={() => setIsLowBalanceOpen(false)} balance={currentCredits} lang={lang} onGetMore={onGetMore} />
     </div>
   );
 };
