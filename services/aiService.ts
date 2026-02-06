@@ -1,14 +1,19 @@
 const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY;
 
 const ENDPOINTS = {
+  // Kling
   KLING_GENERATE: import.meta.env.VITE_KLING_GENERATE_URL || 'https://api.kie.ai/api/v1/jobs/createTask',
   KLING_STATUS: import.meta.env.VITE_KLING_STATUS_URL || 'https://api.kie.ai/api/v1/jobs/recordInfo',
+
+  // Veo
+  VEO_GENERATE: import.meta.env.VITE_VEO_GENERATE_URL || 'https://api.kie.ai/api/v1/veo/generate',
+  VEO_STATUS: import.meta.env.VITE_VEO_STATUS_URL || 'https://api.kie.ai/api/v1/veo/record-info',
   
-  // Для фото
+  // Nano Banana
   IMAGE_GENERATE: import.meta.env.VITE_IMAGE_GENERATE_URL || 'https://api.kie.ai/api/v1/jobs/createTask',
   IMAGE_STATUS: import.meta.env.VITE_IMAGE_STATUS_URL || 'https://api.kie.ai/api/v1/jobs/recordInfo',
 
-  // Музыка
+  // Suno
   MUSIC_GENERATE: import.meta.env.VITE_MUSIC_GENERATE_URL || 'https://api.kie.ai/api/v1/generate',
   MUSIC_STATUS: import.meta.env.VITE_MUSIC_STATUS_URL || 'https://api.kie.ai/api/v1/generate/record-info'
 };
@@ -82,100 +87,63 @@ export const generateNanoImage = async (params: {
 };
 
 /**
- * Універсальна функція для генерації відео
+ * Універсальна функція для генерації відео (Sora 2 / Veo)
  */
 export const generateUniversalVideo = async (params: {
   prompt: string,
   duration: '10' | '15',
-  aspectRatio: '9:16' | '16:9',
+  aspectRatio: '9:16' | '16:9' | 'auto',
   imageUrl?: string,
   method: 'text' | 'image',
   modelId: string,
   includeSound?: boolean
 }) => {
-
-  if (params.modelId !== 'sora-2') {
-    throw new Error("Ця модель тимчасово недоступна. Використовуйте Sora 2.");
-  }
+  const isVeo = params.modelId === 'veo';
+  // Выбираем эндпоинт на основе модели
+  const endpoint = isVeo ? ENDPOINTS.VEO_GENERATE : ENDPOINTS.KLING_GENERATE;
   
-  // 1. ОПРЕДЕЛЯЕМ МОДЕЛЬ И ВХОДНЫЕ ДАННЫЕ
-  const isImageMode = params.method === 'image' && params.imageUrl;
-  const modelName = isImageMode ? 'sora-2-image-to-video' : 'sora-2-text-to-video';
+  let payload: any = {};
 
-  // 2. ФОРМИРУЕМ ТЕЛО ЗАПРОСА
-  const payload: any = {
-    model: modelName,
-    input: {
-      "prompt": params.prompt,
-      "aspect_ratio": params.aspectRatio === '9:16' ? 'portrait' : 'landscape',
-      "n_frames": params.duration, 
-      "remove_watermark": true,
-      "sound": params.modelId === 'sora-2' || params.modelId === 'veo' ? true : params.includeSound
+  if (isVeo) {
+    // 1. ЛОГИКА ДЛЯ VEO
+    payload = {
+      model: 'veo3_fast',
+      prompt: params.prompt,
+      aspect_ratio: params.aspectRatio, // Принимает 'auto', '16:9', '9:16'
+      seeds: Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000,
+      generationType: (params.method === 'image' && params.imageUrl) ? 'REFERENCE_2_VIDEO' : 'TEXT_2_VIDEO',
+      watermark: 'VidiAI'
+    };
+
+    if (params.method === 'image' && params.imageUrl) {
+      payload.imageUrls = [params.imageUrl]; // У Veo поле называется imageUrls (массив)
     }
-  };
+  } else if (params.modelId === 'sora-2') {
+    // 2. ЛОГИКА ДЛЯ SORA 2
+    const isImageMode = params.method === 'image' && params.imageUrl;
+    // Sora не понимает 'auto', поэтому подстраховываемся
+    const soraRatio = params.aspectRatio === '9:16' ? 'portrait' : 'landscape';
 
-  // 3. ДОБАВЛЯЕМ КАРТИНКУ В МАССИВ (если это Image-to-Video)
-  if (isImageMode) {
-    payload.input.image_urls = [params.imageUrl];
-  }
+    payload = {
+      model: isImageMode ? 'sora-2-image-to-video' : 'sora-2-text-to-video',
+      input: {
+        "prompt": params.prompt,
+        "aspect_ratio": soraRatio,
+        "n_frames": params.duration, 
+        "remove_watermark": true,
+        "sound": true // Sora всегда со звуком
+      }
+    };
 
-  // 4. ОТПРАВЛЯЕМ ЗАПРОС
-  return baseGenerateKling(payload);
-};
-
-export const generateUniversalMusic = async (params: {
-  prompt: string,
-  title?: string,
-  style?: string,
-  lyrics?: string,
-  vocalGender: 'male' | 'female' | 'random', // Принимаем твои значения из стейта
-  instrumental: boolean,
-  isCustom: boolean
-}) => {
-  // РЕАЛИЗАЦИЯ РАНДОМА: если пришел 'random', выбираем сами
-  let finalGender: 'm' | 'f' = 'm'; 
-  if (params.vocalGender === 'random') {
-    finalGender = Math.random() > 0.5 ? 'm' : 'f';
-  } else {
-    finalGender = params.vocalGender === 'female' ? 'f' : 'm';
-  }
-
-  // Базовый объект запроса (всегда V5 и Callback)
-  let payload: any = {
-    model: 'V5',
-    instrumental: params.instrumental,
-    customMode: params.isCustom,
-    callBackUrl: 'https://server.vidiai.top/api/music_callback.php'
-  };
-
-  if (params.isCustom) {
-    // ВЕТКА CUSTOM MODE (Обязательно: стиль, тайтл, промпт/текст)
-    if (!params.style?.trim()) throw new Error("Стиль музики обов'язковий!");
-    if (!params.title?.trim()) throw new Error("Назва треку обов'язкова!");
-    
-    payload.style = params.style;
-    payload.title = params.title;
-    
-    if (params.instrumental) {
-      // Инструментал в кастомном моде
-      payload.prompt = params.prompt || params.style; 
-    } else {
-      // Вокал в кастомном моде (Обязательно: Lyrics)
-      if (!params.lyrics?.trim()) throw new Error("Текст пісні (Lyrics) обов'язковий!");
-      payload.prompt = params.lyrics;
-      payload.vocalGender = finalGender;
+    if (isImageMode) {
+      payload.input.image_urls = [params.imageUrl];
     }
   } else {
-    // ВЕТКА STANDARD MODE (Обязательно: промпт)
-    if (!params.prompt?.trim()) throw new Error("Опис пісні обов'язковий!");
-    
-    payload.prompt = params.prompt;
-    if (!params.instrumental) {
-      payload.vocalGender = finalGender;
-    }
+    throw new Error("Ця модель тимчасово недоступна.");
   }
 
-  const response = await fetch(ENDPOINTS.MUSIC_GENERATE, {
+  // 3. ОТПРАВКА ЗАПРОСА
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -185,13 +153,17 @@ export const generateUniversalMusic = async (params: {
   });
 
   const result = await response.json();
-  const taskId = result.data?.taskId || result.data?.jobId || (result.data && result.data[0]?.taskId);
+  
+  // У Veo taskId может лежать прямо в data
+  const taskId = result.data?.taskId || result.data?.jobId || result.data;
 
-  if (!taskId) {
-    throw new Error(result.message || 'Не вдалося створити завдання на музику');
+  if (!taskId || (typeof taskId !== 'string' && typeof taskId !== 'number')) {
+    if (result.code === 402) throw new Error("Недостатньо кредитів на Kie.ai.");
+    throw new Error(result.message || 'Failed to create task');
   }
   
-  return taskId;
+  // Добавляем префикс, чтобы getTaskStatus знал, какой статус проверять
+  return isVeo ? `veo_${taskId}` : taskId;
 };
 
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
