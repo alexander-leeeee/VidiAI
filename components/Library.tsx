@@ -66,27 +66,28 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
             });
   
             // Проверяем статус через API для тех, что еще в обработке
-            // Проверяем статус через API для тех, что еще в обработке
             for (const video of formatted) {
               if (video.status === 'processing') {
-                // 1. Формируем ID для API (с префиксом)
-                const idForApi = video.contentType === 'video' && !video.id.startsWith('veo_') 
-                  ? `veo_${video.id}` 
-                  : video.id;
+                
+                // 1. Формируем правильный ID для API (с префиксом)
+                // Если тип контента 'video', добавляем префикс 'veo_', чтобы getTaskStatus выбрал нужный сервер
+                let idForApi = video.id;
+                if (video.contentType === 'video' && !video.id.startsWith('veo_')) {
+                  idForApi = `veo_${video.id}`;
+                } else if (video.contentType === 'music' && !video.id.startsWith('music_')) {
+                  idForApi = `music_${video.id}`;
+                }
             
-                console.log(`[LIBRARY] Checking status for: ${idForApi}`); // ЛОГ ДЛЯ ПРОВЕРКИ
-            
+                // 2. Вызываем проверку статуса с префиксом
                 const freshStatus = await getTaskStatus(idForApi);
                 
                 // СЛУЧАЙ 1: УСПЕХ
                 if (freshStatus.status === 'succeeded' && freshStatus.video_url) {
-                  // ЛОГ №5: Условие успеха
-                  console.log(`[LIBRARY] Success! Video ${video.id} is ready. URL: ${freshStatus.video_url}. Updating DB...`);
-            
                   video.status = 'succeeded';
                   video.url = freshStatus.video_url;
                   video.alternative_url = freshStatus.alternative_url; 
             
+                  // 3. Обновляем в БД (функция сама очистит префикс перед записью)
                   await updateVideoInDb(
                     idForApi, 
                     'succeeded', 
@@ -96,11 +97,16 @@ const Library: React.FC<LibraryProps> = ({ lang, onReplayRequest, currentCredits
                 } 
                 // СЛУЧАЙ 2: ОШИБКА
                 else if (freshStatus.status === 'failed') {
-                  console.log(`[LIBRARY] Task ${video.id} failed.`); // ЛОГ ОШИБКИ
                   video.status = 'failed';
                   const errorMsg = freshStatus.error_msg || "Internal Server Error";
                   
-                  await updateVideoInDb(idForApi, 'failed', '', '', errorMsg);
+                  await updateVideoInDb(
+                    idForApi, 
+                    'failed', 
+                    '', 
+                    '', 
+                    errorMsg 
+                  );
                 }
               }
             }
