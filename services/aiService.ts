@@ -300,7 +300,13 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
-export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null, alternativeUrl?: string | null) => {
+export const updateVideoInDb = async (
+  taskId: string, 
+  status: string, 
+  videoUrl: string | null, 
+  alternativeUrl?: string | null,
+  errorMsg?: string // Добавляем 5-й параметр
+) => {
   try {
     const response = await fetch('https://server.vidiai.top/api/update_media_status.php', {
       method: 'POST',
@@ -309,7 +315,8 @@ export const updateVideoInDb = async (taskId: string, status: string, videoUrl: 
         task_id: taskId, 
         status: status, 
         video_url: videoUrl,
-        alternative_url: alternativeUrl // Добавили передачу второго трека
+        alternative_url: alternativeUrl,
+        error_description: errorMsg // Отправляем текст ошибки в базу
       }),
     });
     
