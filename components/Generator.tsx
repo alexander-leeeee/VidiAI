@@ -277,12 +277,16 @@ return (
               onClick={() => {
                 if (m.active) {
                   setSelectedModelId(m.id);
-                  setUploadedImages([]); // Очищаем фото при смене модели
+                  setUploadedImages([]); // Очищаем старые фото
+                  
                   if (m.id === 'veo') {
-                    setVideoMethod('reference'); // Для Veo свой метод
+                    setVideoMethod('reference'); 
+                    setSoraLayout('9:16');
+                  } else if (m.id === 'kling') {
+                    setVideoMethod('image'); // Kling 2.1 работает в режиме "З фото"
                     setSoraLayout('9:16');
                   } else {
-                    setVideoMethod('image'); // Для Sora возвращаем стандарт
+                    setVideoMethod('image'); 
                     if (soraLayout === 'auto') setSoraLayout('portrait');
                   }
                 }
@@ -373,21 +377,21 @@ return (
               </div>
             ) : (
               /* 2. РЕЖИМ SORA АБО СТИЛЬ VEO */
-              <div className={`flex items-center gap-2 ${selectedModelId === 'sora-2' ? 'flex-col' : 'overflow-x-auto pb-2 no-scrollbar'}`}>
+              <div className={`flex items-center gap-2 ${(selectedModelId === 'sora-2' || selectedModelId === 'kling') ? 'flex-col' : 'overflow-x-auto pb-2 no-scrollbar'}`}>
                 {uploadedImages.map((img, index) => (
-                  <div key={index} className={`relative flex-shrink-0 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm ${selectedModelId === 'sora-2' ? 'w-full h-48' : 'w-24 h-24'}`}>
+                  <div key={index} className={`relative flex-shrink-0 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm ${(selectedModelId === 'sora-2' || selectedModelId === 'kling') ? 'w-full h-48' : 'w-24 h-24'}`}>
                     <img src={img.preview} className="w-full h-full object-cover" />
                     <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon className="w-3 h-3"/></button>
                   </div>
                 ))}
-        
-                {/* Кнопка "Додати" */}
-                {uploadedImages.length < (selectedModelId === 'sora-2' ? 1 : 3) && (
+              
+                {/* Кнопка "Додати" с лимитом 1 для Sora/Kling и 3 для Veo Style */}
+                {uploadedImages.length < ((selectedModelId === 'sora-2' || selectedModelId === 'kling') ? 1 : 3) && (
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className={`border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all ${selectedModelId === 'sora-2' ? 'w-full h-48' : 'w-24 h-24 flex-shrink-0'}`}
+                    className={`border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all ${(selectedModelId === 'sora-2' || selectedModelId === 'kling') ? 'w-full h-48' : 'w-24 h-24 flex-shrink-0'}`}
                   >
-                    <PhotoIcon className={`${selectedModelId === 'sora-2' ? 'w-8 h-8' : 'w-6 h-6'} mb-1 opacity-30`} />
+                    <PhotoIcon className={`${(selectedModelId === 'sora-2' || selectedModelId === 'kling') ? 'w-8 h-8' : 'w-6 h-6'} mb-1 opacity-30`} />
                     <span className="text-[10px] font-bold uppercase">Додати фото</span>
                   </button>
                 )}
