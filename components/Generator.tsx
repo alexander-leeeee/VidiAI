@@ -341,7 +341,7 @@ return (
           <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-center ml-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {selectedModelId === 'sora-2' ? "Фото для анімації" : videoMethod === 'start-end' ? "Кадри переходу (Старт + Фінал)" : "Референси стилю (1-3)"}
+                {selectedModelId === 'sora-2' ? "Фото для анімації" : videoMethod === 'start-end' ? "Кадри переходу (Старт + Фінал)" : "Референси стилю (1-3 зображення)"}
               </label>
               {selectedModelId === 'veo' && videoMethod === 'reference' && (
                 <span className="text-[10px] font-bold text-primary uppercase">{uploadedImages.length} / 3</span>
