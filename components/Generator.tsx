@@ -336,42 +336,63 @@ return (
           </div>
         )}
 
-        {/* Завантаження фото */}
+        {/* Динамічний блок завантаження */}
         {((mode === 'image' && imageQuality === 'edit') || (mode === 'video' && videoMethod !== 'text')) && (
           <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-center ml-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {selectedModelId === 'sora-2' ? "Фото для анімації" : videoMethod === 'start-end' ? "Кадри переходу" : "Референси стилю"}
+                {selectedModelId === 'sora-2' ? "Фото для анімації" : videoMethod === 'start-end' ? "Кадри переходу (Старт + Фінал)" : "Референси стилю (1-3)"}
               </label>
-              {/* Лимит 0/3 показываем только для Veo */}
-              {selectedModelId === 'veo' && (
-                <span className="text-[10px] font-bold text-primary uppercase">
-                  {uploadedImages.length} / {videoMethod === 'start-end' ? 2 : 3}
-                </span>
+              {selectedModelId === 'veo' && videoMethod === 'reference' && (
+                <span className="text-[10px] font-bold text-primary uppercase">{uploadedImages.length} / 3</span>
               )}
             </div>
         
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-              {uploadedImages.map((img, index) => (
-                <div key={index} className="relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm">
-                  <img src={img.preview} className="w-full h-full object-cover" />
-                  <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full"><TrashIcon className="w-3 h-3"/></button>
-                  {selectedModelId === 'veo' && videoMethod === 'start-end' && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-[8px] text-center py-1 uppercase font-black text-white">
-                      {index === 0 ? 'Старт' : 'Фінал'}
+            {/* 1. РЕЖИМ ПЕРЕХОДУ (VEO) — На всю ширину з плюсиком */}
+            {selectedModelId === 'veo' && videoMethod === 'start-end' ? (
+              <div className="flex items-center gap-3">
+                {[0, 1].map((idx) => (
+                  <React.Fragment key={idx}>
+                    <div className="flex-1 relative h-32 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl overflow-hidden bg-white/5">
+                      {uploadedImages[idx] ? (
+                        <>
+                          <img src={uploadedImages[idx].preview} className="w-full h-full object-cover" />
+                          <button onClick={() => removeImage(idx)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500 transition-colors"><TrashIcon className="w-3 h-3"/></button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-[8px] text-center py-1 uppercase font-black text-white">{idx === 0 ? 'Старт' : 'Фінал'}</div>
+                        </>
+                      ) : (
+                        <div onClick={() => fileInputRef.current?.click()} className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors">
+                          <PhotoIcon className="w-6 h-6 mb-1 opacity-30" />
+                          <span className="text-[9px] font-bold uppercase text-gray-500">{idx === 0 ? "Початок" : "Кінець"}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                    {idx === 0 && <div className="text-primary font-black text-xl">+</div>}
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              /* 2. РЕЖИМ SORA АБО СТИЛЬ VEO */
+              <div className={`flex items-center gap-2 ${selectedModelId === 'sora-2' ? 'flex-col' : 'overflow-x-auto pb-2 no-scrollbar'}`}>
+                {uploadedImages.map((img, index) => (
+                  <div key={index} className={`relative flex-shrink-0 rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm ${selectedModelId === 'sora-2' ? 'w-full h-48' : 'w-24 h-24'}`}>
+                    <img src={img.preview} className="w-full h-full object-cover" />
+                    <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1.5 bg-black/60 text-white rounded-full hover:bg-red-500"><TrashIcon className="w-3 h-3"/></button>
+                  </div>
+                ))}
         
-              {/* Лимит для Sora — строго 1 фото */}
-              {uploadedImages.length < (selectedModelId === 'sora-2' ? 1 : (videoMethod === 'start-end' ? 2 : 3)) && (
-                <button onClick={() => fileInputRef.current?.click()} className="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
-                  <PhotoIcon className="w-6 h-6 mb-1 opacity-30" />
-                  <span className="text-[9px] font-bold uppercase">Додати</span>
-                </button>
-              )}
-            </div>
+                {/* Кнопка "Додати" */}
+                {uploadedImages.length < (selectedModelId === 'sora-2' ? 1 : 3) && (
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed border-gray-300 dark:border-white/20 rounded-2xl flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 transition-all ${selectedModelId === 'sora-2' ? 'w-full h-48' : 'w-24 h-24 flex-shrink-0'}`}
+                  >
+                    <PhotoIcon className={`${selectedModelId === 'sora-2' ? 'w-8 h-8' : 'w-6 h-6'} mb-1 opacity-30`} />
+                    <span className="text-[10px] font-bold uppercase">Додати фото</span>
+                  </button>
+                )}
+              </div>
+            )}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
         )}
