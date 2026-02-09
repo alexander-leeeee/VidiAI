@@ -87,49 +87,57 @@ export const generateNanoImage = async (params: {
 };
 
 /**
- * Універсальна функція для генерації відео (Sora 2 / Veo)
+ * Універсальна функція для генерації відео (Sora 2 / Veo / Kling 2.1)
  */
 export const generateUniversalVideo = async (params: {
   prompt: string,
   duration: '10' | '15',
   aspectRatio: string,
   imageUrl?: string,
-  // Меняем метод на более специфичные для Veo
-  method: 'reference' | 'start-end' | 'text', 
+  method: 'reference' | 'start-end' | 'text' | 'image', // Добавили 'image' для совместимости
   modelId: string,
   includeSound?: boolean
 }) => {
   const isVeo = params.modelId === 'veo';
+  const isKling = params.modelId === 'kling'; // ПРОВЕРКА НА КЛИНГ
+  
+  // Выбор эндпоинта: Veo идет на свой, остальные (Sora/Kling) на createTask
   const endpoint = isVeo ? ENDPOINTS.VEO_GENERATE : ENDPOINTS.KLING_GENERATE;
   
   let payload: any = {};
 
   if (isVeo) {
-    // 1. Обработка ссылок (из строки в массив)
+    // ЛОГИКА VEO (Массив ссылок)
     const urls = params.imageUrl ? params.imageUrl.split(',').filter(u => u.trim()) : [];
-    
-    // 2. Определение типа генерации для Veo
     let genType = 'TEXT_2_VIDEO';
-    if (params.method === 'reference' && urls.length > 0) {
-      genType = 'REFERENCE_2_VIDEO'; // Поддерживает до 3-х фото
-    } else if (params.method === 'start-end' && urls.length === 2) {
-      genType = 'FIRST_AND_LAST_FRAMES_2_VIDEO'; // Только 2 фото
-    }
-
-    // 3. Фикс соотношения сторон
-    const safeRatio = (params.aspectRatio === 'auto' || !params.aspectRatio) ? '9:16' : params.aspectRatio;
+    if (params.method === 'reference' && urls.length > 0) genType = 'REFERENCE_2_VIDEO';
+    else if (params.method === 'start-end' && urls.length === 2) genType = 'FIRST_AND_LAST_FRAMES_2_VIDEO';
 
     payload = {
       model: 'veo3_fast',
       prompt: params.prompt || "Cinematic animation",
-      aspect_ratio: safeRatio,
+      aspect_ratio: params.aspectRatio === 'auto' ? '9:16' : params.aspectRatio,
       seeds: Math.floor(Math.random() * 100000),
       generationType: genType,
-      imageUrls: urls, // Шлем массив ссылок (Kie AI ожидает массив для Veo)
+      imageUrls: urls,
       watermark: 'VidiAI'
     };
+
+  } else if (isKling) {
+    // НОВАЯ ЛОГИКА KLING 2.1 STANDARD
+    payload = {
+      model: 'kling/v2-1-standard',
+      input: {
+        "prompt": params.prompt,
+        "image_url": params.imageUrl || "", // Kling 2.1 ждет одну строку
+        "duration": "5", // У этой версии фиксировано 5 сек
+        "negative_prompt": "blur, distort, and low quality",
+        "cfg_scale": 0.5
+      }
+    };
+
   } else if (params.modelId === 'sora-2') {
-    // Логика для Sora остается почти без изменений, но подстраиваем под новый method
+    // ЛОГИКА SORA 2
     const isImageMode = params.method !== 'text' && params.imageUrl;
     const soraRatio = params.aspectRatio === '9:16' ? 'portrait' : 'landscape';
 
@@ -139,14 +147,13 @@ export const generateUniversalVideo = async (params: {
         "prompt": params.prompt,
         "aspect_ratio": soraRatio,
         "n_frames": params.duration, 
-        "remove_watermark": true,
         "sound": true,
         ...(isImageMode && { "image_urls": params.imageUrl?.split(',') })
       }
     };
   }
 
-  // 3. ОТПРАВКА ЗАПРОСА
+  // ОТПРАВКА ЗАПРОСА
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -254,8 +261,12 @@ export const TEMPLATE_COSTS: Record<string, number> = {
 
   // Цены для Veo
   'veo': 60, // Устанавливаем цену для Veo (например, 35 монет)
-  
-  'default': 15       // Запасной вариант
+
+  // Цены для Kling 2.1
+  'kling': 20,
+
+  // Запасной вариант
+  'default': 30
 };
 
 // Функция для получения цены по ID
