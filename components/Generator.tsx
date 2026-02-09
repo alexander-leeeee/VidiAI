@@ -477,12 +477,16 @@ return (
                 </div>
               ) : (
                 /* ВЫБОР ДЛЯ SORA ТА KLING (5, 10, 15) */
-                <div className="grid grid-cols-3 gap-2">
+                <div className={`grid gap-2 w-full ${selectedModelId === 'kling' ? 'grid-cols-2' : 'grid-cols-2'}`}>
                   {(selectedModelId === 'kling' ? ['5', '10'] : ['10', '15']).map((sec) => (
                     <button 
                       key={sec} 
                       onClick={() => setSoraDuration(sec as any)} 
-                      className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraDuration === sec ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
+                      className={`py-3.5 rounded-2xl border text-sm font-bold transition-all w-full ${
+                        soraDuration === sec 
+                        ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
+                        : 'bg-white dark:bg-surface border-gray-200 dark:border-white/10 text-gray-400 hover:border-primary/30'
+                      }`}
                     >
                       {sec} сек
                     </button>
