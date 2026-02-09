@@ -267,9 +267,9 @@ return (
       {mode === 'video' && templateId === 'default' && (
         <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
           {[
-            { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' }, // Если надо деактивировать, то вместо true ставим false
-            { id: 'veo', name: 'Veo 3.1', active: true, icon: '🔮' }, // Если надо деактивировать, то вместо true ставим false
-            { id: 'kling', name: 'Kling 2.1', active: true, icon: '🎬' } // Если надо деактивировать, то вместо true ставим false
+            { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
+            { id: 'veo', name: 'Veo 3.1', active: true, icon: '🔮' },
+            { id: 'kling', name: 'Kling 2.1', active: true, icon: '🎬' }
           ].map((m) => (
             <button
               key={m.id}
@@ -277,25 +277,22 @@ return (
               onClick={() => {
                 if (m.active) {
                   setSelectedModelId(m.id);
-                  setUploadedImages([]); // Очищаем старые фото
-                  
+                  setUploadedImages([]); 
                   if (m.id === 'veo') {
-                    setVideoMethod('reference'); 
-                    setSoraLayout('9:16');
-                  } else if (m.id === 'kling') {
-                    setVideoMethod('image'); // Kling 2.1 работает в режиме "З фото"
+                    setVideoMethod('reference');
                     setSoraLayout('9:16');
                   } else {
-                    setVideoMethod('image'); 
+                    setVideoMethod('image');
+                    setSoraDuration('10'); // Скидання на стандарт
                     if (soraLayout === 'auto') setSoraLayout('portrait');
                   }
                 }
               }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all whitespace-nowrap ${
                 selectedModelId === m.id 
-                ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10' 
-                : 'bg-white/5 border-white/10 text-white/30 opacity-60'
-              } ${!m.active ? 'cursor-not-allowed' : 'active:scale-95'}`}
+                ? 'bg-primary/30 border-primary text-white shadow-[0_0_15px_rgba(124,58,237,0.3)] scale-[1.02]' 
+                : 'bg-white/10 border-white/20 text-white/70 hover:border-white/40'
+              } ${!m.active ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}`}
             >
               <span className="text-sm">{m.icon}</span>
               <div className="flex flex-col items-start">
