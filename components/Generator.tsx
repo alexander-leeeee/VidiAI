@@ -265,12 +265,12 @@ return (
 
       {/* ПЕРЕКЛЮЧАТЕЛЬ МОДЕЛЕЙ */}
       {mode === 'video' && templateId === 'default' && (
-        <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
+        <div className="grid grid-cols-3 gap-2 mb-5 w-full"> {/* Замінено flex на grid */}
           {[
             { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
             { id: 'veo', name: 'Veo 3.1', active: true, icon: '🔮' },
             { id: 'kling', name: 'Kling 2.1', active: true, icon: '🎬' }
-          ].map((m, index) => (
+          ].map((m) => (
             <button
               key={m.id}
               type="button"
@@ -288,19 +288,16 @@ return (
                   }
                 }
               }}
-              className={`flex items-center gap-2 px-5 py-3 rounded-2xl border transition-all whitespace-nowrap ${
-                index === 0 ? 'ml-1' : '' /* Відступ для першої кнопки, щоб не різало край */
-              } ${
+              className={`flex flex-col items-center justify-center gap-1 py-3 rounded-2xl border transition-all ${
                 selectedModelId === m.id 
                 ? 'bg-primary border-primary text-white shadow-[0_0_15px_rgba(124,58,237,0.3)]' 
-                : 'bg-[#1a1a1a] border-white/10 text-white/90 hover:border-white/30'
+                : 'bg-[#1a1a1a] border-white/10 text-white/80 hover:border-white/20'
               } ${!m.active ? 'opacity-30 cursor-not-allowed' : 'active:scale-95'}`}
             >
-              <span className="text-sm">{m.icon}</span>
-              <div className="flex flex-col items-start">
-                <span className="text-[11px] font-black uppercase tracking-wider">{m.name}</span>
-                {!m.active && <span className="text-[7px] text-primary font-bold uppercase">Soon</span>}
-              </div>
+              <span className="text-base">{m.icon}</span>
+              <span className="text-[9px] font-black uppercase tracking-tight text-center">
+                {m.name}
+              </span>
             </button>
           ))}
         </div>
