@@ -331,6 +331,13 @@ return (
                 <button onClick={() => { setVideoMethod('start-end'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'start-end' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Перехід (2)</button>
                 <button onClick={() => { setVideoMethod('text'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-[10px] font-bold transition-all ${videoMethod === 'text' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>Промт</button>
               </div>
+            ) : selectedModelId === 'kling' ? (
+              /* ДЛЯ KLING 2.1 ТІЛЬКИ ОДНА КНОПКА (З ФОТО) */
+              <div className="p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                <div className="py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-primary to-secondary text-white shadow-md text-center">
+                  З фото (Image-to-Video)
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
                 <button onClick={() => { setVideoMethod('image'); setUploadedImages([]); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${videoMethod === 'image' ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md' : 'text-gray-400'}`}>З фото</button>
@@ -469,12 +476,12 @@ return (
                   <span className="text-sm font-black text-white">~ 8 сек</span>
                 </div>
               ) : (
-                /* Для Sora 2: Выбор 10/15 сек */
-                <div className="grid grid-cols-2 gap-2">
-                  {['10', '15'].map((sec) => (
+                /* ВЫБОР ДЛЯ SORA ТА KLING (5, 10, 15) */
+                <div className="grid grid-cols-3 gap-2">
+                  {(selectedModelId === 'kling' ? ['5', '10'] : ['10', '15']).map((sec) => (
                     <button 
                       key={sec} 
-                      onClick={() => setSoraDuration(sec as '10' | '15')} 
+                      onClick={() => setSoraDuration(sec as any)} 
                       className={`py-3 rounded-xl border text-xs font-bold transition-all ${soraDuration === sec ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface text-gray-400'}`}
                     >
                       {sec} сек
@@ -516,47 +523,34 @@ return (
           </div>
         )}
 
-        {/* Настройка звука в видео */}
-        {mode === 'video' && templateId === 'default' && (
-          <div className="space-y-2 mt-4 animate-in fade-in duration-500">
-            <label className="text-xs font-bold dark:text-gray-400 ml-1 uppercase tracking-wider">
-              Аудіосупровід
-            </label>
-            
-            {selectedModelId === 'kling' ? (
-              /* ДЛЯ KLING: Интерактивный переключатель */
-              <div 
-                onClick={() => setWithSound(!withSound)}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer ${
-                  withSound 
-                  ? 'bg-primary/10 border-primary/30 text-white' 
-                  : 'bg-white/5 border-white/10 text-white/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${withSound ? 'bg-primary text-white' : 'bg-white/10 text-gray-500'}`}>
-                    {withSound ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  </div>
-                  <span className="text-sm font-bold">{withSound ? 'Зі звуком' : 'Без звуку'}</span>
-                </div>
-                <div className={`w-10 h-5 rounded-full relative transition-colors ${withSound ? 'bg-primary' : 'bg-gray-600'}`}>
-                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${withSound ? 'left-6' : 'left-1'}`} />
-                </div>
+        {/* Настройка звука */}
+        <div className="space-y-2 mt-4 animate-in fade-in duration-500">
+          <label className="text-xs font-bold dark:text-gray-400 ml-1 uppercase tracking-wider">Аудіосупровід</label>
+          
+          {selectedModelId === 'kling' ? (
+            /* ПЛАШКА "БЕЗ ЗВУКУ" ДЛЯ KLING */
+            <div className="flex items-center gap-3 p-3.5 bg-white/5 border border-white/10 rounded-2xl opacity-80">
+              <div className="p-2 rounded-full bg-red-500/20 text-red-500">
+                <VolumeX size={16} />
               </div>
-            ) : (
-              /* ДЛЯ SORA И VEO: Просто информационная метка */
-              <div className="flex items-center gap-3 p-3.5 bg-white/5 border border-white/10 rounded-2xl opacity-80">
-                <div className="p-2 rounded-full bg-green-500/20 text-green-500">
-                  <Volume2 size={16} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-white">Звук включено</span>
-                  <span className="text-[10px] text-gray-500">Ця модель завжди генерує відео зі звуком</span>
-                </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-white">Без звуку</span>
+                <span className="text-[10px] text-gray-500">Модель Kling 2.1 Standard не підтримує звук</span>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          ) : (
+            /* ДЛЯ SORA И VEO (Завжди зі звуком) */
+            <div className="flex items-center gap-3 p-3.5 bg-white/5 border border-white/10 rounded-2xl opacity-80">
+              <div className="p-2 rounded-full bg-green-500/20 text-green-500">
+                <Volume2 size={16} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-white">Звук включено</span>
+                <span className="text-[10px] text-gray-500">Ця модель завжди генерує відео зі звуком</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {mode === 'image' && (
           <div className="space-y-6 animate-in fade-in duration-500">
