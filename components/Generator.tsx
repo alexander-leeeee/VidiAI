@@ -541,13 +541,13 @@ return (
             </div>
           ) : (
             /* ДЛЯ SORA И VEO (Завжди зі звуком) */
-            <div className="flex items-center gap-3 p-3.5 bg-white/5 border border-white/10 rounded-2xl opacity-80">
-              <div className="p-2 rounded-full bg-green-500/20 text-green-500">
+            <div className="flex items-center gap-3 p-3.5 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl">
+              <div className="p-2 rounded-full bg-green-500/20 text-green-600 dark:text-green-500">
                 <Volume2 size={16} />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-white">Звук включено</span>
-                <span className="text-[10px] text-gray-500">Ця модель завжди генерує відео зі звуком</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">Звук включено</span>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400">Ця модель завжди генерує відео зі звуком</span>
               </div>
             </div>
           )}
