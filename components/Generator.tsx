@@ -263,14 +263,14 @@ return (
         <p className="text-gray-500 dark:text-gray-400 text-sm">{header.sub}</p>
       </div>
 
-      {/* ПЕРЕКЛЮЧАТЕЛЬ МОДЕЛЕЙ (ФУНДАМЕНТ) */}
+      {/* ПЕРЕКЛЮЧАТЕЛЬ МОДЕЛЕЙ */}
       {mode === 'video' && templateId === 'default' && (
         <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
           {[
             { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
             { id: 'veo', name: 'Veo 3.1', active: true, icon: '🔮' },
             { id: 'kling', name: 'Kling 2.1', active: true, icon: '🎬' }
-          ].map((m) => (
+          ].map((m, index) => (
             <button
               key={m.id}
               type="button"
@@ -283,20 +283,22 @@ return (
                     setSoraLayout('9:16');
                   } else {
                     setVideoMethod('image');
-                    setSoraDuration('10'); // Скидання на стандарт
+                    setSoraDuration('10'); 
                     if (soraLayout === 'auto') setSoraLayout('portrait');
                   }
                 }
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-5 py-3 rounded-2xl border transition-all whitespace-nowrap ${
+                index === 0 ? 'ml-1' : '' /* Відступ для першої кнопки, щоб не різало край */
+              } ${
                 selectedModelId === m.id 
-                ? 'bg-primary/30 border-primary text-white shadow-[0_0_15px_rgba(124,58,237,0.3)] scale-[1.02]' 
-                : 'bg-white/10 border-white/20 text-white/70 hover:border-white/40'
-              } ${!m.active ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}`}
+                ? 'bg-primary border-primary text-white shadow-[0_0_15px_rgba(124,58,237,0.3)]' 
+                : 'bg-[#1a1a1a] border-white/10 text-white/90 hover:border-white/30'
+              } ${!m.active ? 'opacity-30 cursor-not-allowed' : 'active:scale-95'}`}
             >
               <span className="text-sm">{m.icon}</span>
               <div className="flex flex-col items-start">
-                <span className="text-[10px] font-black uppercase tracking-wider">{m.name}</span>
+                <span className="text-[11px] font-black uppercase tracking-wider">{m.name}</span>
                 {!m.active && <span className="text-[7px] text-primary font-bold uppercase">Soon</span>}
               </div>
             </button>
