@@ -290,8 +290,9 @@ return (
               }}
               className={`flex flex-col items-center justify-center gap-1 py-3 rounded-2xl border transition-all ${
                 selectedModelId === m.id 
-                ? 'bg-primary border-primary text-white shadow-[0_0_15px_rgba(124,58,237,0.3)]' 
-                : 'bg-[#1a1a1a] border-white/10 text-white/80 hover:border-white/20'
+                ? 'bg-primary border-primary text-white shadow-lg' 
+                : 'bg-gray-100 border-gray-200 text-gray-900 dark:bg-white/5 dark:border-white/10 dark:text-white/80' 
+                /* ^ Тут: bg-gray-100 для світлої теми, dark:bg-white/5 для темної */
               } ${!m.active ? 'opacity-30 cursor-not-allowed' : 'active:scale-95'}`}
             >
               <span className="text-base">{m.icon}</span>
