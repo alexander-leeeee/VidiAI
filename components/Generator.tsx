@@ -267,9 +267,9 @@ return (
       {mode === 'video' && templateId === 'default' && (
         <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar">
           {[
-            { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' },
-            { id: 'veo', name: 'Veo 3.1', active: true, icon: '🔮' }, // АКТИВИРОВАЛИ VEO
-            { id: 'kling', name: 'Kling 2.1', active: false, icon: '🎬' }
+            { id: 'sora-2', name: 'Sora 2', active: true, icon: '⚡' }, // Если надо деактивировать, то вместо true ставим false
+            { id: 'veo', name: 'Veo 3.1', active: true, icon: '🔮' }, // Если надо деактивировать, то вместо true ставим false
+            { id: 'kling', name: 'Kling 2.1', active: true, icon: '🎬' } // Если надо деактивировать, то вместо true ставим false
           ].map((m) => (
             <button
               key={m.id}
