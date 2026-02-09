@@ -130,7 +130,7 @@ export const generateUniversalVideo = async (params: {
       input: {
         "prompt": params.prompt,
         "image_url": params.imageUrl || "", // Kling 2.1 ждет одну строку
-        "duration": "5", // У этой версии фиксировано 5 сек
+        "duration": params.duration || "5", // У этой версии фиксировано 5 сек
         "negative_prompt": "blur, distort, and low quality",
         "cfg_scale": 0.5
       }
