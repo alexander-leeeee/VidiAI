@@ -244,8 +244,11 @@ export const generateUniversalMusic = async (params: {
 
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
 export const TEMPLATE_COSTS: Record<string, number> = {
-  '1': 25,            // Видео 10 сек + звук
-  '2': 10,            // Видео 5 сек
+  '1': 50,            // Видео 10 сек + звук
+  '2': 50,            // Видео 5 сек
+  '3': 50,
+  '4': 50,
+  '5': 50,
   
   // НОВЫЕ РУЧНЫЕ РЕЖИМЫ
   'manual_music': 10, // Генерация музыки
@@ -329,7 +332,10 @@ export const generateTemplate2 = async (prompt: string, imageUrl: string) => {
 const templateActions: Record<string, (prompt: string, imageUrl: string) => Promise<string>> = {
   '1': generateTemplate1, // Первый шаблон — 10 сек + звук
   '2': generateTemplate2, // Второй шаблон — 5 сек без звука
-  '3': generateTemplate1, // Третий шаблон может тоже использовать настройки первого
+  '3': generateTemplate3,
+  '4': generateTemplate4,
+  '5': generateTemplate5,
+  '6': generateTemplate6,
   // Сюда ты просто дописываешь новые ID по мере появления шаблонов
 };
 
