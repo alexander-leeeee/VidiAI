@@ -21,23 +21,27 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     { id: 'chic', label: t.cat_chic },
     { id: 'fun', label: t.cat_fun },
     { id: 'flow', label: t.cat_flow },
+    { id: 'dancing', label: t.cat_dancing },
   ];
 
   const MOCK_VIDEOS: VideoItem[] = [
     {
-      id: 'template-dancing-child',
-      title: 'Танцующий ребёнок',
+      id: '1',
+      title: 'Випадковий танець',
       hasMusic: true,
-      url: 'https://server.vidiai.top/uploads/videos/move/dancing-test.mp4',
+      url: 'https://server.vidiai.top/uploads/videos/dancing-test.mp4',
       thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-test.webp',
       prompt: 'Animate the subject in the photo into an energetic dance performance. Keep the original location, background, lighting, and camera position exactly the same as in the photo. Only the main subject moves and dances. The subject performs a dynamic, high-energy dance with confident, expressive movements, similar to a professional dancer. Strong rhythm, sharp and powerful motions, body control, turns, jumps, and footwork. Realistic motion, smooth animation, natural physics. No changes to clothing, body shape, or environment. The dance feels fun, impressive, and lively. Family-friendly, safe content.',
-      category: 'move' // Категория 'Движ'
+      category: 'dancing'
     },
     {
       id: '2',
-      url: 'https://cdn.coverr.co/videos/coverr-red-smoke-1296/1080p.mp4',
-      prompt: 'Абстрактный красный дым, кинематографичное освещение',
-      category: 'flow'
+      title: 'Трендовий танець #1',
+      hasMusic: true,
+      url: 'https://server.vidiai.top/uploads/videos/dancing_trend_1.mp4',
+      thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-test.webp',
+      prompt: 'The subject from the image is dancing.',
+      category: 'dancing'
     },
     {
       id: '3',
