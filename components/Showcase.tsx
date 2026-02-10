@@ -44,21 +44,30 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     },
     {
       id: '3',
-      url: 'https://cdn.coverr.co/videos/coverr-cloudy-forest-road-4508/1080p.mp4',
-      prompt: 'Таинственный туманный лес, вид с дрона',
-      category: 'chic'
+      title: 'Трендовий танець #2',
+      hasMusic: true,
+      url: 'https://server.vidiai.top/uploads/videos/dancing-trend-2.mp4',
+      thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-2.webp',
+      prompt: 'The subject from the image is dancing.',
+      category: 'dancing'
     },
     {
       id: '4',
-      url: 'https://cdn.coverr.co/videos/coverr-walking-in-a-video-game-store-4447/1080p.mp4',
-      prompt: 'Футуристичный магазин видеоигр в Токио',
-      category: 'fun'
+      title: 'Трендовий танець #3',
+      hasMusic: true,
+      url: 'https://server.vidiai.top/uploads/videos/dancing-trend-3.mp4',
+      thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-3.webp',
+      prompt: 'The subject from the image is dancing.',
+      category: 'dancing'
     },
     {
       id: '5',
-      url: 'https://cdn.coverr.co/videos/coverr-stars-timelapse-4566/1080p.mp4',
-      prompt: 'Таймлапс звездного неба в пустыне',
-      category: 'new_year'
+      title: 'Трендовий танець #4',
+      hasMusic: true,
+      url: 'https://server.vidiai.top/uploads/videos/dancing-trend-4.mp4',
+      thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-4.webp',
+      prompt: 'The subject from the image is dancing.',
+      category: 'dancing'
     },
     {
       id: '6',
