@@ -38,7 +38,7 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
       id: '2',
       title: 'Трендовий танець #1',
       hasMusic: true,
-      url: 'https://server.vidiai.top/uploads/videos/dancing_trend_1.mp4',
+      url: 'https://server.vidiai.top/uploads/videos/dancing-trend-1.mp4',
       thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing_trend_1.webp',
       prompt: 'The subject from the image is dancing.',
       category: 'dancing'
