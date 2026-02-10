@@ -17,11 +17,10 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     { id: 'all', label: t.cat_all },
     { id: 'new_year', label: t.cat_new_year },
     { id: 'laugh', label: t.cat_laugh },
-    { id: 'move', label: t.cat_move },
+    { id: 'dancing', label: t.cat_dancing },
     { id: 'chic', label: t.cat_chic },
     { id: 'fun', label: t.cat_fun },
     { id: 'flow', label: t.cat_flow },
-    { id: 'dancing', label: t.cat_dancing },
   ];
 
   const MOCK_VIDEOS: VideoItem[] = [
