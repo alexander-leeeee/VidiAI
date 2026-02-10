@@ -333,10 +333,6 @@ export const generateTemplate2 = async (prompt: string, imageUrl: string) => {
 const templateActions: Record<string, (prompt: string, imageUrl: string) => Promise<string>> = {
   '1': generateTemplate1, // Первый шаблон — 10 сек + звук
   '2': generateTemplate2, // Второй шаблон — 5 сек без звука
-  '3': generateTemplate3,
-  '4': generateTemplate4,
-  '5': generateTemplate5,
-  '6': generateTemplate6,
   // Сюда ты просто дописываешь новые ID по мере появления шаблонов
 };
 
