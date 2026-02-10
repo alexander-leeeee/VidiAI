@@ -315,15 +315,16 @@ export const generateTemplate1 = async (prompt: string, imageUrl: string) => {
   });
 };
 
-// Шаблон №2: Твой новый шаблон (например, 5 сек, без звука)
+// Шаблон №2: 
 export const generateTemplate2 = async (prompt: string, imageUrl: string) => {
   return baseGenerateKling({
-    model: 'kling/v2-1-standard',
+    model: 'kling-2.6/motion-control',
     input: {
       "prompt": prompt,
-      "image_url": imageUrl, 
-      "sound": false,
-      "duration": "5"
+      "input_urls": imageUrl, 
+      "video_urls": ["https://server.vidiai.top/uploads/videos/dancing-trend-1.mp4"],
+      "character_orientation": "video",
+      "mode": "720p"
     }
   });
 };
