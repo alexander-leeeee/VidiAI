@@ -171,8 +171,10 @@ export const generateUniversalVideo = async (params: {
     throw new Error(result.message || 'Failed to create task');
   }
   
-  return isVeo ? `veo_${taskId}` : taskId;
-};
+  // ПРОВЕРЯЕМ: если запрос шел на VEO_GENERATE, только тогда добавляем префикс
+  const finalId = endpoint === ENDPOINTS.VEO_GENERATE ? `veo_${taskId}` : taskId;
+
+  return finalId;
 
 /**
  * Універсальна функція для генерації музики (Suno V5)
