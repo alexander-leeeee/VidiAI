@@ -4,7 +4,7 @@ import Showcase from './components/Showcase';
 import Generator from './components/Generator';
 import Library from './components/Library';
 import Settings from './components/Settings';
-import Subscription from './components/Subscription';
+import Pricing from './components/Pricing';
 import CreditsModal from './components/CreditsModal';
 import { CoinsIcon } from './components/Icons';
 import { Tab, VideoItem, Language, Theme } from './types';
@@ -20,7 +20,6 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<Theme>('dark');
   const [credits, setCredits] = useState<number>(0); // Поставить на 0, чтобы пользователи не получали кредиты с браузера
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
-  const [currentPlanId, setCurrentPlanId] = useState<string>('free');
   const [isBrowserWarningOpen, setIsBrowserWarningOpen] = useState(false);
   const [welcomeCredits, setWelcomeCredits] = useState<number>(40);
   const [templatePrompt, setTemplatePrompt] = useState<string>('');
@@ -116,24 +115,16 @@ const App: React.FC = () => {
     setActiveTab(Tab.LIBRARY);
   };
 
-  const handleSubscribe = (planId: string) => {
-    // Мы перешли на модель кредитов, поэтому подписки пока не трогаем
-    console.log("Выбран план:", planId);
-  };
-
   const handleBuyCredits = (amount: number) => {
-    // 1. УБИРАЕМ начисление!
-    // setCredits(prev => prev + amount); <-- УДАЛИ ЭТУ СТРОКУ
-
-    // 2. ДОБАВЛЯЕМ логику реальной покупки
-    console.log(`Инициирована покупка пакета: ${amount} кредитов`);
-
-    // Здесь мы будем вызывать твой будущий платежный шлюз
-    // Для начала можно просто выводить сообщение:
+    // ЛОГИКА ОПЛАТЫ
+    console.log(`Ініційовано покупку пакета: ${amount} кредитів`);
+    
+    // Временная заглушка (потом заменим на ссылку оплаты)
     alert(`Ви обрали пакет на ${amount} кредитів. Зараз ми перенаправимо вас на оплату...`);
     
-    // В будущем тут будет вызов:
-    // startPaymentFlow(amount); 
+    // Пример для будущего (открытие ссылки в Telegram):
+    // const tg = (window as any).Telegram?.WebApp;
+    // tg.openLink(`https://your-server.com/pay.php?amount=${amount}&user=${tgId}`);
   };
 
   const handleUseTemplate = (video: VideoItem) => {
@@ -210,10 +201,9 @@ const App: React.FC = () => {
              <Showcase lang={lang} onUseTemplate={handleUseTemplate} />
         </div>
         <div className={`transition-opacity duration-300 ${activeTab === Tab.SUBSCRIPTION ? 'opacity-100' : 'hidden absolute inset-0'}`}>
-             <Subscription 
+             <Pricing 
                 lang={lang} 
-                currentPlanId={currentPlanId} 
-                onSubscribe={handleSubscribe} 
+                userCredits={credits}
                 onBuyCredits={handleBuyCredits}
              />
         </div>
