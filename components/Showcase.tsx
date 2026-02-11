@@ -89,10 +89,6 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     ? MOCK_VIDEOS 
     : MOCK_VIDEOS.filter(v => v.category === activeCategory);
 
-  const filteredVideos = activeCategory === 'all' 
-    ? MOCK_VIDEOS 
-    : MOCK_VIDEOS.filter(v => v.category === activeCategory);
-
   return (
     <div className="pb-24 pt-4">
       {/* Categories Scroll */}
