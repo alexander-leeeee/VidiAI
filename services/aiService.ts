@@ -396,23 +396,23 @@ export const updateVideoInDb = async (
 export const saveVideoToHistory = async (
   taskId: string, 
   prompt: string, 
-  title: string, 
+  title: string, // Просто принимаем строку
   tgId: number, 
   imageUrl: string | null, 
   aspectRatio: string,
   contentType: string = 'video'
 ) => {
   try {
-    // 1. Очищаем ID от префиксов, чтобы в базе он был чистым
     const cleanId = taskId.replace('music_', '').replace('veo_', '');
+    const baseUrl = import.meta.env.VITE_SERVER_BASE_URL; // Используем твой env
 
-    await fetch('https://server.vidiai.top/api/save_media.php', {
+    await fetch(`${baseUrl}/save_media.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        task_id: cleanId, // 2. Отправляем чистый ID
+        task_id: cleanId, 
         prompt, 
-        title, 
+        title: title, // Сюда прилетит готовое имя, например "Трендовий танець #1"
         telegram_id: tgId, 
         imageUrl, 
         aspectRatio,
