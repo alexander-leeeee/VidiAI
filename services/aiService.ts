@@ -175,6 +175,7 @@ export const generateUniversalVideo = async (params: {
   const finalId = endpoint === ENDPOINTS.VEO_GENERATE ? `veo_${taskId}` : taskId;
 
   return finalId;
+}
 
 /**
  * Універсальна функція для генерації музики (Suno V5)
