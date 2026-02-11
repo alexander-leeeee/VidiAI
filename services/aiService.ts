@@ -425,28 +425,31 @@ export const getTaskStatus = async (taskId: string) => {
   const isMusicTask = taskId.startsWith('music_');
   const isVeoTask = taskId.startsWith('veo_');
 
-  // 1. Очищаем ID ПЕРЕД выбором эндпоинта
+  // 1. Очищаем ID от префиксов
   const cleanTaskId = taskId.replace('music_', '').replace('veo_', '').trim();
 
-  // 2. ЖЕСТКО выбираем эндпоинт, чтобы избежать ошибок роутинга
-  let endpoint = '';
+  // 2. ЖЕСТКИЙ ВЫБОР URL (игнорируем путаницу в переменных)
+  let finalRequestUrl = '';
 
   if (isMusicTask) {
-    endpoint = 'https://api.kie.ai/api/v1/generate/record-info'; // Suno
+    finalRequestUrl = `https://api.kie.ai/api/v1/generate/record-info?taskId=${cleanTaskId}`;
   } else if (isVeoTask) {
-    endpoint = 'https://api.kie.ai/api/v1/veo/record-info'; // Veo
+    finalRequestUrl = `https://api.kie.ai/api/v1/veo/record-info?taskId=${cleanTaskId}`;
   } else {
-    // Для всего остального (Kling 2.1, Kling 2.6, Nano Banana)
-    endpoint = 'https://api.kie.ai/api/v1/jobs/recordInfo'; 
+    // Для Kling 2.1, 2.6, Nano Banana и Sora — используем базовый эндпоинт
+    finalRequestUrl = `https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${cleanTaskId}`;
   }
 
-  // ЛОГ ДЛЯ ТЕБЯ: Проверь это в консоли сразу
-  console.log(`[ROUTING] ID: ${taskId} -> URL: ${endpoint}`);
+  // ЛОГ ДЛЯ ПРОВЕРКИ: Ты увидишь в консоли, что теперь там точно /jobs/recordInfo
+  console.log(`[FIXED ROUTING] Requesting: ${finalRequestUrl}`);
 
   try {
-    const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
+    const response = await fetch(finalRequestUrl, {
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${KIE_API_KEY}` }
+      headers: { 
+        'Authorization': `Bearer ${KIE_API_KEY}`,
+        'Accept': 'application/json'
+      }
     });
 
     const result = await response.json();
