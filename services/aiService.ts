@@ -425,13 +425,23 @@ export const getTaskStatus = async (taskId: string) => {
   const isMusicTask = taskId.startsWith('music_');
   const isVeoTask = taskId.startsWith('veo_');
 
-  // 1. Выбираем правильный эндпоинт
-  let endpoint = ENDPOINTS.KLING_STATUS;
-  if (isMusicTask) endpoint = ENDPOINTS.MUSIC_STATUS;
-  if (isVeoTask) endpoint = ENDPOINTS.VEO_STATUS;
+  // 1. Очищаем ID ПЕРЕД выбором эндпоинта
+  const cleanTaskId = taskId.replace('music_', '').replace('veo_', '').trim();
 
-  // 2. Очищаем ID от префиксов
-  const cleanTaskId = taskId.replace('music_', '').replace('veo_', '');
+  // 2. ЖЕСТКО выбираем эндпоинт, чтобы избежать ошибок роутинга
+  let endpoint = '';
+
+  if (isMusicTask) {
+    endpoint = 'https://api.kie.ai/api/v1/generate/record-info'; // Suno
+  } else if (isVeoTask) {
+    endpoint = 'https://api.kie.ai/api/v1/veo/record-info'; // Veo
+  } else {
+    // Для всего остального (Kling 2.1, Kling 2.6, Nano Banana)
+    endpoint = 'https://api.kie.ai/api/v1/jobs/recordInfo'; 
+  }
+
+  // ЛОГ ДЛЯ ТЕБЯ: Проверь это в консоли сразу
+  console.log(`[ROUTING] ID: ${taskId} -> URL: ${endpoint}`);
 
   try {
     const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
