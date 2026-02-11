@@ -28,7 +28,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, lang }) =
                 <span className="text-[10px] font-medium">{t.nav_home}</span>
             </button>
 
-            {/* Credits */}
+            {/* Pricing */}
             <button 
                 onClick={() => onTabChange(Tab.SUBSCRIPTION)}
                 className={`flex flex-col items-center gap-1 transition-colors ${
@@ -36,7 +36,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, lang }) =
                 }`}
             >
                 <CircleDollarSign className="w-6 h-6" /> {/* Твоя новая иконка */}
-                <span className="text-[10px]">{t.nav_subscription}</span>
+                <span className="text-[10px]">{t.nav_sub}</span>
             </button>
 
             {/* Create (Center) */}
