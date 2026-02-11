@@ -5,6 +5,7 @@ import { getTranslation } from '../utils/translations';
 import { generateByTemplateId, saveVideoToHistory, getCostByTemplateId, generateNanoImage, generateUniversalVideo, generateUniversalMusic } from '../services/aiService';
 import LowBalanceModal from './LowBalanceModal';
 import { Volume2, VolumeX } from 'lucide-react';
+import { MOCK_VIDEOS } from './Showcase';
 
 export type GeneratorMode = 'video' | 'image' | 'music';
 
@@ -83,7 +84,13 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     return `manual_${mode}`;
   })();
 
-  const currentCost = getCostByTemplateId(effectiveTemplateId);
+  const currentTemplate = MOCK_VIDEOS.find(v => v.id === templateId);
+
+  const currentCost = getCostByTemplateId(
+    effectiveTemplateId, 
+    soraDuration, 
+    currentTemplate?.pricePerSecond // Передаем цену за сек, если она есть
+  );
 
   useEffect(() => {
     setIsGenerating(false);
@@ -217,7 +224,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
           // СОХРАНЕНИЕ В БАЗУ
           const tgUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
           const tgId = tgUser?.id || 0;
-          const displayTitle = (mode === 'music' && musicTitle?.trim()) ? musicTitle : (initialPrompt ? "Шаблон" : `Власна (${mode})`);
+          const displayTitle = (mode === 'music' && musicTitle?.trim()) ? musicTitle : (currentTemplate ? currentTemplate.title : `Власна (${mode})`);
         
           await saveVideoToHistory(taskId, prompt, displayTitle, tgId, mainUrl, aspectRatio, mode);
 
