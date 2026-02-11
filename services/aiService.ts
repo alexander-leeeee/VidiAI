@@ -469,31 +469,30 @@ export const getTaskStatus = async (taskId: string) => {
       }
 
       // ЛОГИКА ДЛЯ ВИДЕО И ФОТО (Veo, Sora, Kling, Nano)
-      // Проверяем все возможные поля, включая вложенный response.resultUrls из твоего лога
+      // 1. Сначала ищем в стандартных полях
       let rawUrl = data.response?.resultUrls || data.resultUrl || data.url || data.videoUrl || data.imageUrl || null;
-
-      // Если это массив, берем первый элемент
-      let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
-
-      // Резервная проверка через resultJson (для старых моделей Kling)
-      if (!finalUrl && data.resultJson) {
+      
+      // 2. Резервная проверка через resultJson (Критично для Kling 2.6 / Motion Control и старых моделей)
+      if (!rawUrl && data.resultJson) {
         try {
           const parsed = JSON.parse(data.resultJson);
-          const jsonUrl = parsed.resultUrls?.[0] || parsed.url || null;
-          finalUrl = Array.isArray(jsonUrl) ? jsonUrl[0] : jsonUrl;
+          // Достаем массив или строку из любых возможных полей внутри JSON
+          rawUrl = parsed.resultUrls || parsed.url || null;
         } catch (e) {
           console.error("Помилка парсингу resultJson:", e);
         }
       }
-
+      
+      // 3. Финальная очистка: если получили массив — берем первый элемент, если строку — берем её
+      let finalUrl = Array.isArray(rawUrl) ? rawUrl[0] : rawUrl;
+      
       // ЛОГ ДЛЯ ОТЛАДКИ
       console.log(`[DEBUG] Task: ${taskId} | Success: ${isSucceeded} | URL: ${finalUrl}`);
-
+      
       return {
         status: isSucceeded ? 'succeeded' : rawState,
         video_url: finalUrl 
       };
-    }
     
     return { status: 'error', error_msg: result.message || "Unknown API Error" };
   } catch (error) {
