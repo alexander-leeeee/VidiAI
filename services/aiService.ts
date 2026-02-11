@@ -321,7 +321,7 @@ export const generateTemplate2 = async (prompt: string, imageUrl: string) => {
     model: 'kling-2.6/motion-control',
     input: {
       "prompt": prompt,
-      "input_urls": imageUrl, 
+      "input_urls": [imageUrl],
       "video_urls": ["https://server.vidiai.top/uploads/videos/dancing-trend-1.mp4"],
       "character_orientation": "video",
       "mode": "720p"
