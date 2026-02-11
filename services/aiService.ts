@@ -493,6 +493,7 @@ export const getTaskStatus = async (taskId: string) => {
         status: isSucceeded ? 'succeeded' : rawState,
         video_url: finalUrl 
       };
+    }
     
     return { status: 'error', error_msg: result.message || "Unknown API Error" };
   } catch (error) {
