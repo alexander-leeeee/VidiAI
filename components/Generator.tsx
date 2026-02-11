@@ -84,12 +84,19 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
     return `manual_${mode}`;
   })();
 
+  // 1. Находим текущий шаблон
   const currentTemplate = MOCK_VIDEOS.find(v => v.id === templateId);
 
+  // 2. Определяем длительность: 
+  // Если это шаблон — берем его вшитую длину. 
+  // Если это Sora/Veo — берем значение из кнопок (soraDuration).
+  const finalDuration = currentTemplate?.duration || soraDuration; 
+
+  // 3. Считаем цену
   const currentCost = getCostByTemplateId(
     effectiveTemplateId, 
-    soraDuration, 
-    currentTemplate?.pricePerSecond // Передаем цену за сек, если она есть
+    finalDuration, 
+    currentTemplate?.pricePerSecond // Передаем цену за сек только если она есть
   );
 
   useEffect(() => {
