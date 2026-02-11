@@ -1,3 +1,6 @@
+// aiService.ts
+import { MOCK_VIDEOS } from '../components/Showcase'; // Проверь правильность пути к файлу
+
 const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY;
 
 const ENDPOINTS = {
