@@ -250,29 +250,29 @@ export const generateUniversalMusic = async (params: {
 
 // --- РЕЕСТР СТОИМОСТИ (легко менять здесь) ---
 export const TEMPLATE_COSTS: Record<string, number> = {
-  '1': 50,            // Видео 10 сек + звук
+  '1': 220,           // Kling 2.6 - 10 сек + звук
   '2': 50,            // Видео 5 сек
   '3': 50,
   '4': 50,
   '5': 50,
   
   // НОВЫЕ РУЧНЫЕ РЕЖИМЫ
-  'manual_music': 10, // Генерация музыки
+  'manual_music': 12, // Генерация музыки
 
   // Изображения
-  'image_standard': 5,
-  'image_pro': 10,
-  'image_edit': 15,
+  'image_standard': 4,
+  'image_pro': 18,
+  'image_edit': 4,
     
   // Цены для Sora 2 (примерные)
   'sora_10': 30, // 10 секунд
-  'sora_15': 45, // 15 секунд
+  'sora_15': 35, // 15 секунд
 
   // Цены для Veo
   'veo': 60, // Устанавливаем цену для Veo (например, 35 монет)
 
   // Цены для Kling 2.1
-  'kling': 20,
+  'kling': 60,
 
   // Запасной вариант
   'default': 30
