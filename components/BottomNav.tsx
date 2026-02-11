@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tab, Language } from '../types';
-import { HomeIcon, PlusIcon, FolderIcon, SettingsIcon, CreditCardIcon } from './Icons';
+import { HomeIcon, PlusIcon, FolderIcon, SettingsIcon, CircleDollarSign } from './Icons';
 import { getTranslation } from '../utils/translations';
 
 interface BottomNavProps {
@@ -28,10 +28,15 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, lang }) =
                 <span className="text-[10px] font-medium">{t.nav_home}</span>
             </button>
 
-            {/* Subscription */}
-            <button onClick={() => onTabChange(Tab.SUBSCRIPTION)} className={navItemClass(activeTab === Tab.SUBSCRIPTION)}>
-                <CreditCardIcon active={activeTab === Tab.SUBSCRIPTION} />
-                <span className="text-[10px] font-medium">{t.nav_sub}</span>
+            {/* Credits */}
+            <button 
+                onClick={() => onTabChange(Tab.SUBSCRIPTION)}
+                className={`flex flex-col items-center gap-1 transition-colors ${
+                    activeTab === Tab.SUBSCRIPTION ? 'text-primary' : 'text-gray-500'
+                }`}
+            >
+                <CircleDollarSign className="w-6 h-6" /> {/* Твоя новая иконка */}
+                <span className="text-[10px]">{t.nav_subscription}</span>
             </button>
 
             {/* Create (Center) */}
