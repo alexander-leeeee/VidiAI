@@ -17,7 +17,7 @@ const Pricing: React.FC<PricingProps> = ({ lang, onBuyCredits, userCredits }) =>
     { 
       amount: 1000, 
       price: '340 ₴', 
-      name: 'Тестовий пак', 
+      name: 'Стартовий пак', 
       desc: 'Для знайомства з VidiAI',
       details: ['~5-6 видео Kling/Sora', '~20 картинок Nano', '~30 пісень Suno'],
       savings: 0,
