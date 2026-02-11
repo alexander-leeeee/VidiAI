@@ -3,7 +3,7 @@ import { Language } from '../types';
 export const translations = {
   ru: {
     nav_home: 'Главная',
-    nav_sub: 'Подписка',
+    nav_sub: 'Кредиты',
     nav_create: 'Создать',
     nav_library: 'Галерея',
     nav_settings: 'Настройки',
@@ -73,7 +73,7 @@ export const translations = {
   },
   en: {
     nav_home: 'Home',
-    nav_sub: 'Plans',
+    nav_sub: 'Credits',
     nav_create: 'Create',
     nav_library: 'Gallery',
     nav_settings: 'Settings',
@@ -143,7 +143,7 @@ export const translations = {
   },
   uk: {
     nav_home: 'Головна',
-    nav_sub: 'Плани',
+    nav_sub: 'Кредити',
     nav_create: 'Створити',
     nav_library: 'Галерея',
     nav_settings: 'Налаштування',
