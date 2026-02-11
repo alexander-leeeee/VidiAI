@@ -1,3 +1,4 @@
+// Subscription.tsx
 import React from 'react';
 import { Language } from '../types';
 import { getTranslation } from '../utils/translations';
@@ -58,9 +59,11 @@ const Subscription: React.FC<SubscriptionProps> = ({ lang, onBuyCredits }) => {
             {pack.recommended && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-md">
                 ВИГІДНО
-              }
+              </div>
+            )} {/* <-- Вот здесь должна быть скобка и закрытие блока */}
+
             {pack.amount === 10000 && (
-               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] font-bold px-3 py-1 rounded-full shadow-md">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] font-bold px-3 py-1 rounded-full shadow-md">
                 НАЙКРАЩА ЦІНА
               </div>
             )}
