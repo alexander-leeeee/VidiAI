@@ -117,16 +117,23 @@ const App: React.FC = () => {
   };
 
   const handleSubscribe = (planId: string) => {
-    // In a real app, this would trigger a payment flow
-    setCurrentPlanId(planId);
-    if (planId !== 'free') {
-        setCredits(prev => prev + 100); // Bonus credits for subscribing
-    }
+    // Мы перешли на модель кредитов, поэтому подписки пока не трогаем
+    console.log("Выбран план:", planId);
   };
 
   const handleBuyCredits = (amount: number) => {
-    // In a real app, this would trigger a payment flow
-    setCredits(prev => prev + amount);
+    // 1. УБИРАЕМ начисление!
+    // setCredits(prev => prev + amount); <-- УДАЛИ ЭТУ СТРОКУ
+
+    // 2. ДОБАВЛЯЕМ логику реальной покупки
+    console.log(`Инициирована покупка пакета: ${amount} кредитов`);
+
+    // Здесь мы будем вызывать твой будущий платежный шлюз
+    // Для начала можно просто выводить сообщение:
+    alert(`Ви обрали пакет на ${amount} кредитів. Зараз ми перенаправимо вас на оплату...`);
+    
+    // В будущем тут будет вызов:
+    // startPaymentFlow(amount); 
   };
 
   const handleUseTemplate = (video: VideoItem) => {
