@@ -316,10 +316,10 @@ const baseGenerateKling = async (payload: any) => {
   return taskId;
 };
 
-// --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: НАЧАЛО ---
+// --- БАЗОВЫЕ ТЕХНОЛОГИИ ГЕНЕРАЦИИ ---
 
-// Шаблон №1: Kling 2.6 (10 сек, звук)
-export const generateTemplate1 = async (prompt: string, imageUrl: string) => {
+// 1. Обычная анимация (Image-to-Video) — как была в Шаблоне №1
+export const genImageToVideo = async (prompt: string, imageUrl: string) => {
   return baseGenerateKling({
     model: 'kling-2.6/image-to-video',
     input: {
@@ -331,33 +331,35 @@ export const generateTemplate1 = async (prompt: string, imageUrl: string) => {
   });
 };
 
-// Шаблон №2: 
-export const generateTemplate2 = async (prompt: string, imageUrl: string) => {
+// 2. Контроль движения (Motion Control) — как в Шаблонах №2, 3, 4...
+export const genMotionControl = async (prompt: string, imageUrl: string, videoUrl: string) => {
   return baseGenerateKling({
     model: 'kling-2.6/motion-control',
     input: {
       "prompt": prompt,
       "input_urls": [imageUrl],
-      "video_urls": ["https://server.vidiai.top/uploads/videos/dancing-trend-1.mp4"],
+      "video_urls": [videoUrl], // Ссылка берется динамически!
       "character_orientation": "video",
       "mode": "720p"
     }
   });
 };
 
-// 1. Создаем карту соответствия (какой ID какой функцией генерируется)
-const templateActions: Record<string, (prompt: string, imageUrl: string) => Promise<string>> = {
-  '1': generateTemplate1, // Первый шаблон — 10 сек + звук
-  '2': generateTemplate2, // Второй шаблон — 5 сек без звука
-  // Сюда ты просто дописываешь новые ID по мере появления шаблонов
+// 1. Карта соответствия: какой ID какую технологию использует
+const templateActions: Record<string, Function> = {
+  '1': genImageToVideo,
+  '2': genMotionControl,
+  '3': genMotionControl,
+  '4': genMotionControl,
+  '5': genMotionControl,
+  // Сюда будешь добавлять 6, 7... 99 и назначать им любую функцию
 };
 
 /**
  * Універсальна функція-диспетчер
  */
 export const generateByTemplateId = async (templateId: string, prompt: string, imageUrl: string, options?: any) => {
-  // 1. ПРОВЕРКА НА РУЧНОЙ РЕЖИМ (Sora 10/15 сек)
-  // В Generator.tsx мы формируем ID как `sora_${soraDuration}`
+  // 1. ПРОВЕРКА НА SORA (Manual Mode)
   if (templateId.startsWith('sora_')) {
     return await generateUniversalVideo({
       prompt: prompt,
@@ -369,10 +371,26 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
     });
   }
 
-  // 2. ЛОГИКА ШАБЛОНОВ (Showcase)
-  // Ищем функцию по ID (1, 2, 3...). Если ID нет в списке — берем стандартный шаблон
-  const action = templateActions[templateId] || generateTemplate2;
-  return await action(prompt, imageUrl, options);
+  // 2. ЛОГИКА ШАБЛОНОВ
+  // Ищем данные шаблона в экспортированном массиве из Showcase
+  const currentTemplate = MOCK_VIDEOS.find(v => v.id === templateId);
+  const videoUrl = currentTemplate?.url || "";
+
+  // Достаем нужную функцию из карты
+  const action = templateActions[templateId];
+
+  if (!action) {
+    // Если ID не прописан в карте, используем Motion Control как стандарт
+    return await genMotionControl(prompt, imageUrl, videoUrl);
+  }
+
+  // ВЫЗОВ: Если функция требует videoUrl (Motion Control), передаем его
+  if (action === genMotionControl) {
+    return await action(prompt, imageUrl, videoUrl);
+  } 
+  
+  // Для всех остальных (как genImageToVideo) передаем только стандартные параметры
+  return await action(prompt, imageUrl);
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
