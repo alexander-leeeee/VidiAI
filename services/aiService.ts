@@ -376,24 +376,19 @@ export const generateByTemplateId = async (templateId: string, prompt: string, i
 };
 
 // --- ЭКСПОРТЫ ДЛЯ ШАБЛОНОВ: КОНЕЦ ---
-export const updateVideoInDb = async (
-  taskId: string, 
-  status: string, 
-  videoUrl: string | null, 
-  alternativeUrl?: string | null,
-  errorMsg?: string
-) => {
+export const updateVideoInDb = async (taskId: string, status: string, videoUrl: string | null, alternativeUrl?: string | null, errorMsg?: string) => {
   try {
-    // 1. Очищаем ID от префиксов 'music_' или 'veo_'
     const cleanId = taskId.replace('music_', '').replace('veo_', '');
+    // ИСПРАВЛЕНО: используем baseUrl из env
+    const baseUrl = import.meta.env.VITE_SERVER_BASE_URL;
 
-    const response = await fetch('https://server.vidiai.top/api/update_media_status.php', {
+    const response = await fetch(`${baseUrl}/update_media_status.php`, { // <-- Теперь через переменную
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        task_id: cleanId, // 2. Отправляем чистый ID, который PHP найдет в базе
+        task_id: cleanId, 
         status: status, 
-        video_url: videoUrl,
+        video_url: videoUrl, 
         alternative_url: alternativeUrl,
         error_description: errorMsg 
       }),
