@@ -276,8 +276,21 @@ export const TEMPLATE_COSTS: Record<string, number> = {
 };
 
 // Функция для получения цены по ID
-export const getCostByTemplateId = (id: string | undefined): number => {
-  return TEMPLATE_COSTS[id || 'default'] || TEMPLATE_COSTS['default'];
+export const getCostByTemplateId = (
+  id: string | undefined, 
+  duration?: string | number,
+  pricePerSecond?: number // Добавляем этот параметр
+): number => {
+  const baseCost = TEMPLATE_COSTS[id || 'default'] || TEMPLATE_COSTS['default'];
+
+  // Если передан флаг цены за секунду — считаем динамику
+  if (pricePerSecond && pricePerSecond > 0) {
+    const seconds = Number(duration) || 5;
+    return seconds * pricePerSecond;
+  }
+
+  // В противном случае — старый добрый фикс из реестра
+  return baseCost;
 };
 
 // --- ВНУТРЕННЯЯ ФУНКЦИЯ (не экспортируем, она нужна только здесь) ---
