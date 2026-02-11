@@ -36,6 +36,7 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     {
       id: '2',
       title: 'Трендовий танець #1',
+      pricePerSecond: 10,
       hasMusic: true,
       url: 'https://server.vidiai.top/uploads/videos/dancing-trend-1.mp4',
       thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-1.webp',
@@ -45,6 +46,7 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     {
       id: '3',
       title: 'Трендовий танець #2',
+      pricePerSecond: 10,
       hasMusic: true,
       url: 'https://server.vidiai.top/uploads/videos/dancing-trend-2.mp4',
       thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-2.webp',
@@ -54,6 +56,7 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     {
       id: '4',
       title: 'Трендовий танець #3',
+      pricePerSecond: 10,
       hasMusic: true,
       url: 'https://server.vidiai.top/uploads/videos/dancing-trend-3.mp4',
       thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-3.webp',
@@ -63,6 +66,7 @@ const Showcase: React.FC<ShowcaseProps> = ({ lang, onUseTemplate }) => {
     {
       id: '5',
       title: 'Трендовий танець #4',
+      pricePerSecond: 10,
       hasMusic: true,
       url: 'https://server.vidiai.top/uploads/videos/dancing-trend-4.mp4',
       thumbnail: 'https://server.vidiai.top/uploads/thumbnails/dancing-trend-4.webp',
