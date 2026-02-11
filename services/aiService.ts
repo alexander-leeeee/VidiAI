@@ -431,23 +431,24 @@ export const getTaskStatus = async (taskId: string) => {
   // 1. Очищаем ID от префиксов
   const cleanTaskId = taskId.replace('music_', '').replace('veo_', '').trim();
 
-  // 2. ЖЕСТКИЙ ВЫБОР URL (игнорируем путаницу в переменных)
-  let finalRequestUrl = '';
+  // 2. Выбор эндпоинта строго из .env с защитой от "ложного veo"
+  let endpoint = '';
 
   if (isMusicTask) {
-    finalRequestUrl = `https://api.kie.ai/api/v1/generate/record-info?taskId=${cleanTaskId}`;
-  } else if (isVeoTask) {
-    finalRequestUrl = `https://api.kie.ai/api/v1/veo/record-info?taskId=${cleanTaskId}`;
+    endpoint = ENDPOINTS.MUSIC_STATUS;
+  } else if (isVeoTask && cleanTaskId.length < 30) {
+    // Если это реально короткий ID от Veo
+    endpoint = ENDPOINTS.VEO_STATUS;
   } else {
-    // Для Kling 2.1, 2.6, Nano Banana и Sora — используем базовый эндпоинт
-    finalRequestUrl = `https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${cleanTaskId}`;
+    // Для Kling (af301...) и Nano Banana всегда используем этот путь
+    endpoint = ENDPOINTS.KLING_STATUS;
   }
 
-  // ЛОГ ДЛЯ ПРОВЕРКИ: Ты увидишь в консоли, что теперь там точно /jobs/recordInfo
-  console.log(`[FIXED ROUTING] Requesting: ${finalRequestUrl}`);
+  // ДИАГНОСТИКА: Проверь, что теперь здесь .../jobs/recordInfo
+  console.log(`[ROUTING] Using Endpoint: ${endpoint} for ID: ${cleanTaskId}`);
 
   try {
-    const response = await fetch(finalRequestUrl, {
+    const response = await fetch(`${endpoint}?taskId=${cleanTaskId}`, {
       method: 'GET',
       headers: { 
         'Authorization': `Bearer ${KIE_API_KEY}`,
