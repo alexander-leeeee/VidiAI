@@ -78,6 +78,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
   
   const effectiveTemplateId = (() => {
     if (templateId && templateId !== 'default') return templateId;
+    if (selectedModelId === 'kling') return 'kling-2.1';
     if (selectedModelId === 'veo') return 'veo';
     if (selectedModelId === 'sora-2') return `sora_${soraDuration}`;
     if (mode === 'image') return `image_${imageQuality}`;
@@ -223,7 +224,7 @@ const Generator: React.FC<GeneratorProps & { setCredits?: React.Dispatch<React.S
                   duration: soraDuration, 
                   aspectRatio: soraLayout as any,
                   method: videoMethod, // Теперь здесь 'image' для Sora или 'reference'/'start-end' для Veo
-                  modelId: selectedModelId,
+                  modelId: selectedModelId === 'kling' ? 'kling-2.1' : selectedModelId,
                   includeSound: withSound
               });
           }
