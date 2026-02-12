@@ -271,28 +271,42 @@ export const TEMPLATE_COSTS: Record<string, number> = {
   // Цены для Veo
   'veo': 60, // Устанавливаем цену для Veo (например, 35 монет)
 
-  // Цены для Kling 2.1
-  'kling': 60,
+  // Kling 2.1 Standard
+  'kling-2.1_5': 25,
+  'kling-2.1_10': 50,
+
+  // Задел на будущее (Kling 2.6)
+  'kling-2.6_5': 50,
+  'kling-2.6_10': 100,
 
   // Запасной вариант
   'default': 30
 };
 
-// Функция для получения цены по ID
 export const getCostByTemplateId = (
   id: string | undefined, 
   duration?: string | number,
-  pricePerSecond?: number // Добавляем этот параметр
+  pricePerSecond?: number 
 ): number => {
-  const baseCost = TEMPLATE_COSTS[id || 'default'] || TEMPLATE_COSTS['default'];
-
-  // Если передан флаг цены за секунду — считаем динамику
-  if (pricePerSecond && pricePerSecond > 0) {
-    const seconds = Number(duration) || 5;
-    return seconds * pricePerSecond;
+  // 1. ПРОВЕРКА НА ФИКСИРОВАННЫЙ КЛИНГ (Твой запрос про 25/50)
+  // Если это 'kling-2.1', лезем в реестр за ключами 'kling-2.1_5' или 'kling-2.1_10'
+  if (id && id.includes('kling')) {
+    const dur = (duration === '10' || duration === 10) ? '10' : '5';
+    const dynamicKey = `${id}_${dur}`; 
+    // Если в TEMPLATE_COSTS есть цена для этой версии и длительности — отдаем её
+    if (TEMPLATE_COSTS[dynamicKey]) return TEMPLATE_COSTS[dynamicKey];
   }
 
-  // В противном случае — старый добрый фикс из реестра
+  // 2. ТВОЙ КОД: ПОСЕКУНДНЫЙ РАСЧЕТ
+  // Если в функцию пришел тариф (например, 8.4), считаем динамику
+  if (pricePerSecond && pricePerSecond > 0) {
+    const seconds = Number(duration) || 5;
+    return Math.round(seconds * pricePerSecond);
+  }
+
+  // 3. ТВОЙ КОД: ОБЫЧНЫЙ ФИКС
+  // Для картинок, музыки или шаблонов с фиксированной ценой
+  const baseCost = TEMPLATE_COSTS[id || 'default'] || TEMPLATE_COSTS['default'];
   return baseCost;
 };
 
