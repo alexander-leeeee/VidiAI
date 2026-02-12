@@ -19,7 +19,7 @@ const Pricing: React.FC<PricingProps> = ({ lang, onBuyCredits, userCredits }) =>
       price: '340 ₴', 
       name: 'Стартовий пак', 
       desc: 'Для знайомства з VidiAI',
-      details: ['~5-6 видео Kling/Sora', '~20 картинок Nano', '~30 пісень Suno'],
+      details: ['до 11 видео', 'до 120 изображений', 'до 115 пісень'],
       savings: 0,
       recommended: false,
       color: 'bg-white dark:bg-gray-800' 
@@ -29,7 +29,7 @@ const Pricing: React.FC<PricingProps> = ({ lang, onBuyCredits, userCredits }) =>
       price: '900 ₴', 
       name: 'Творчий пак', 
       desc: 'Для активного контенту',
-      details: ['~15-18 видео Kling/Sora', '~60 картинок Nano', '~90 пісень Suno'],
+      details: ['до 33 видео', 'до 360 изображений', 'до 345 пісень'],
       savings: 12, //
       recommended: true, 
       color: 'bg-gradient-to-br from-primary to-secondary',
@@ -40,7 +40,7 @@ const Pricing: React.FC<PricingProps> = ({ lang, onBuyCredits, userCredits }) =>
       price: '2600 ₴', 
       name: 'Профі пак', 
       desc: 'Максимальні можливості',
-      details: ['~50-60 видео Kling/Sora', '~200 картинок Nano', '~300 пісень Suno'],
+      details: ['до 110 видео', 'до 1200 изображений', 'до 1150 пісень'],
       savings: 24, //
       recommended: false,
       color: 'bg-gray-900 dark:bg-neutral-900',
