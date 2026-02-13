@@ -35,29 +35,44 @@ const App: React.FC = () => {
     if (tg) {
       tg.ready();
       tg.expand();
-    }
-  
-    const tgUser = tg?.initDataUnsafe?.user;
-  
-    if (tgUser) {
-      // Единый вызов синхронизации
-      syncUserWithDb(tgUser.id, tgUser.username || 'User').then(res => {
-        if (res.status === 'success') {
-          setCredits(res.credits); // Баланс юзера
-          
-          // Обновляем текст в модалке актуальной цифрой с сервера
-          if (res.welcome_limit) {
-            setWelcomeCredits(res.welcome_limit);
-          }
+
+      // 1. Отримуємо параметри з посилання (наприклад, plan_pro або faceswap)
+      const startParam = tg.initDataUnsafe?.start_param;
+      if (startParam) {
+        console.log("Прийшов параметр із сайту:", startParam);
+        
+        // Логіка перемикання вкладок залежно від параметра
+        if (startParam.includes('plan')) {
+          setActiveTab(Tab.SUBSCRIPTION); // Відкриваємо ціни
+        } else if (startParam === 'faceswap') {
+          setGeneratorMode('video'); 
+          setActiveTab(Tab.CREATE); // Відкриваємо генератор
         }
-      });
-    } else {
-      // Если зашли через обычный браузер в Украине
-      setCredits(0);
-      setIsBrowserWarningOpen(true);
-      console.log("Пользователь не авторизован через Telegram");
+      }
+
+      // 2. АВТОРИЗАЦІЯ ТА БАЛАНС
+      const tgUser = tg.initDataUnsafe?.user;
+      if (tgUser) {
+        // Викликаємо вашу функцію синхронізації
+        syncUserWithDb(tgUser.id, tgUser.username || 'User').then(res => {
+          if (res.status === 'success') {
+            setCredits(res.credits); // Встановлюємо реальні кредити з вашої БД
+            console.log(`Баланс Олександра (${tgUser.id}) оновлено: ${res.credits}`);
+            
+            if (res.welcome_limit) {
+              setWelcomeCredits(res.welcome_limit);
+            }
+          }
+        }).catch(err => {
+          console.error("Помилка синхронізації з БД:", err);
+        });
+      } else {
+        // Якщо даних користувача немає (відкрито в браузері)
+        setCredits(0);
+        setIsBrowserWarningOpen(true);
+      }
     }
-  }, []);
+  }, []); // Виконується один раз при ініціалізації додатка
   
   // Handle Theme Change
   useEffect(() => {
