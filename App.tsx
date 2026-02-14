@@ -36,6 +36,18 @@ const App: React.FC = () => {
       tg.ready();
       tg.expand();
 
+      // ЗАПИТ НА ДОЗВІЛ ПИСАТИ В ОСОБИСТІ
+      // Цей метод викликає вікно: "Дозволити боту надсилати вам повідомлення?"
+      if (tg.requestWriteAccess) {
+        tg.requestWriteAccess((allowed: boolean) => {
+          if (allowed) {
+            console.log("Користувач дозволив розсилки!");
+          } else {
+            console.log("Користувач відмовився від розсилок.");
+          }
+        });
+      }
+
       // 1. Отримуємо параметри з посилання (наприклад, plan_pro або faceswap)
       const startParam = tg.initDataUnsafe?.start_param;
       if (startParam) {
